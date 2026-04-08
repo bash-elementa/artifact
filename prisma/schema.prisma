@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  image        String?
+  role         String?
+  team         Team?
+  bio          String?
+  storageBytes BigInt     @default(0)
+  createdAt    DateTime   @default(now())
+  artifacts    Artifact[]
+  projects     Project[]
+  reactions    Reaction[]
+}
+
+enum Team {
+  XD
+  ENGINEERING
+  PRODUCT
+  MARKETING
+  STUDIO
+  OPERATIONS
+}
+
+model Project {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artifacts   Artifact[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Artifact {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  type           ArtifactType
+  isShareable    Boolean      @default(true)
+  isSharedToFeed Boolean      @default(false)
+  storageBytes   BigInt       @default(0)
+
+  // Media
+  mediaUrl      String?
+  mediaMimeType String?
+
+  // URL
+  websiteUrl    String?
+  screenSize    ScreenSize?
+  screenshotUrl String?
+
+  // Figma
+  figmaUrl        String?
+  figmaPreviewUrl String?
+
+  // Inspo
+  sourceUrl    String?
+  sourceCredit String?
+
+  tags      String[]
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  reactions Reaction[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+
+enum ArtifactType {
+  MEDIA
+  URL
+  FIGMA
+  INSPO
+}
+
+enum ScreenSize {
+  DESKTOP
+  TABLET
+  MOBILE
+}
+
+model Reaction {
+  id         String   @id @default(cuid())
+  emoji      String
+  userId     String
+  artifactId String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artifact   Artifact @relation(fields: [artifactId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, artifactId, emoji])
+}
