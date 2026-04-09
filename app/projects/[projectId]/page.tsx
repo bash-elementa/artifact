@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { use } from "react";
 import Link from "next/link";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
 import { ArtifactCard } from "@/components/projects/ArtifactCard";
 import { ArtifactLightbox } from "@/components/explore/ArtifactLightbox";
 import { UploadModal } from "@/components/upload/UploadModal";
@@ -36,33 +36,73 @@ interface Project {
   _count: { artifacts: number };
 }
 
-const MIN_COLS = 1;
-const MAX_COLS = 6;
+const STEPS = 6;
+const STEP_PX = 44;
+const TRACK_W = (STEPS - 1) * STEP_PX; // 220px
+const THUMB_SIZE = 32;
 
 function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const dragX = useMotionValue((value - 1) * STEP_PX);
+  const springX = useSpring(dragX, { stiffness: 70, damping: 5, mass: 1.6 });
+
+  useEffect(() => {
+    dragX.set((value - 1) * STEP_PX);
+  }, [value, dragX]);
+
+  function snapToNearest() {
+    const raw = dragX.get();
+    const clamped = Math.max(0, Math.min(TRACK_W, raw));
+    const step = Math.round(clamped / STEP_PX);
+    dragX.set(step * STEP_PX);
+    onChange(step + 1);
+  }
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="relative flex items-center gap-1.5">
-        {Array.from({ length: MAX_COLS }, (_, i) => i + 1).map((n) => (
-          <button
-            key={n}
-            onClick={() => onChange(n)}
-            className="relative flex items-center justify-center transition-all duration-200"
-            style={{ width: 20, height: 20 }}
-            aria-label={`${n} column${n !== 1 ? "s" : ""}`}
-          >
-            <span
-              className="rounded-full bg-[var(--foreground)] transition-all duration-200"
-              style={{
-                width: n <= value ? 8 : 5,
-                height: n <= value ? 8 : 5,
-                opacity: n <= value ? 1 : 0.25,
-              }}
-            />
-          </button>
+    <div className="flex items-center gap-4">
+      <div
+        className="relative flex items-center"
+        style={{ width: TRACK_W + THUMB_SIZE, height: 48 }}
+      >
+        {/* Track */}
+        <div
+          className="absolute rounded-full bg-[var(--border)]"
+          style={{ left: THUMB_SIZE / 2, right: THUMB_SIZE / 2, height: 2 }}
+        />
+
+        {/* Step dots */}
+        {Array.from({ length: STEPS }, (_, i) => (
+          <div
+            key={i}
+            className="absolute top-1/2 -translate-y-1/2 rounded-full transition-all duration-200"
+            style={{
+              left: i * STEP_PX + THUMB_SIZE / 2 - 4,
+              width: 8,
+              height: 8,
+              background: i < value ? "var(--foreground)" : "var(--border)",
+              opacity: i < value ? 0.3 : 1,
+            }}
+          />
         ))}
+
+        {/* Draggable thumb */}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: TRACK_W }}
+          dragElastic={0.12}
+          dragMomentum={false}
+          style={{ x: springX, left: 0 }}
+          onDragEnd={snapToNearest}
+          whileDrag={{ scale: 1.2 }}
+          className="absolute top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-10 flex items-center justify-center rounded-full bg-[var(--foreground)] shadow-xl select-none"
+        >
+          <span className="text-[10px] font-bold text-[var(--background)] pointer-events-none">
+            {value}
+          </span>
+        </motion.div>
       </div>
-      <span className="text-xs text-[var(--muted)] w-12 shrink-0">{value} {value === 1 ? "column" : "columns"}</span>
+      <span className="text-xs text-[var(--muted)] shrink-0">
+        {value === 1 ? "1 column" : `${value} columns`}
+      </span>
     </div>
   );
 }
