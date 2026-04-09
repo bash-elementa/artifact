@@ -35,9 +35,11 @@ interface FeedArtifact {
 }
 
 const VIEWPORT_BUFFER = 400;
-const TILE_W = 260;
-const MIN_GAP = 24;
-const PADDING = 60;
+const COLUMN_COUNT = 5;
+const COLUMN_WIDTH = 280;
+const COLUMN_GAP = 16;
+const ITEM_GAP = 16;
+const PADDING = 24;
 const FALLBACK_HEIGHTS = [220, 300, 240, 280, 200, 260, 320, 180, 250, 210];
 
 type Dims = Record<string, { w: number; h: number }>;
@@ -63,69 +65,35 @@ function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims, seed: number): L
   if (artifacts.length === 0) return { items: [], canvasWidth: 1200, canvasHeight: 600 };
 
   const rng = makeRng(seed);
-  const n = artifacts.length;
 
-  const heights = artifacts.map((a, i) => {
-    const d = dims[a.id];
-    const raw = d ? Math.round(TILE_W * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
-    return Math.max(160, Math.min(400, raw));
-  });
-
-  // Scatter area: wide horizontal band
-  const AREA_W = Math.max(1400, n * 200);
-  const AREA_H = Math.max(500, Math.ceil(n / 5) * 320);
-
-  const placed: { x: number; y: number; h: number }[] = [];
-
-  for (let i = 0; i < n; i++) {
-    const h = heights[i];
-    let bestX = rng() * AREA_W;
-    let bestY = rng() * AREA_H;
-
-    // Try up to 150 positions, pick the one with the least overlap
-    for (let attempt = 0; attempt < 150; attempt++) {
-      const tx = rng() * AREA_W;
-      const ty = rng() * AREA_H;
-      let overlapping = false;
-
-      for (const p of placed) {
-        if (
-          tx < p.x + TILE_W + MIN_GAP &&
-          tx + TILE_W + MIN_GAP > p.x &&
-          ty < p.y + p.h + MIN_GAP &&
-          ty + h + MIN_GAP > p.y
-        ) {
-          overlapping = true;
-          break;
-        }
-      }
-
-      if (!overlapping) {
-        bestX = tx;
-        bestY = ty;
-        break;
-      }
-    }
-
-    placed.push({ x: bestX, y: bestY, h });
+  // Shuffle so new artifacts don't always append to the same column
+  const shuffled = [...artifacts];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 
-  // Normalise to positive coords with padding
-  const minX = Math.min(...placed.map((p) => p.x));
-  const minY = Math.min(...placed.map((p) => p.y));
+  const columnHeights = Array(COLUMN_COUNT).fill(PADDING);
+  const items: LayoutItem[] = [];
 
-  const items: LayoutItem[] = artifacts.map((a, i) => ({
-    artifact: a,
-    x: Math.round(placed[i].x - minX + PADDING),
-    y: Math.round(placed[i].y - minY + PADDING),
-    width: TILE_W,
-    height: heights[i],
-  }));
+  for (let i = 0; i < shuffled.length; i++) {
+    const a = shuffled[i];
+    const col = columnHeights.indexOf(Math.min(...columnHeights));
+    const x = PADDING + col * (COLUMN_WIDTH + COLUMN_GAP);
+    const y = columnHeights[col];
 
-  const maxX = Math.max(...items.map((i) => i.x + i.width)) + PADDING;
-  const maxY = Math.max(...items.map((i) => i.y + i.height)) + PADDING;
+    const d = dims[a.id];
+    const raw = d ? Math.round(COLUMN_WIDTH * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
+    const height = Math.max(160, Math.min(480, raw));
 
-  return { items, canvasWidth: maxX, canvasHeight: maxY };
+    items.push({ artifact: a, x, y, width: COLUMN_WIDTH, height });
+    columnHeights[col] += height + ITEM_GAP;
+  }
+
+  const canvasWidth = PADDING * 2 + COLUMN_COUNT * COLUMN_WIDTH + (COLUMN_COUNT - 1) * COLUMN_GAP;
+  const canvasHeight = Math.max(...columnHeights) + PADDING;
+
+  return { items, canvasWidth, canvasHeight };
 }
 
 async function loadDimensions(artifacts: FeedArtifact[]): Promise<Dims> {
