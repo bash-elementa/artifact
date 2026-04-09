@@ -184,37 +184,26 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
 
   return (
     <>
-      <div className="w-full px-6 py-8">
-        {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-[var(--muted)] mb-8">
-          <Link href="/projects" className="hover:text-[var(--foreground)] transition-colors">Projects</Link>
-          <span>/</span>
-          <span className="text-[var(--foreground)] font-medium">{project.name}</span>
+      <div className="w-full px-6 pt-24 pb-8">
+        {/* Header */}
+        <div className="flex flex-col items-center text-center mb-8 gap-1.5">
+          <h1 className="text-4xl font-bold tracking-tight">{project.name}</h1>
+          <p className="text-sm text-[var(--muted)]">
+            {project._count.artifacts} {project._count.artifacts === 1 ? "artifact" : "artifacts"}
+          </p>
         </div>
 
-        {/* Header */}
-        <div className="flex flex-col items-center text-center mb-8 gap-3">
-          <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
-          {project.description && (
-            <p className="text-sm text-[var(--muted)] max-w-md">{project.description}</p>
-          )}
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-[var(--muted)]">
-              {project._count.artifacts} {project._count.artifacts === 1 ? "artifact" : "artifacts"}
-            </span>
+        {/* Slider + Upload button */}
+        {project.artifacts.length > 0 && (
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <ColumnSlider value={columns} onChange={setColumns} />
             <button
               onClick={() => setUploadOpen(true)}
-              className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+              className="w-11 h-11 rounded-full bg-white text-black text-xl font-light flex items-center justify-center hover:opacity-90 transition-opacity shrink-0"
+              aria-label="Upload artifact"
             >
-              + Upload
+              +
             </button>
-          </div>
-        </div>
-
-        {/* Column slider */}
-        {project.artifacts.length > 0 && (
-          <div className="flex justify-center mb-6">
-            <ColumnSlider value={columns} onChange={setColumns} />
           </div>
         )}
 
@@ -224,13 +213,14 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
             <div className="text-5xl">🗂️</div>
             <div>
               <p className="text-base font-medium">No artifacts yet</p>
-              <p className="text-sm text-[var(--muted)] mt-1">Upload your first artifact to this project.</p>
+              <p className="text-sm text-[var(--muted)] mt-1">Hit the + button above to upload your first artifact.</p>
             </div>
             <button
               onClick={() => setUploadOpen(true)}
-              className="mt-2 rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black"
+              className="w-11 h-11 rounded-full bg-white text-black text-xl font-light flex items-center justify-center hover:opacity-90 transition-opacity"
+              aria-label="Upload artifact"
             >
-              Upload artifact
+              +
             </button>
           </div>
         ) : (

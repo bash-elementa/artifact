@@ -61,7 +61,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 pointer-events-none">
+      <header className="fixed inset-x-0 top-0 z-40 pointer-events-none glass">
         <div className="flex h-16 items-center justify-between px-6 pointer-events-auto">
 
           {/* Left: Logo + Tabs */}
