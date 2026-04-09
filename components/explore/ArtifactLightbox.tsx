@@ -238,7 +238,7 @@ function ContainerLightbox({
 }) {
   return (
     <>
-      {/* Backdrop */}
+      {/* Outer: full-screen click-to-close */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -246,15 +246,14 @@ function ContainerLightbox({
         transition={{ duration: 0.2 }}
         className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl"
         onClick={onClose}
-      />
-
-      {/* Dialog */}
+      >
+      {/* Dialog — stops propagation so clicks inside don't close */}
       <motion.div
         initial={{ opacity: 0, scale: 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.97 }}
         transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl glass overflow-hidden"
+        className="absolute inset-4 md:inset-8 flex flex-col rounded-3xl glass overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -358,6 +357,7 @@ function ContainerLightbox({
             <span className="text-xs text-white/40">{timeAgo(artifact.createdAt)}</span>
           </div>
         </div>
+      </motion.div>
       </motion.div>
     </>
   );

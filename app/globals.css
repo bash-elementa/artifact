@@ -10,6 +10,16 @@
   --accent: #e5ff47;
 }
 
+[data-theme="light"] {
+  --background: #f0f0f0;
+  --foreground: #0a0a0a;
+  --surface: #e4e4e4;
+  --surface-2: #d8d8d8;
+  --border: #c8c8c8;
+  --muted: #888888;
+  --accent: #e5ff47;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
