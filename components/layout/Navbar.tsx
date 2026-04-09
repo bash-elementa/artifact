@@ -61,37 +61,38 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40">
-        <div className="flex h-16 items-center justify-between px-6">
+      <header className="fixed inset-x-0 top-0 z-40 pointer-events-none">
+        <div className="flex h-16 items-center justify-between px-6 pointer-events-auto">
 
-          {/* Left: Logo */}
-          <Link href="/explore" className="text-white shrink-0">
-            <ArtifactLogo />
-          </Link>
+          {/* Left: Logo + Tabs */}
+          <div className="flex items-center gap-4 shrink-0">
+            <Link href="/explore" className="text-white shrink-0">
+              <ArtifactLogo />
+            </Link>
 
-          {/* Center: Tab switcher */}
-          <nav className="flex items-center rounded-full p-1.5" style={{ background: "rgba(255,255,255,0.08)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}>
-            {tabs.map((tab) => {
-              const active = pathname.startsWith(tab.href);
-              return (
-                <Link
-                  key={tab.href}
-                  href={tab.href}
-                  className={cn(
-                    "px-7 py-2 text-sm font-semibold rounded-full transition-all duration-200",
-                    active
-                      ? "bg-white text-black shadow-sm"
-                      : "text-white/60 hover:text-white"
-                  )}
-                >
-                  {tab.label}
-                </Link>
-              );
-            })}
-          </nav>
+            <nav className="flex items-center rounded-full p-1.5" style={{ background: "rgba(255,255,255,0.08)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}>
+              {tabs.map((tab) => {
+                const active = pathname.startsWith(tab.href);
+                return (
+                  <Link
+                    key={tab.href}
+                    href={tab.href}
+                    className={cn(
+                      "px-7 py-2 text-sm font-semibold rounded-full transition-all duration-200",
+                      active
+                        ? "bg-white text-black shadow-sm"
+                        : "text-white/60 hover:text-white"
+                    )}
+                  >
+                    {tab.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
 
           {/* Right: Upload + Moon + Avatar */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 pointer-events-auto">
             {/* Upload button */}
             <button
               onClick={() => setUploadOpen(true)}
