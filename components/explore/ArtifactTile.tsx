@@ -41,6 +41,18 @@ function getCFStreamUID(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function looksLikeVideo(url: string): boolean {
+  const lower = url.toLowerCase().split("?")[0];
+  return (
+    lower.includes("videodelivery.net") ||
+    lower.includes("cloudflarestream.com") ||
+    lower.endsWith(".m3u8") ||
+    lower.endsWith(".mp4") ||
+    lower.endsWith(".webm") ||
+    lower.endsWith(".mov")
+  );
+}
+
 function getVideoThumbnail(artifact: FeedArtifact): string | null {
   if (artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.mediaUrl) {
@@ -60,7 +72,9 @@ const TILE_SIZES = [
 
 export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTileProps) {
   const previewUrl = getPreviewUrl(artifact);
-  const isVideo = artifact.mediaMimeType?.startsWith("video/");
+  const isVideo =
+    artifact.mediaMimeType?.startsWith("video/") ||
+    (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
   const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
   const pointerDown = useRef<{ x: number; y: number } | null>(null);
 

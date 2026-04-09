@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { UrlRenderer } from "@/components/artifact-renderers/UrlRenderer";
 import { FigmaRenderer } from "@/components/artifact-renderers/FigmaRenderer";
+import { MediaRenderer } from "@/components/artifact-renderers/MediaRenderer";
 import { ReactionBar } from "@/components/reactions/ReactionBar";
 import { timeAgo } from "@/lib/utils";
 
@@ -84,6 +85,18 @@ function GlassBtn({
 
 // ── Isolated MEDIA lightbox ──────────────────────────────────────────────────
 
+function looksLikeVideo(url: string): boolean {
+  const lower = url.toLowerCase().split("?")[0];
+  return (
+    lower.includes("videodelivery.net") ||
+    lower.includes("cloudflarestream.com") ||
+    lower.endsWith(".m3u8") ||
+    lower.endsWith(".mp4") ||
+    lower.endsWith(".webm") ||
+    lower.endsWith(".mov")
+  );
+}
+
 function MediaLightbox({
   artifact,
   onClose,
@@ -97,7 +110,9 @@ function MediaLightbox({
   onNext?: () => void;
   onReact?: (artifactId: string, emoji: string, action: "added" | "removed") => void;
 }) {
-  const isVideo = artifact.mediaMimeType?.startsWith("video/");
+  const isVideo =
+    artifact.mediaMimeType?.startsWith("video/") ||
+    (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
   const src = artifact.mediaUrl!;
 
   return (
@@ -129,26 +144,18 @@ function MediaLightbox({
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
         className="fixed inset-0 z-50 flex items-center justify-center p-20 pointer-events-none"
+        onClick={(e) => e.stopPropagation()}
       >
-        {isVideo ? (
-          <video
-            src={src}
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl pointer-events-auto"
-            onClick={(e) => e.stopPropagation()}
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={src}
+        <div
+          className="max-w-full max-h-full w-full h-full flex items-center justify-center pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MediaRenderer
+            url={src}
+            mimeType={isVideo ? (artifact.mediaMimeType ?? "video/mp4") : artifact.mediaMimeType}
             alt={artifact.name}
-            className="max-w-full max-h-full object-contain rounded-3xl shadow-2xl pointer-events-auto"
-            onClick={(e) => e.stopPropagation()}
           />
-        )}
+        </div>
       </motion.div>
 
       {/* Close */}

@@ -36,6 +36,18 @@ function getCFStreamUID(url: string): string | null {
   return m ? m[1] : null;
 }
 
+function looksLikeVideo(url: string): boolean {
+  const lower = url.toLowerCase().split("?")[0];
+  return (
+    lower.includes("videodelivery.net") ||
+    lower.includes("cloudflarestream.com") ||
+    lower.endsWith(".m3u8") ||
+    lower.endsWith(".mp4") ||
+    lower.endsWith(".webm") ||
+    lower.endsWith(".mov")
+  );
+}
+
 /** Best static thumbnail to show in the card for a video artifact. */
 function getVideoThumbnail(artifact: Artifact): string | null {
   if (artifact.screenshotUrl) return artifact.screenshotUrl;
@@ -59,7 +71,9 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
   const [menuOpen, setMenuOpen] = useState(false);
 
   const previewUrl = getPreviewUrl(artifact);
-  const isVideo = artifact.mediaMimeType?.startsWith("video/");
+  const isVideo =
+    artifact.mediaMimeType?.startsWith("video/") ||
+    (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
   const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
 
   async function toggleShare(e: React.MouseEvent) {
