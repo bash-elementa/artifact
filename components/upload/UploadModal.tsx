@@ -5,16 +5,14 @@ import { AnimatePresence, motion } from "framer-motion";
 import { MediaUploader } from "./MediaUploader";
 import { UrlUploader } from "./UrlUploader";
 import { FigmaUploader } from "./FigmaUploader";
-import { InspoUploader } from "./InspoUploader";
 import { cn } from "@/lib/utils";
 
-type Tab = "media" | "url" | "figma" | "inspo";
+type Tab = "media" | "url" | "figma";
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: "media", label: "Media", emoji: "🖼️" },
-  { id: "url", label: "URL", emoji: "🌐" },
+  { id: "url", label: "Website", emoji: "🌐" },
   { id: "figma", label: "Figma", emoji: "✦" },
-  { id: "inspo", label: "Inspo", emoji: "💡" },
 ];
 
 interface UploadModalProps {
@@ -94,9 +92,6 @@ export function UploadModal({ open, onClose, defaultProjectId, onSuccess }: Uplo
               )}
               {activeTab === "figma" && (
                 <FigmaUploader defaultProjectId={defaultProjectId} onSuccess={handleSuccess} />
-              )}
-              {activeTab === "inspo" && (
-                <InspoUploader defaultProjectId={defaultProjectId} onSuccess={handleSuccess} />
               )}
             </div>
           </motion.div>
