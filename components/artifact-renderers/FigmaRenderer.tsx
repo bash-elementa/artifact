@@ -11,7 +11,7 @@ interface FigmaRendererProps {
 export function FigmaRenderer({ figmaUrl, figmaPreviewUrl, name = "" }: FigmaRendererProps) {
   const [embedFailed, setEmbedFailed] = useState(false);
 
-  const embedUrl = `https://www.figma.com/embed?embed_host=playground&url=${encodeURIComponent(figmaUrl)}`;
+  const embedUrl = `https://www.figma.com/embed?embed_host=artifact&url=${encodeURIComponent(figmaUrl)}`;
 
   if (embedFailed && figmaPreviewUrl) {
     return (

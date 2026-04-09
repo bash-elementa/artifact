@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { artifacts, reactions, generateId } from "@/lib/mock-db";
-import { MOCK_USER } from "@/lib/mock-user";
+import { prisma } from "@/lib/prisma";
+import { getUser } from "@/lib/get-user";
 
 const VALID_EMOJIS = ["👏", "✨", "🔥", "💡", "❤️"];
 
 export async function POST(req: NextRequest) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
   const { artifactId, emoji } = body;
 
@@ -12,27 +15,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid emoji" }, { status: 400 });
   }
 
-  const artifact = artifacts.find((a) => a.id === artifactId && a.isSharedToFeed && !a.deletedAt);
+  const artifact = await prisma.artifact.findFirst({
+    where: { id: artifactId, isSharedToFeed: true, deletedAt: null },
+  });
   if (!artifact) {
     return NextResponse.json({ error: "Artifact not found" }, { status: 404 });
   }
 
-  const existingIdx = reactions.findIndex(
-    (r) => r.userId === MOCK_USER.id && r.artifactId === artifactId && r.emoji === emoji
-  );
+  const existing = await prisma.reaction.findFirst({
+    where: { userId: user.id, artifactId, emoji },
+  });
 
-  if (existingIdx !== -1) {
-    reactions.splice(existingIdx, 1);
+  if (existing) {
+    await prisma.reaction.delete({ where: { id: existing.id } });
     return NextResponse.json({ action: "removed" });
   } else {
-    const reaction = {
-      id: generateId(),
-      emoji,
-      userId: MOCK_USER.id,
-      artifactId,
-      createdAt: new Date().toISOString(),
-    };
-    reactions.push(reaction);
-    return NextResponse.json({ action: "added", reaction });
+    const reaction = await prisma.reaction.create({
+      data: { emoji, userId: user.id, artifactId },
+    });
+    return NextResponse.json({
+      action: "added",
+      reaction: { ...reaction, createdAt: reaction.createdAt.toISOString() },
+    });
   }
 }

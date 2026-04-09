@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateId } from "@/lib/mock-db";
+import { uploadVideoToStream } from "@/lib/cloudflare";
 
-const MAX_VIDEO_SIZE = 524288000;
+const MAX_VIDEO_SIZE = 524288000; // 500MB
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -12,12 +12,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Video exceeds 500MB limit" }, { status: 413 });
   }
 
-  // Mock: return a fake Stream UID
-  const uid = generateId();
+  const streamFormData = new FormData();
+  streamFormData.append("file", file);
+
+  const result = await uploadVideoToStream(streamFormData);
+
   return NextResponse.json({
-    uid,
-    playbackUrl: `https://videodelivery.net/${uid}/manifest/video.m3u8`,
-    thumbnailUrl: `https://picsum.photos/seed/${uid}/800/450`,
+    uid: result.uid,
+    playbackUrl: result.playback.hls,
+    thumbnailUrl: `https://videodelivery.net/${result.uid}/thumbnails/thumbnail.jpg`,
     size: file.size,
   });
 }

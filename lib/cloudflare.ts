@@ -10,7 +10,7 @@ const r2Client = new S3Client({
   },
 });
 
-const BUCKET = process.env.CLOUDFLARE_R2_BUCKET_NAME ?? "playground-media";
+const BUCKET = process.env.CLOUDFLARE_R2_BUCKET_NAME ?? "artifact-media";
 const PUBLIC_URL = process.env.CLOUDFLARE_R2_PUBLIC_URL ?? "";
 
 export async function uploadToR2(

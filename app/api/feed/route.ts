@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { artifacts, enrichArtifact } from "@/lib/mock-db";
-import { MOCK_USER } from "@/lib/mock-user";
+import { prisma } from "@/lib/prisma";
+import { getUser } from "@/lib/get-user";
+import { serializeArtifact } from "@/lib/serialize";
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
@@ -14,17 +15,19 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 export async function GET(req: NextRequest) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const seed = searchParams.get("seed");
 
-  const feedArtifacts = artifacts.filter(
-    (a) => a.isSharedToFeed && a.isShareable && !a.deletedAt
-  );
+  const feedArtifacts = await prisma.artifact.findMany({
+    where: { isSharedToFeed: true, isShareable: true, deletedAt: null },
+    include: { user: true, reactions: true },
+  });
 
   const sessionSeed = seed ? parseInt(seed) : Date.now();
   const shuffled = seededShuffle(feedArtifacts, sessionSeed);
 
-  const annotated = shuffled.map((a) => enrichArtifact(a, MOCK_USER.id));
-
-  return NextResponse.json(annotated);
+  return NextResponse.json(shuffled.map((a) => serializeArtifact(a, user.id)));
 }

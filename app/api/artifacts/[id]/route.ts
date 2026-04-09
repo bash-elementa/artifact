@@ -1,54 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
-import { artifacts, enrichArtifact } from "@/lib/mock-db";
-import { MOCK_USER } from "@/lib/mock-user";
+import { prisma } from "@/lib/prisma";
+import { getUser } from "@/lib/get-user";
+import { serializeArtifact } from "@/lib/serialize";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const artifact = artifacts.find((a) => a.id === id && !a.deletedAt);
+  const artifact = await prisma.artifact.findFirst({
+    where: { id, deletedAt: null },
+    include: { user: true, reactions: true },
+  });
   if (!artifact) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(enrichArtifact(artifact, MOCK_USER.id));
+  const supabase = await (await import("@/lib/supabase/server")).createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  return NextResponse.json(serializeArtifact(artifact, user?.id));
 }
 
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { id } = await params;
   const body = await req.json();
 
-  const idx = artifacts.findIndex((a) => a.id === id && a.userId === MOCK_USER.id && !a.deletedAt);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  const artifact = artifacts[idx];
-
-  if (body.isSharedToFeed && artifact.type === "INSPO") {
-    return NextResponse.json({ error: "Inspo cannot be shared to feed" }, { status: 400 });
+  if (body.isSharedToFeed) {
+    const existing = await prisma.artifact.findFirst({ where: { id, userId: user.id, deletedAt: null } });
+    if (existing?.type === "INSPO") {
+      return NextResponse.json({ error: "Inspo cannot be shared to feed" }, { status: 400 });
+    }
   }
 
-  artifacts[idx] = {
-    ...artifact,
-    ...(body.name !== undefined && { name: body.name }),
-    ...(body.description !== undefined && { description: body.description }),
-    ...(body.isSharedToFeed !== undefined && { isSharedToFeed: body.isSharedToFeed }),
-    ...(body.projectId !== undefined && { projectId: body.projectId }),
-    ...(body.tags !== undefined && { tags: body.tags }),
-    updatedAt: new Date().toISOString(),
-  };
+  const artifact = await prisma.artifact.update({
+    where: { id },
+    data: {
+      ...(body.name !== undefined && { name: body.name }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.isSharedToFeed !== undefined && { isSharedToFeed: body.isSharedToFeed }),
+      ...(body.projectId !== undefined && { projectId: body.projectId }),
+      ...(body.tags !== undefined && { tags: body.tags }),
+    },
+    include: { user: true, reactions: true },
+  });
 
-  return NextResponse.json(enrichArtifact(artifacts[idx], MOCK_USER.id));
+  return NextResponse.json(serializeArtifact(artifact, user.id));
 }
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const idx = artifacts.findIndex((a) => a.id === id && a.userId === MOCK_USER.id && !a.deletedAt);
-  if (idx === -1) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  artifacts[idx] = { ...artifacts[idx], deletedAt: new Date().toISOString() };
+  const { id } = await params;
+  await prisma.artifact.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
   return NextResponse.json({ success: true });
 }

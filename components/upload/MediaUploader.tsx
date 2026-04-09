@@ -103,7 +103,7 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
             name: item.name,
             description: item.description || undefined,
             type: "MEDIA",
-            mediaUrl: isVideo ? uploadData.uid : uploadData.url,
+            mediaUrl: isVideo ? uploadData.playbackUrl : uploadData.url,
             mediaMimeType: item.file.type,
             storageBytes: item.file.size,
             projectId: defaultProjectId ?? null,

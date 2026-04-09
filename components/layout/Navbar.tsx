@@ -1,15 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { MOCK_USER } from "@/lib/mock-user";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { UploadModal } from "@/components/upload/UploadModal";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+  }, []);
+
+  const initials = user?.email
+    ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
+    : "?";
+
+  async function handleSignOut() {
+    await fetch("/auth/sign-out", { method: "POST" });
+    router.push("/auth/sign-in");
+  }
 
   const tabs = [
     { href: "/explore", label: "Explore" },
@@ -23,7 +41,7 @@ export function Navbar() {
           {/* Logo + Tabs inline */}
           <div className="flex items-center gap-6 shrink-0">
             <Link href="/explore" className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
-              /playground
+              Artifact
             </Link>
 
             <nav className="flex items-center gap-0.5 rounded-full glass p-1">
@@ -57,11 +75,33 @@ export function Navbar() {
               Upload
             </button>
 
-            <Link href={`/profile/${MOCK_USER.id}`} className="group">
-              <div className="w-8 h-8 rounded-full glass flex items-center justify-center text-xs font-semibold text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors">
-                {MOCK_USER.name.split(" ").map((n) => n[0]).join("")}
-              </div>
-            </Link>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="group w-8 h-8 rounded-full glass flex items-center justify-center text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+              >
+                {initials}
+              </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-10 w-40 glass rounded-xl shadow-lg overflow-hidden z-50">
+                  {user?.id && (
+                    <Link
+                      href={`/profile/${user.id}`}
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-white/10 transition-colors"
+                    >
+                      Profile
+                    </Link>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/10 transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>

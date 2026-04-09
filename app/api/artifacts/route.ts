@@ -1,59 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
-import { artifacts, enrichArtifact, generateId, USERS } from "@/lib/mock-db";
-import { MOCK_USER } from "@/lib/mock-user";
+import { prisma } from "@/lib/prisma";
+import { getUser } from "@/lib/get-user";
+import { serializeArtifact } from "@/lib/serialize";
 
 export async function GET(req: NextRequest) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const { searchParams } = new URL(req.url);
   const projectId = searchParams.get("projectId");
-  const type = searchParams.get("type");
-  const userId = searchParams.get("userId") ?? MOCK_USER.id;
+  const type = searchParams.get("type") as any;
+  const userId = searchParams.get("userId") ?? user.id;
   const sharedOnly = searchParams.get("shared") === "true";
 
-  const filtered = artifacts.filter((a) => {
-    if (a.deletedAt) return false;
-    if (a.userId !== userId) return false;
-    if (projectId && a.projectId !== projectId) return false;
-    if (type && a.type !== type) return false;
-    if (sharedOnly && !a.isSharedToFeed) return false;
-    return true;
+  const artifacts = await prisma.artifact.findMany({
+    where: {
+      deletedAt: null,
+      userId,
+      ...(projectId ? { projectId } : {}),
+      ...(type ? { type } : {}),
+      ...(sharedOnly ? { isSharedToFeed: true } : {}),
+    },
+    include: { user: true, reactions: true },
+    orderBy: { createdAt: "desc" },
   });
 
-  const enriched = filtered
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .map((a) => enrichArtifact(a, MOCK_USER.id));
-
-  return NextResponse.json(enriched);
+  return NextResponse.json(artifacts.map((a) => serializeArtifact(a, user.id)));
 }
 
 export async function POST(req: NextRequest) {
+  const user = await getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const body = await req.json();
 
-  const artifact = {
-    id: generateId(),
-    name: body.name ?? "Untitled",
-    description: body.description ?? null,
-    type: body.type ?? "MEDIA",
-    isShareable: body.type !== "INSPO",
-    isSharedToFeed: false,
-    storageBytes: body.storageBytes ?? 0,
-    mediaUrl: body.mediaUrl ?? null,
-    mediaMimeType: body.mediaMimeType ?? null,
-    websiteUrl: body.websiteUrl ?? null,
-    screenSize: body.screenSize ?? null,
-    screenshotUrl: body.screenshotUrl ?? null,
-    figmaUrl: body.figmaUrl ?? null,
-    figmaPreviewUrl: body.figmaPreviewUrl ?? null,
-    sourceUrl: body.sourceUrl ?? null,
-    sourceCredit: body.sourceCredit ?? null,
-    tags: body.tags ?? [],
-    userId: MOCK_USER.id,
-    projectId: body.projectId ?? null,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    deletedAt: null,
-  };
+  const artifact = await prisma.artifact.create({
+    data: {
+      name: body.name ?? "Untitled",
+      description: body.description ?? null,
+      type: body.type ?? "MEDIA",
+      isShareable: body.type !== "INSPO",
+      isSharedToFeed: false,
+      storageBytes: body.storageBytes ?? 0,
+      mediaUrl: body.mediaUrl ?? null,
+      mediaMimeType: body.mediaMimeType ?? null,
+      websiteUrl: body.websiteUrl ?? null,
+      screenSize: body.screenSize ?? null,
+      screenshotUrl: body.screenshotUrl ?? null,
+      figmaUrl: body.figmaUrl ?? null,
+      figmaPreviewUrl: body.figmaPreviewUrl ?? null,
+      sourceUrl: body.sourceUrl ?? null,
+      sourceCredit: body.sourceCredit ?? null,
+      tags: body.tags ?? [],
+      userId: user.id,
+      projectId: body.projectId ?? null,
+    },
+    include: { user: true, reactions: true },
+  });
 
-  artifacts.push(artifact);
-
-  return NextResponse.json(enrichArtifact(artifact, MOCK_USER.id), { status: 201 });
+  return NextResponse.json(serializeArtifact(artifact, user.id), { status: 201 });
 }
