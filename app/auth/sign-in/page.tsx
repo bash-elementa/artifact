@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,7 +11,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   auth_failed: "Authentication failed. Please try again.",
 };
 
-export default function SignInPage() {
+function SignInForm() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
 
@@ -83,77 +83,80 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
-      <div className="w-full max-w-sm glass rounded-2xl p-8 flex flex-col gap-6">
-        {/* Logo */}
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-            Artifact
-          </h1>
-          <p className="text-sm text-[var(--muted)] mt-1">
-            Sign in with your @{ALLOWED_DOMAIN} account
-          </p>
-        </div>
-
-        {/* Google */}
-        <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-[var(--border)]" />
-          <span className="text-xs text-[var(--muted)]">or</span>
-          <div className="flex-1 h-px bg-[var(--border)]" />
-        </div>
-
-        {/* Email/password form */}
-        <form onSubmit={handleEmailAuth} className="flex flex-col gap-3">
-          <input
-            type="email"
-            placeholder={`you@${ALLOWED_DOMAIN}`}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
-          />
-
-          {error && <p className="text-xs text-red-400">{error}</p>}
-          {message && <p className="text-xs text-green-400">{message}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            {loading ? "…" : mode === "sign_in" ? "Sign in" : "Create account"}
-          </button>
-        </form>
-
-        {/* Toggle mode */}
-        <p className="text-center text-xs text-[var(--muted)]">
-          {mode === "sign_in" ? "Don't have an account? " : "Already have an account? "}
-          <button
-            onClick={() => { setMode(mode === "sign_in" ? "sign_up" : "sign_in"); setError(null); setMessage(null); }}
-            className="text-[var(--foreground)] underline"
-          >
-            {mode === "sign_in" ? "Sign up" : "Sign in"}
-          </button>
+    <div className="w-full max-w-sm glass rounded-2xl p-8 flex flex-col gap-6">
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+          Artifact
+        </h1>
+        <p className="text-sm text-[var(--muted)] mt-1">
+          Sign in with your @{ALLOWED_DOMAIN} account
         </p>
       </div>
+
+      <button
+        onClick={handleGoogle}
+        disabled={loading}
+        className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50"
+      >
+        <GoogleIcon />
+        Continue with Google
+      </button>
+
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px bg-[var(--border)]" />
+        <span className="text-xs text-[var(--muted)]">or</span>
+        <div className="flex-1 h-px bg-[var(--border)]" />
+      </div>
+
+      <form onSubmit={handleEmailAuth} className="flex flex-col gap-3">
+        <input
+          type="email"
+          placeholder={`you@${ALLOWED_DOMAIN}`}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
+        />
+
+        {error && <p className="text-xs text-red-400">{error}</p>}
+        {message && <p className="text-xs text-green-400">{message}</p>}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-black hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {loading ? "…" : mode === "sign_in" ? "Sign in" : "Create account"}
+        </button>
+      </form>
+
+      <p className="text-center text-xs text-[var(--muted)]">
+        {mode === "sign_in" ? "Don't have an account? " : "Already have an account? "}
+        <button
+          onClick={() => { setMode(mode === "sign_in" ? "sign_up" : "sign_in"); setError(null); setMessage(null); }}
+          className="text-[var(--foreground)] underline"
+        >
+          {mode === "sign_in" ? "Sign up" : "Sign in"}
+        </button>
+      </p>
+    </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
+      <Suspense>
+        <SignInForm />
+      </Suspense>
     </div>
   );
 }
