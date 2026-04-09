@@ -36,6 +36,37 @@ interface Project {
   _count: { artifacts: number };
 }
 
+const MIN_COLS = 1;
+const MAX_COLS = 6;
+
+function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative flex items-center gap-1.5">
+        {Array.from({ length: MAX_COLS }, (_, i) => i + 1).map((n) => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            className="relative flex items-center justify-center transition-all duration-200"
+            style={{ width: 20, height: 20 }}
+            aria-label={`${n} column${n !== 1 ? "s" : ""}`}
+          >
+            <span
+              className="rounded-full bg-[var(--foreground)] transition-all duration-200"
+              style={{
+                width: n <= value ? 8 : 5,
+                height: n <= value ? 8 : 5,
+                opacity: n <= value ? 1 : 0.25,
+              }}
+            />
+          </button>
+        ))}
+      </div>
+      <span className="text-xs text-[var(--muted)] w-12 shrink-0">{value} {value === 1 ? "column" : "columns"}</span>
+    </div>
+  );
+}
+
 export default function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const [project, setProject] = useState<Project | null>(null);
@@ -43,6 +74,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
   const [lightboxArtifact, setLightboxArtifact] = useState<Artifact | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [columns, setColumns] = useState(3);
 
   const loadProject = useCallback(async () => {
     setLoading(true);
@@ -82,7 +114,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
     return (
       <div className="w-full px-6 py-8">
         <div className="h-8 w-48 rounded-lg bg-[var(--surface-2)] animate-pulse mb-8" />
-        <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
+        <div className="columns-3 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="break-inside-avoid mb-3 rounded-2xl bg-[var(--surface-2)] animate-pulse"
               style={{ height: [220, 300, 180, 260, 240, 200, 280, 220][i] }} />
@@ -111,8 +143,8 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
           <span className="text-[var(--foreground)] font-medium">{project.name}</span>
         </div>
 
-        {/* Pinterest-style header */}
-        <div className="flex flex-col items-center text-center mb-10 gap-3">
+        {/* Header */}
+        <div className="flex flex-col items-center text-center mb-8 gap-3">
           <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
           {project.description && (
             <p className="text-sm text-[var(--muted)] max-w-md">{project.description}</p>
@@ -129,6 +161,13 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
             </button>
           </div>
         </div>
+
+        {/* Column slider */}
+        {project.artifacts.length > 0 && (
+          <div className="flex justify-center mb-6">
+            <ColumnSlider value={columns} onChange={setColumns} />
+          </div>
+        )}
 
         {/* Masonry grid */}
         {project.artifacts.length === 0 ? (
@@ -147,7 +186,10 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
-            <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3">
+            <div
+              className="gap-3 transition-all duration-300"
+              style={{ columns, columnGap: 12 }}
+            >
               {project.artifacts.map((artifact) => (
                 <div key={artifact.id} className="break-inside-avoid mb-3">
                   <ArtifactCard
