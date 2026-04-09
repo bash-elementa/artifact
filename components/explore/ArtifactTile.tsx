@@ -26,6 +26,7 @@ interface ArtifactTileProps {
   artifact: FeedArtifact;
   style: React.CSSProperties;
   onClick: () => void;
+  onReact?: (emoji: string, action: "added" | "removed") => void;
 }
 
 function getPreviewUrl(artifact: FeedArtifact): string | null {
@@ -57,7 +58,7 @@ const TILE_SIZES = [
   { width: 260, height: 195 },
 ];
 
-export function ArtifactTile({ artifact, style, onClick }: ArtifactTileProps) {
+export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTileProps) {
   const previewUrl = getPreviewUrl(artifact);
   const isVideo = artifact.mediaMimeType?.startsWith("video/");
   const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
@@ -97,6 +98,9 @@ export function ArtifactTile({ artifact, style, onClick }: ArtifactTileProps) {
       if (!res.ok) {
         setMine(mine);
         setCounts(counts);
+      } else {
+        const data = await res.json();
+        onReact?.(emoji, data.action as "added" | "removed");
       }
     } catch {
       setMine(mine);

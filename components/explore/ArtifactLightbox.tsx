@@ -41,6 +41,7 @@ interface ArtifactLightboxProps {
   onClose: () => void;
   onPrev?: () => void;
   onNext?: () => void;
+  onReact?: (artifactId: string, emoji: string, action: "added" | "removed") => void;
 }
 
 function UserAvatar({ user }: { user?: ArtifactUser }) {
@@ -88,11 +89,13 @@ function MediaLightbox({
   onClose,
   onPrev,
   onNext,
+  onReact,
 }: {
   artifact: LightboxArtifact;
   onClose: () => void;
   onPrev?: () => void;
   onNext?: () => void;
+  onReact?: (artifactId: string, emoji: string, action: "added" | "removed") => void;
 }) {
   const isVideo = artifact.mediaMimeType?.startsWith("video/");
   const src = artifact.mediaUrl!;
@@ -202,6 +205,7 @@ function MediaLightbox({
             artifactId={artifact.id}
             reactionCounts={artifact.reactionCounts ?? {}}
             myReactions={artifact.myReactions ?? []}
+            onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
           />
         )}
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
@@ -217,11 +221,13 @@ function ContainerLightbox({
   onClose,
   onPrev,
   onNext,
+  onReact,
 }: {
   artifact: LightboxArtifact;
   onClose: () => void;
   onPrev?: () => void;
   onNext?: () => void;
+  onReact?: (artifactId: string, emoji: string, action: "added" | "removed") => void;
 }) {
   return (
     <>
@@ -339,6 +345,7 @@ function ContainerLightbox({
                 artifactId={artifact.id}
                 reactionCounts={artifact.reactionCounts ?? {}}
                 myReactions={artifact.myReactions ?? []}
+                onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
               />
             )}
             <span className="text-xs text-white/40">{timeAgo(artifact.createdAt)}</span>
@@ -351,7 +358,7 @@ function ContainerLightbox({
 
 // ── Root ─────────────────────────────────────────────────────────────────────
 
-export function ArtifactLightbox({ artifact, onClose, onPrev, onNext }: ArtifactLightboxProps) {
+export function ArtifactLightbox({ artifact, onClose, onPrev, onNext, onReact }: ArtifactLightboxProps) {
   useEffect(() => {
     if (!artifact) return;
     function onKey(e: KeyboardEvent) {
@@ -375,6 +382,7 @@ export function ArtifactLightbox({ artifact, onClose, onPrev, onNext }: Artifact
             onClose={onClose}
             onPrev={onPrev}
             onNext={onNext}
+            onReact={onReact}
           />
         ) : (
           <ContainerLightbox
@@ -383,6 +391,7 @@ export function ArtifactLightbox({ artifact, onClose, onPrev, onNext }: Artifact
             onClose={onClose}
             onPrev={onPrev}
             onNext={onNext}
+            onReact={onReact}
           />
         )
       )}

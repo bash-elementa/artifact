@@ -114,7 +114,7 @@ async function loadDimensions(artifacts: FeedArtifact[]): Promise<Dims> {
   return dims;
 }
 
-function VirtualizedTiles({ layout, onTileClick }: { layout: Layout; onTileClick: (a: FeedArtifact) => void }) {
+function VirtualizedTiles({ layout, onTileClick, onReact }: { layout: Layout; onTileClick: (a: FeedArtifact) => void; onReact: (artifactId: string, emoji: string, action: "added" | "removed") => void }) {
   const [viewport, setViewport] = useState({
     x: 0, y: 0,
     w: typeof window !== "undefined" ? window.innerWidth : 1440,
@@ -151,6 +151,7 @@ function VirtualizedTiles({ layout, onTileClick }: { layout: Layout; onTileClick
           artifact={artifact}
           style={{ left: x, top: y, width, height }}
           onClick={() => onTileClick(artifact)}
+          onReact={(emoji, action) => onReact(artifact.id, emoji, action)}
         />
       ))}
     </>
@@ -161,8 +162,10 @@ export function ExploreCanvas() {
   const [artifacts, setArtifacts] = useState<FeedArtifact[]>([]);
   const [dims, setDims] = useState<Dims>({});
   const [loading, setLoading] = useState(true);
-  const [lightboxArtifact, setLightboxArtifact] = useState<FeedArtifact | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  // Always derive lightbox artifact from live artifacts array so reactions stay in sync
+  const lightboxArtifact = lightboxOpen ? (artifacts[lightboxIndex] ?? null) : null;
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transformRef = useRef<any>(null);
@@ -197,11 +200,31 @@ export function ExploreCanvas() {
     transformRef.current.setTransform(posX, posY, 1, 0);
   }, [layout]);
 
+  const handleReact = useCallback((artifactId: string, emoji: string, action: "added" | "removed") => {
+    setArtifacts((prev) =>
+      prev.map((a) => {
+        if (a.id !== artifactId) return a;
+        const newCounts = { ...a.reactionCounts };
+        const newMine = [...a.myReactions];
+        if (action === "added") {
+          newCounts[emoji] = (newCounts[emoji] ?? 0) + 1;
+          if (!newMine.includes(emoji)) newMine.push(emoji);
+        } else {
+          newCounts[emoji] = Math.max(0, (newCounts[emoji] ?? 0) - 1);
+          if (newCounts[emoji] === 0) delete newCounts[emoji];
+          const i = newMine.indexOf(emoji);
+          if (i > -1) newMine.splice(i, 1);
+        }
+        return { ...a, reactionCounts: newCounts, myReactions: newMine };
+      })
+    );
+  }, []);
+
   const openLightbox = useCallback(
     (artifact: FeedArtifact) => {
       const idx = artifacts.findIndex((a) => a.id === artifact.id);
       setLightboxIndex(idx >= 0 ? idx : 0);
-      setLightboxArtifact(artifact);
+      setLightboxOpen(true);
     },
     [artifacts]
   );
@@ -210,7 +233,6 @@ export function ExploreCanvas() {
     const next = lightboxIndex + dir;
     if (next < 0 || next >= artifacts.length) return;
     setLightboxIndex(next);
-    setLightboxArtifact(artifacts[next]);
   }
 
   if (loading) {
@@ -262,7 +284,7 @@ export function ExploreCanvas() {
               willChange: "transform",
             }}
           >
-            <VirtualizedTiles layout={layout} onTileClick={openLightbox} />
+            <VirtualizedTiles layout={layout} onTileClick={openLightbox} onReact={handleReact} />
           </TransformComponent>
         </TransformWrapper>
       </div>
@@ -273,7 +295,8 @@ export function ExploreCanvas() {
 
       <ArtifactLightbox
         artifact={lightboxArtifact}
-        onClose={() => setLightboxArtifact(null)}
+        onClose={() => setLightboxOpen(false)}
+        onReact={handleReact}
         onPrev={lightboxIndex > 0 ? () => navigateLightbox(-1) : undefined}
         onNext={
           lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined
