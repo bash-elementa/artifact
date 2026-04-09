@@ -35,56 +35,97 @@ interface FeedArtifact {
 }
 
 const VIEWPORT_BUFFER = 400;
-const COLUMN_COUNT = 5;
-const COLUMN_WIDTH = 280;
-const COLUMN_GAP = 16;
-const ITEM_GAP = 16;
-const PADDING = 24;
+const TILE_W = 260;
+const MIN_GAP = 24;
+const PADDING = 60;
 const FALLBACK_HEIGHTS = [220, 300, 240, 280, 200, 260, 320, 180, 250, 210];
 
 type Dims = Record<string, { w: number; h: number }>;
+type LayoutItem = { artifact: FeedArtifact; x: number; y: number; width: number; height: number };
+type Layout = { items: LayoutItem[]; canvasWidth: number; canvasHeight: number };
 
-type LayoutItem = {
-  artifact: FeedArtifact;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-type Layout = {
-  items: LayoutItem[];
-  canvasWidth: number;
-  canvasHeight: number;
-};
+// Fast seeded RNG (mulberry32)
+function makeRng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 function previewUrl(a: FeedArtifact): string | null {
   return a.mediaUrl ?? a.figmaPreviewUrl ?? a.screenshotUrl ?? null;
 }
 
-function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims): Layout {
-  const columnHeights = Array(COLUMN_COUNT).fill(PADDING);
-  const items: LayoutItem[] = [];
+function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims, seed: number): Layout {
+  if (artifacts.length === 0) return { items: [], canvasWidth: 1200, canvasHeight: 600 };
 
-  for (let i = 0; i < artifacts.length; i++) {
-    const a = artifacts[i];
-    const col = columnHeights.indexOf(Math.min(...columnHeights));
-    const x = PADDING + col * (COLUMN_WIDTH + COLUMN_GAP);
-    const y = columnHeights[col];
+  const rng = makeRng(seed);
+  const n = artifacts.length;
 
+  const heights = artifacts.map((a, i) => {
     const d = dims[a.id];
-    const raw = d ? Math.round(COLUMN_WIDTH * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
-    const height = Math.max(160, Math.min(480, raw));
+    const raw = d ? Math.round(TILE_W * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
+    return Math.max(160, Math.min(400, raw));
+  });
 
-    items.push({ artifact: a, x, y, width: COLUMN_WIDTH, height });
-    columnHeights[col] += height + ITEM_GAP;
+  // Scatter area: wide horizontal band
+  const AREA_W = Math.max(1400, n * 200);
+  const AREA_H = Math.max(500, Math.ceil(n / 5) * 320);
+
+  const placed: { x: number; y: number; h: number }[] = [];
+
+  for (let i = 0; i < n; i++) {
+    const h = heights[i];
+    let bestX = rng() * AREA_W;
+    let bestY = rng() * AREA_H;
+
+    // Try up to 150 positions, pick the one with the least overlap
+    for (let attempt = 0; attempt < 150; attempt++) {
+      const tx = rng() * AREA_W;
+      const ty = rng() * AREA_H;
+      let overlapping = false;
+
+      for (const p of placed) {
+        if (
+          tx < p.x + TILE_W + MIN_GAP &&
+          tx + TILE_W + MIN_GAP > p.x &&
+          ty < p.y + p.h + MIN_GAP &&
+          ty + h + MIN_GAP > p.y
+        ) {
+          overlapping = true;
+          break;
+        }
+      }
+
+      if (!overlapping) {
+        bestX = tx;
+        bestY = ty;
+        break;
+      }
+    }
+
+    placed.push({ x: bestX, y: bestY, h });
   }
 
-  const canvasWidth =
-    PADDING * 2 + COLUMN_COUNT * COLUMN_WIDTH + (COLUMN_COUNT - 1) * COLUMN_GAP;
-  const canvasHeight = Math.max(...columnHeights) + PADDING;
+  // Normalise to positive coords with padding
+  const minX = Math.min(...placed.map((p) => p.x));
+  const minY = Math.min(...placed.map((p) => p.y));
 
-  return { items, canvasWidth, canvasHeight };
+  const items: LayoutItem[] = artifacts.map((a, i) => ({
+    artifact: a,
+    x: Math.round(placed[i].x - minX + PADDING),
+    y: Math.round(placed[i].y - minY + PADDING),
+    width: TILE_W,
+    height: heights[i],
+  }));
+
+  const maxX = Math.max(...items.map((i) => i.x + i.width)) + PADDING;
+  const maxY = Math.max(...items.map((i) => i.y + i.height)) + PADDING;
+
+  return { items, canvasWidth: maxX, canvasHeight: maxY };
 }
 
 async function loadDimensions(artifacts: FeedArtifact[]): Promise<Dims> {
@@ -105,15 +146,9 @@ async function loadDimensions(artifacts: FeedArtifact[]): Promise<Dims> {
   return dims;
 }
 
-interface VirtualizedTilesProps {
-  layout: Layout;
-  onTileClick: (artifact: FeedArtifact) => void;
-}
-
-function VirtualizedTiles({ layout, onTileClick }: VirtualizedTilesProps) {
+function VirtualizedTiles({ layout, onTileClick }: { layout: Layout; onTileClick: (a: FeedArtifact) => void }) {
   const [viewport, setViewport] = useState({
-    x: 0,
-    y: 0,
+    x: 0, y: 0,
     w: typeof window !== "undefined" ? window.innerWidth : 1440,
     h: typeof window !== "undefined" ? window.innerHeight : 900,
   });
@@ -161,6 +196,9 @@ export function ExploreCanvas() {
   const [lightboxArtifact, setLightboxArtifact] = useState<FeedArtifact | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const transformRef = useRef<any>(null);
+  const hascentered = useRef(false);
 
   useEffect(() => {
     fetch(`/api/feed?seed=${sessionSeed.current}`)
@@ -175,7 +213,21 @@ export function ExploreCanvas() {
       .finally(() => setLoading(false));
   }, []);
 
-  const layout = useMemo(() => layoutArtifacts(artifacts, dims), [artifacts, dims]);
+  const layout = useMemo(
+    () => layoutArtifacts(artifacts, dims, sessionSeed.current),
+    [artifacts, dims]
+  );
+
+  // Centre viewport on the artifact cluster once dims are loaded
+  useEffect(() => {
+    if (!transformRef.current || layout.items.length === 0 || hascentered.current) return;
+    hascentered.current = true;
+
+    const vmin = Math.min(window.innerWidth, window.innerHeight) * 0.1;
+    const posX = window.innerWidth / 2 + vmin - layout.canvasWidth / 2;
+    const posY = window.innerHeight / 2 + vmin - layout.canvasHeight / 2;
+    transformRef.current.setTransform(posX, posY, 1, 0);
+  }, [layout]);
 
   const openLightbox = useCallback(
     (artifact: FeedArtifact) => {
@@ -223,6 +275,7 @@ export function ExploreCanvas() {
         style={{ inset: "-10vmin" }}
       >
         <TransformWrapper
+          ref={transformRef}
           initialScale={1}
           minScale={1}
           maxScale={1}
@@ -255,9 +308,7 @@ export function ExploreCanvas() {
         onClose={() => setLightboxArtifact(null)}
         onPrev={lightboxIndex > 0 ? () => navigateLightbox(-1) : undefined}
         onNext={
-          lightboxIndex < artifacts.length - 1
-            ? () => navigateLightbox(1)
-            : undefined
+          lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined
         }
       />
     </>
