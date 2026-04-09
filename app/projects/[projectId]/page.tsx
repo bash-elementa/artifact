@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { use } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, animate } from "framer-motion";
 import { ArtifactCard } from "@/components/projects/ArtifactCard";
 import { ArtifactLightbox } from "@/components/explore/ArtifactLightbox";
 import { UploadModal } from "@/components/upload/UploadModal";
@@ -37,70 +37,79 @@ interface Project {
 }
 
 const STEPS = 6;
-const STEP_PX = 44;
-const TRACK_W = (STEPS - 1) * STEP_PX; // 220px
-const THUMB_SIZE = 32;
+const STEP_PX = 40;
+const TRACK_W = (STEPS - 1) * STEP_PX; // 200px
+const THUMB = 32;
+
+const SPRING = { type: "spring" as const, stiffness: 70, damping: 5, mass: 1.6 };
 
 function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
-  const dragX = useMotionValue((value - 1) * STEP_PX);
-  const springX = useSpring(dragX, { stiffness: 70, damping: 5, mass: 1.6 });
+  const x = useMotionValue((value - 1) * STEP_PX);
+  const lastReported = useMotionValue(value);
 
+  // Sync when value changes externally
   useEffect(() => {
-    dragX.set((value - 1) * STEP_PX);
-  }, [value, dragX]);
+    animate(x, (value - 1) * STEP_PX, SPRING);
+  }, [value, x]);
 
-  function snapToNearest() {
-    const raw = dragX.get();
-    const clamped = Math.max(0, Math.min(TRACK_W, raw));
-    const step = Math.round(clamped / STEP_PX);
-    dragX.set(step * STEP_PX);
-    onChange(step + 1);
+  function handleDrag() {
+    const raw = Math.max(0, Math.min(TRACK_W, x.get()));
+    const newVal = Math.round(raw / STEP_PX) + 1;
+    if (newVal !== lastReported.get()) {
+      lastReported.set(newVal);
+      onChange(newVal);
+    }
+  }
+
+  function handleDragEnd() {
+    const raw = Math.max(0, Math.min(TRACK_W, x.get()));
+    const step = Math.round(raw / STEP_PX);
+    animate(x, step * STEP_PX, SPRING);
+    const newVal = step + 1;
+    lastReported.set(newVal);
+    onChange(newVal);
   }
 
   return (
     <div className="flex items-center gap-4">
-      <div
-        className="relative flex items-center"
-        style={{ width: TRACK_W + THUMB_SIZE, height: 48 }}
-      >
-        {/* Track */}
+      {/* Track */}
+      <div className="relative flex items-center" style={{ width: TRACK_W + THUMB, height: THUMB }}>
+        {/* Track line */}
         <div
-          className="absolute rounded-full bg-[var(--border)]"
-          style={{ left: THUMB_SIZE / 2, right: THUMB_SIZE / 2, height: 2 }}
+          className="absolute top-1/2 -translate-y-1/2 rounded-full"
+          style={{ left: THUMB / 2, width: TRACK_W, height: 2, background: "var(--border)" }}
         />
-
-        {/* Step dots */}
+        {/* Dots */}
         {Array.from({ length: STEPS }, (_, i) => (
           <div
             key={i}
-            className="absolute top-1/2 -translate-y-1/2 rounded-full transition-all duration-200"
+            className="absolute top-1/2 -translate-y-1/2 rounded-full"
             style={{
-              left: i * STEP_PX + THUMB_SIZE / 2 - 4,
-              width: 8,
-              height: 8,
-              background: i < value ? "var(--foreground)" : "var(--border)",
-              opacity: i < value ? 0.3 : 1,
+              left: i * STEP_PX + THUMB / 2 - 4,
+              width: 8, height: 8,
+              background: "var(--muted)",
+              opacity: 0.25,
             }}
           />
         ))}
-
-        {/* Draggable thumb */}
+        {/* Thumb */}
         <motion.div
           drag="x"
           dragConstraints={{ left: 0, right: TRACK_W }}
-          dragElastic={0.12}
+          dragElastic={0.08}
           dragMomentum={false}
-          style={{ x: springX, left: 0 }}
-          onDragEnd={snapToNearest}
-          whileDrag={{ scale: 1.2 }}
-          className="absolute top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing z-10 flex items-center justify-center rounded-full bg-[var(--foreground)] shadow-xl select-none"
+          style={{ x, left: 0, width: THUMB, height: THUMB }}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          whileDrag={{ scale: 1.12 }}
+          className="absolute top-1/2 -translate-y-1/2 rounded-2xl bg-[var(--foreground)] shadow-xl cursor-grab active:cursor-grabbing flex items-center justify-center z-10 select-none"
         >
-          <span className="text-[10px] font-bold text-[var(--background)] pointer-events-none">
+          <span className="text-[11px] font-bold text-[var(--background)] pointer-events-none">
             {value}
           </span>
         </motion.div>
       </div>
-      <span className="text-xs text-[var(--muted)] shrink-0">
+      <span className="text-xs text-[var(--muted)] shrink-0 w-16">
         {value === 1 ? "1 column" : `${value} columns`}
       </span>
     </div>
@@ -228,7 +237,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
           <AnimatePresence mode="popLayout">
             <div
               className="gap-3 transition-all duration-300"
-              style={{ columns, columnGap: 12 }}
+              style={{ columnCount: columns, columnGap: 12 }}
             >
               {project.artifacts.map((artifact) => (
                 <div key={artifact.id} className="break-inside-avoid mb-3">
