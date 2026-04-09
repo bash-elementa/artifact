@@ -35,6 +35,20 @@ function getPreviewUrl(artifact: FeedArtifact): string | null {
   return null;
 }
 
+function getCFStreamUID(url: string): string | null {
+  const m = url.match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i);
+  return m ? m[1] : null;
+}
+
+function getVideoThumbnail(artifact: FeedArtifact): string | null {
+  if (artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.mediaUrl) {
+    const uid = getCFStreamUID(artifact.mediaUrl);
+    if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+  }
+  return null;
+}
+
 const TILE_SIZES = [
   { width: 240, height: 180 },
   { width: 280, height: 210 },
@@ -46,6 +60,7 @@ const TILE_SIZES = [
 export function ArtifactTile({ artifact, style, onClick }: ArtifactTileProps) {
   const previewUrl = getPreviewUrl(artifact);
   const isVideo = artifact.mediaMimeType?.startsWith("video/");
+  const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
   const pointerDown = useRef<{ x: number; y: number } | null>(null);
 
   const [counts, setCounts] = useState<Record<string, number>>(artifact.reactionCounts);
@@ -119,15 +134,19 @@ export function ArtifactTile({ artifact, style, onClick }: ArtifactTileProps) {
       <div className="relative w-full h-full">
         {previewUrl ? (
           isVideo ? (
-            <video
-              src={previewUrl}
-              muted
-              loop
-              playsInline
-              className="w-full h-full object-cover"
-              onMouseEnter={(e) => e.currentTarget.play()}
-              onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
-            />
+            videoThumbnail ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={videoThumbnail}
+                alt={artifact.name}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[var(--surface-2)]">
+                <span className="text-4xl opacity-30">🎬</span>
+              </div>
+            )
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img

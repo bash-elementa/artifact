@@ -26,6 +26,8 @@ function inferMimeType(url: string): string {
   if (clean.endsWith(".mp4")) return "video/mp4";
   if (clean.endsWith(".webm")) return "video/webm";
   if (clean.endsWith(".mov")) return "video/quicktime";
+  if (clean.endsWith(".m3u8")) return "video/mp4"; // HLS stream
+  if (url.includes("videodelivery.net") || url.includes("cloudflarestream.com")) return "video/mp4";
   if (url.includes("giphy.com") || url.includes("tenor.com")) return "image/gif";
   return "image/jpeg"; // default assumption
 }
@@ -117,6 +119,7 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
             type: "MEDIA",
             mediaUrl: isVideo ? uploadData.playbackUrl : uploadData.url,
             mediaMimeType: item.file.type,
+            screenshotUrl: isVideo ? (uploadData.thumbnailUrl ?? null) : null,
             storageBytes: item.file.size,
             projectId: defaultProjectId ?? null,
           }),

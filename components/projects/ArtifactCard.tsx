@@ -30,6 +30,22 @@ interface ArtifactCardProps {
   onDelete?: (id: string) => void;
 }
 
+/** Extract Cloudflare Stream UID from an HLS/delivery URL. */
+function getCFStreamUID(url: string): string | null {
+  const m = url.match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i);
+  return m ? m[1] : null;
+}
+
+/** Best static thumbnail to show in the card for a video artifact. */
+function getVideoThumbnail(artifact: Artifact): string | null {
+  if (artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.mediaUrl) {
+    const uid = getCFStreamUID(artifact.mediaUrl);
+    if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+  }
+  return null;
+}
+
 function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA" && artifact.mediaUrl) return artifact.mediaUrl;
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
@@ -44,6 +60,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
 
   const previewUrl = getPreviewUrl(artifact);
   const isVideo = artifact.mediaMimeType?.startsWith("video/");
+  const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
 
   async function toggleShare(e: React.MouseEvent) {
     e.stopPropagation();
@@ -84,15 +101,26 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
       <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)]">
         {previewUrl ? (
           isVideo ? (
-            <video
-              src={previewUrl}
-              muted
-              loop
-              playsInline
-              className="w-full object-cover"
-              onMouseEnter={(e) => e.currentTarget.play()}
-              onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
-            />
+            videoThumbnail ? (
+              // Show thumbnail; full playback happens in the lightbox
+              <div className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={videoThumbnail}
+                  alt={artifact.name}
+                  className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                />
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
+                    <span className="text-white text-sm pl-0.5">▶</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full aspect-video flex items-center justify-center bg-[var(--surface-2)]">
+                <span className="text-4xl opacity-20">🎬</span>
+              </div>
+            )
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img
