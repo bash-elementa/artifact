@@ -8,6 +8,7 @@ import {
 } from "react-zoom-pan-pinch";
 import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
+import { LoadingDots } from "@/components/ui/LoadingDots";
 
 interface FeedArtifact {
   id: string;
@@ -237,9 +238,8 @@ export function ExploreCanvas() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center w-full h-full gap-3">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-        <p className="text-sm text-[var(--muted)]">Loading the feed…</p>
+      <div className="flex flex-col items-center justify-center w-full h-full gap-4">
+        <LoadingDots size={10} gap={8} color="var(--foreground)" jumpHeight={14} />
       </div>
     );
   }
