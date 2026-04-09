@@ -61,7 +61,7 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 glass">
+      <header className="sticky top-0 z-40">
         <div className="flex h-16 items-center justify-between px-6">
 
           {/* Left: Logo */}
