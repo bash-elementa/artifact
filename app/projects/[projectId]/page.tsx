@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
@@ -45,68 +45,73 @@ const SPRING = { type: "spring" as const, stiffness: 70, damping: 5, mass: 1.6 }
 
 function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const x = useMotionValue((value - 1) * STEP_PX);
-  // Derive display number from x position without triggering re-renders
   const displayValue = useTransform(x, (v) => Math.round(Math.max(0, Math.min(TRACK_W, v)) / STEP_PX) + 1);
+  const isDragging = useRef(false);
 
-  // Sync when value changes externally
+  // Only snap externally when not mid-drag
   useEffect(() => {
+    if (isDragging.current) return;
     animate(x, (value - 1) * STEP_PX, SPRING);
   }, [value, x]);
+
+  function handleDragStart() {
+    isDragging.current = true;
+  }
+
+  function handleDrag() {
+    const raw = Math.max(0, Math.min(TRACK_W, x.get()));
+    const newVal = Math.round(raw / STEP_PX) + 1;
+    onChange(newVal);
+  }
 
   function handleDragEnd() {
     const raw = Math.max(0, Math.min(TRACK_W, x.get()));
     const step = Math.round(raw / STEP_PX);
-    animate(x, step * STEP_PX, SPRING);
     onChange(step + 1);
+    animate(x, step * STEP_PX, SPRING);
+    isDragging.current = false;
   }
 
   const PAD = 6;
 
   return (
-    <div className="flex items-center gap-3">
-      {/* Pill container */}
-      <div
-        className="rounded-full bg-[var(--foreground)] flex items-center"
-        style={{ padding: PAD, height: THUMB + PAD * 2 }}
-      >
-        <div className="relative flex items-center" style={{ width: TRACK_W + THUMB, height: THUMB }}>
-          {/* Track line */}
+    <div className="rounded-full bg-[var(--surface-2)] flex items-center" style={{ padding: PAD, height: THUMB + PAD * 2 }}>
+      <div className="relative flex items-center" style={{ width: TRACK_W + THUMB, height: THUMB }}>
+        {/* Track line */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 rounded-full"
+          style={{ left: THUMB / 2, width: TRACK_W, height: 2, background: "var(--border)" }}
+        />
+        {/* Dots */}
+        {Array.from({ length: STEPS }, (_, i) => (
           <div
-            className="absolute top-1/2 -translate-y-1/2 rounded-full"
-            style={{ left: THUMB / 2, width: TRACK_W, height: 2, background: "rgba(255,255,255,0.15)" }}
+            key={i}
+            className="absolute top-1/2 -translate-y-1/2 rounded-full bg-[var(--muted)]"
+            style={{
+              left: i * STEP_PX + THUMB / 2 - 4,
+              width: 8, height: 8,
+              opacity: 0.45,
+            }}
           />
-          {/* Dots */}
-          {Array.from({ length: STEPS }, (_, i) => (
-            <div
-              key={i}
-              className="absolute top-1/2 -translate-y-1/2 rounded-full"
-              style={{
-                left: i * STEP_PX + THUMB / 2 - 4,
-                width: 8, height: 8,
-                background: "rgba(255,255,255,0.3)",
-              }}
-            />
-          ))}
-          {/* Thumb */}
-          <motion.div
-            drag="x"
-            dragConstraints={{ left: 0, right: TRACK_W }}
-            dragElastic={0.08}
-            dragMomentum={false}
-            style={{ x, left: 0, width: THUMB, height: THUMB }}
-            onDragEnd={handleDragEnd}
-            whileDrag={{ scale: 1.12 }}
-            className="absolute top-1/2 -translate-y-1/2 rounded-2xl bg-[var(--background)] shadow-lg cursor-grab active:cursor-grabbing flex items-center justify-center z-10 select-none"
-          >
-            <motion.span className="text-[11px] font-bold text-[var(--foreground)] pointer-events-none">
-              {displayValue}
-            </motion.span>
-          </motion.div>
-        </div>
+        ))}
+        {/* Thumb */}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: TRACK_W }}
+          dragElastic={0.08}
+          dragMomentum={false}
+          style={{ x, left: 0, width: THUMB, height: THUMB }}
+          onDragStart={handleDragStart}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          whileDrag={{ scale: 1.12 }}
+          className="absolute top-1/2 -translate-y-1/2 rounded-2xl bg-[var(--foreground)] shadow-lg cursor-grab active:cursor-grabbing flex items-center justify-center z-10 select-none"
+        >
+          <motion.span className="text-[11px] font-bold text-[var(--background)] pointer-events-none">
+            {displayValue}
+          </motion.span>
+        </motion.div>
       </div>
-      <span className="text-xs text-[var(--muted)] shrink-0 w-16">
-        {value === 1 ? "1 column" : `${value} columns`}
-      </span>
     </div>
   );
 }
