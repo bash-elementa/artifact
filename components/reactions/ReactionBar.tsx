@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const EMOJIS = ["👏", "✨", "🔥", "💡", "❤️"];
+const EMOJIS = ["❤️", "🔥", "🤯"];
 
 interface ReactionBarProps {
   artifactId: string;

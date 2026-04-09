@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const DRAG_THRESHOLD = 5;
-const EMOJIS = ["👏", "✨", "🔥", "💡", "❤️"];
+const EMOJIS = ["❤️", "🔥", "🤯"];
 
 interface FeedArtifact {
   id: string;
