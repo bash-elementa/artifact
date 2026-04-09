@@ -30,12 +30,6 @@ interface ArtifactCardProps {
   onDelete?: (id: string) => void;
 }
 
-/** Extract Cloudflare Stream UID from an HLS/delivery URL. */
-function getCFStreamUID(url: string): string | null {
-  const m = url.match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i);
-  return m ? m[1] : null;
-}
-
 function looksLikeVideo(url: string): boolean {
   const lower = url.toLowerCase().split("?")[0];
   return (
@@ -48,17 +42,14 @@ function looksLikeVideo(url: string): boolean {
   );
 }
 
-/** Best static thumbnail to show in the card for a video artifact. */
-function getVideoThumbnail(artifact: Artifact): string | null {
-  if (artifact.screenshotUrl) return artifact.screenshotUrl;
-  if (artifact.mediaUrl) {
-    const url = artifact.mediaUrl;
-    if (url.includes("videodelivery.net") || url.includes("cloudflarestream.com")) {
-      const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1];
-      if (base) return `${base}/thumbnails/thumbnail.jpg`;
-    }
-  }
-  return null;
+function isCFStream(url: string): boolean {
+  return url.includes("videodelivery.net") || url.includes("cloudflarestream.com");
+}
+
+function cfEmbedUrl(url: string): string {
+  const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1] ?? url;
+  const uid = base.split("/").pop()!;
+  return `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
 }
 
 function getPreviewUrl(artifact: Artifact): string | null {
@@ -77,7 +68,6 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
   const isVideo =
     artifact.mediaMimeType?.startsWith("video/") ||
     (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
-  const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
 
   async function toggleShare(e: React.MouseEvent) {
     e.stopPropagation();
@@ -118,25 +108,22 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
       <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)]">
         {previewUrl ? (
           isVideo ? (
-            videoThumbnail ? (
-              // Show thumbnail; full playback happens in the lightbox
-              <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={videoThumbnail}
-                  alt={artifact.name}
-                  className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center">
-                    <span className="text-white text-sm pl-0.5">▶</span>
-                  </div>
-                </div>
-              </div>
+            isCFStream(previewUrl) ? (
+              <iframe
+                src={cfEmbedUrl(previewUrl)}
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                className="w-full aspect-video pointer-events-none"
+                style={{ border: "none" }}
+              />
             ) : (
-              <div className="w-full aspect-video flex items-center justify-center bg-[var(--surface-2)]">
-                <span className="text-4xl opacity-20">🎬</span>
-              </div>
+              <video
+                src={previewUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full object-cover"
+              />
             )
           ) : (
             // eslint-disable-next-line @next/next/no-img-element

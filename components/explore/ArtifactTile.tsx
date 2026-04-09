@@ -36,11 +36,6 @@ function getPreviewUrl(artifact: FeedArtifact): string | null {
   return null;
 }
 
-function getCFStreamUID(url: string): string | null {
-  const m = url.match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i);
-  return m ? m[1] : null;
-}
-
 function looksLikeVideo(url: string): boolean {
   const lower = url.toLowerCase().split("?")[0];
   return (
@@ -53,18 +48,16 @@ function looksLikeVideo(url: string): boolean {
   );
 }
 
-function getVideoThumbnail(artifact: FeedArtifact): string | null {
-  if (artifact.screenshotUrl) return artifact.screenshotUrl;
-  if (artifact.mediaUrl) {
-    const url = artifact.mediaUrl;
-    // Cloudflare Stream: swap any path after the UID for the thumbnail path.
-    // Works for both videodelivery.net and cloudflarestream.com regardless of UID format.
-    if (url.includes("videodelivery.net") || url.includes("cloudflarestream.com")) {
-      const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1];
-      if (base) return `${base}/thumbnails/thumbnail.jpg`;
-    }
-  }
-  return null;
+function isCFStream(url: string): boolean {
+  return url.includes("videodelivery.net") || url.includes("cloudflarestream.com");
+}
+
+/** Return an iframe-embeddable URL for Cloudflare Stream videos. */
+function cfEmbedUrl(url: string): string {
+  // Extract base (scheme + host + first path segment = UID) then build iframe URL
+  const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1] ?? url;
+  const uid = base.split("/").pop()!;
+  return `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
 }
 
 const TILE_SIZES = [
@@ -80,7 +73,6 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
   const isVideo =
     artifact.mediaMimeType?.startsWith("video/") ||
     (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
-  const videoThumbnail = isVideo ? getVideoThumbnail(artifact) : null;
   const pointerDown = useRef<{ x: number; y: number } | null>(null);
 
   const [counts, setCounts] = useState<Record<string, number>>(artifact.reactionCounts);
@@ -157,18 +149,22 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
       <div className="relative w-full h-full">
         {previewUrl ? (
           isVideo ? (
-            videoThumbnail ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={videoThumbnail}
-                alt={artifact.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
+            isCFStream(previewUrl) ? (
+              <iframe
+                src={cfEmbedUrl(previewUrl)}
+                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+                className="w-full h-full pointer-events-none"
+                style={{ border: "none" }}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-[var(--surface-2)]">
-                <span className="text-4xl opacity-30">🎬</span>
-              </div>
+              <video
+                src={previewUrl}
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+              />
             )
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
