@@ -49,6 +49,10 @@ export function ProjectsGrid() {
     void project;
   }
 
+  function handleDeleteProject(id: string) {
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -98,7 +102,7 @@ export function ProjectsGrid() {
         <AnimatePresence mode="popLayout">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
+              <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} />
             ))}
           </div>
         </AnimatePresence>

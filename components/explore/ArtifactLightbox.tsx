@@ -197,16 +197,10 @@ function MediaLightbox({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25, delay: 0.05 }}
-        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 glass rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg"
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 glass rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <UserAvatar user={artifact.user} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-white truncate">{artifact.name}</p>
-          {artifact.description && (
-            <p className="text-xs text-white/50 truncate mt-0.5">{artifact.description}</p>
-          )}
-        </div>
+        <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
         {artifact.isSharedToFeed && (
           <ReactionBar
             artifactId={artifact.id}
@@ -338,14 +332,9 @@ function ContainerLightbox({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-white/[0.06] px-5 py-3 shrink-0">
-          <div className="flex flex-col gap-0.5">
-            <p className="text-sm font-medium text-white">{artifact.name}</p>
-            {artifact.description && (
-              <p className="text-xs text-white/50">{artifact.description}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between px-5 py-3 shrink-0 border-t border-white/[0.06]">
+          <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
+          <div className="flex items-center gap-4 shrink-0 ml-4">
             {artifact.isSharedToFeed && (
               <ReactionBar
                 artifactId={artifact.id}

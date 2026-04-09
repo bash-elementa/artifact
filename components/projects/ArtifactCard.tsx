@@ -184,13 +184,6 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
         </div>
       </div>
 
-      {/* Text below */}
-      <div className="mt-2 px-0.5">
-        <p className="text-sm font-medium text-[var(--foreground)] leading-snug line-clamp-1">
-          {artifact.name}
-        </p>
-        <p className="text-xs text-[var(--muted)] mt-0.5">{timeAgo(artifact.createdAt)}</p>
-      </div>
     </motion.div>
   );
 }
