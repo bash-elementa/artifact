@@ -52,8 +52,11 @@ function looksLikeVideo(url: string): boolean {
 function getVideoThumbnail(artifact: Artifact): string | null {
   if (artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.mediaUrl) {
-    const uid = getCFStreamUID(artifact.mediaUrl);
-    if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+    const url = artifact.mediaUrl;
+    if (url.includes("videodelivery.net") || url.includes("cloudflarestream.com")) {
+      const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1];
+      if (base) return `${base}/thumbnails/thumbnail.jpg`;
+    }
   }
   return null;
 }

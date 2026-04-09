@@ -56,8 +56,13 @@ function looksLikeVideo(url: string): boolean {
 function getVideoThumbnail(artifact: FeedArtifact): string | null {
   if (artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.mediaUrl) {
-    const uid = getCFStreamUID(artifact.mediaUrl);
-    if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+    const url = artifact.mediaUrl;
+    // Cloudflare Stream: swap any path after the UID for the thumbnail path.
+    // Works for both videodelivery.net and cloudflarestream.com regardless of UID format.
+    if (url.includes("videodelivery.net") || url.includes("cloudflarestream.com")) {
+      const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1];
+      if (base) return `${base}/thumbnails/thumbnail.jpg`;
+    }
   }
   return null;
 }
