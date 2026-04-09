@@ -56,9 +56,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
     }
   }, [projectId]);
 
-  useEffect(() => {
-    loadProject();
-  }, [loadProject]);
+  useEffect(() => { loadProject(); }, [loadProject]);
 
   function openLightbox(artifact: Artifact) {
     const idx = project?.artifacts.findIndex((a) => a.id === artifact.id) ?? 0;
@@ -82,11 +80,12 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-6xl px-5 py-8">
-        <div className="h-8 w-48 rounded-lg bg-[var(--surface)] animate-pulse mb-8" />
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="w-full px-6 py-8">
+        <div className="h-8 w-48 rounded-lg bg-[var(--surface-2)] animate-pulse mb-8" />
+        <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] aspect-[4/3] animate-pulse" />
+            <div key={i} className="break-inside-avoid mb-3 rounded-2xl bg-[var(--surface-2)] animate-pulse"
+              style={{ height: [220, 300, 180, 260, 240, 200, 280, 220][i] }} />
           ))}
         </div>
       </div>
@@ -104,32 +103,34 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
 
   return (
     <>
-      <div className="mx-auto w-full max-w-6xl px-5 py-8">
+      <div className="w-full px-6 py-8">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-[var(--muted)] mb-6">
+        <div className="flex items-center gap-2 text-sm text-[var(--muted)] mb-8">
           <Link href="/projects" className="hover:text-[var(--foreground)] transition-colors">Projects</Link>
           <span>/</span>
           <span className="text-[var(--foreground)] font-medium">{project.name}</span>
         </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <h1 className="text-xl font-semibold">{project.name}</h1>
-            {project.description && (
-              <p className="text-sm text-[var(--muted)] mt-1">{project.description}</p>
-            )}
-            <p className="text-xs text-[var(--muted)] mt-1">{project._count.artifacts} artifact{project._count.artifacts !== 1 ? "s" : ""}</p>
+        {/* Pinterest-style header */}
+        <div className="flex flex-col items-center text-center mb-10 gap-3">
+          <h1 className="text-3xl font-bold tracking-tight">{project.name}</h1>
+          {project.description && (
+            <p className="text-sm text-[var(--muted)] max-w-md">{project.description}</p>
+          )}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[var(--muted)]">
+              {project._count.artifacts} {project._count.artifacts === 1 ? "artifact" : "artifacts"}
+            </span>
+            <button
+              onClick={() => setUploadOpen(true)}
+              className="rounded-full bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-black hover:opacity-90 transition-opacity"
+            >
+              + Upload
+            </button>
           </div>
-          <button
-            onClick={() => setUploadOpen(true)}
-            className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-black hover:opacity-90"
-          >
-            + Upload
-          </button>
         </div>
 
-        {/* Artifacts */}
+        {/* Masonry grid */}
         {project.artifacts.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
             <div className="text-5xl">🗂️</div>
@@ -139,28 +140,28 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
             </div>
             <button
               onClick={() => setUploadOpen(true)}
-              className="mt-2 rounded-xl bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black"
+              className="mt-2 rounded-full bg-[var(--accent)] px-5 py-2.5 text-sm font-semibold text-black"
             >
               Upload artifact
             </button>
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-3">
               {project.artifacts.map((artifact) => (
-                <ArtifactCard
-                  key={artifact.id}
-                  artifact={artifact}
-                  onClick={() => openLightbox(artifact)}
-                  onDelete={handleDelete}
-                />
+                <div key={artifact.id} className="break-inside-avoid mb-3">
+                  <ArtifactCard
+                    artifact={artifact}
+                    onClick={() => openLightbox(artifact)}
+                    onDelete={handleDelete}
+                  />
+                </div>
               ))}
             </div>
           </AnimatePresence>
         )}
       </div>
 
-      {/* Lightbox */}
       <ArtifactLightbox
         artifact={lightboxArtifact}
         onClose={() => setLightboxArtifact(null)}

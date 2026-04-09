@@ -75,9 +75,9 @@ export function ProjectsGrid() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] aspect-[4/3] animate-pulse" />
+            <div key={i} className="rounded-2xl bg-[var(--surface-2)] aspect-[4/3] animate-pulse" />
           ))}
         </div>
       ) : projects.length === 0 ? (
@@ -96,7 +96,7 @@ export function ProjectsGrid() {
         </div>
       ) : (
         <AnimatePresence mode="popLayout">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} />
             ))}
