@@ -185,6 +185,13 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
   return (
     <>
       <div className="w-full px-6 pt-24 pb-8">
+        {/* Breadcrumb */}
+        <div className="flex items-center gap-2 text-sm text-[var(--muted)] mb-8">
+          <Link href="/projects" className="hover:text-[var(--foreground)] transition-colors">Projects</Link>
+          <span>/</span>
+          <span className="text-[var(--foreground)] font-medium">{project.name}</span>
+        </div>
+
         {/* Header */}
         <div className="flex flex-col items-center text-center mb-8 gap-1.5">
           <h1 className="text-4xl font-bold tracking-tight">{project.name}</h1>
@@ -199,7 +206,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
             <ColumnSlider value={columns} onChange={setColumns} />
             <button
               onClick={() => setUploadOpen(true)}
-              className="w-11 h-11 rounded-full bg-white text-black text-xl font-light flex items-center justify-center hover:opacity-90 transition-opacity shrink-0"
+              className="w-11 h-11 rounded-full bg-white text-black text-2xl leading-none flex items-center justify-center hover:opacity-90 transition-opacity shrink-0"
               aria-label="Upload artifact"
             >
               +
