@@ -240,6 +240,7 @@ export function ExploreCanvas() {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full gap-4">
         <LoadingDots size={10} gap={8} color="var(--foreground)" jumpHeight={14} />
+        <p className="text-sm text-[var(--muted)]">Building artifacts...</p>
       </div>
     );
   }
