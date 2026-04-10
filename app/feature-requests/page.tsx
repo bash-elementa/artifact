@@ -78,9 +78,16 @@ export default function FeatureRequestsPage() {
 
   useEffect(() => {
     fetch("/api/feature-requests")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: FeatureRequestData[]) => setRequests(data))
-      .catch(() => {})
+      .then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          console.error("Feature requests API error", res.status, text);
+          return [];
+        }
+        return res.json();
+      })
+      .then((data: FeatureRequestData[]) => setRequests(Array.isArray(data) ? data : []))
+      .catch((err) => console.error("Feature requests fetch failed", err))
       .finally(() => setLoading(false));
   }, []);
 

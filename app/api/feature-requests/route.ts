@@ -6,22 +6,27 @@ export async function GET() {
   const user = await getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const requests = await prisma.featureRequest.findMany({
-    include: {
-      user: {
-        select: { id: true, name: true, email: true, image: true },
+  try {
+    const requests = await prisma.featureRequest.findMany({
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, image: true },
+        },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
+      orderBy: { createdAt: "desc" },
+    });
 
-  return NextResponse.json(
-    requests.map((r) => ({
-      ...r,
-      createdAt: r.createdAt.toISOString(),
-      updatedAt: r.updatedAt.toISOString(),
-    }))
-  );
+    return NextResponse.json(
+      requests.map((r) => ({
+        ...r,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+      }))
+    );
+  } catch (err) {
+    console.error("GET /api/feature-requests error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
