@@ -140,38 +140,47 @@ function MediaLightbox({
         <div className="absolute inset-0 bg-black/50" />
       </motion.div>
 
-      {/* Media — centered, isolated */}
+      {/* Media — shrinks to content size so the title pill overlays the actual asset */}
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-20 pointer-events-none"
+        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+        style={{ padding: "5rem 5rem 6rem" }} // extra bottom padding for the bottom bar
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Wrapper shrinks to the rendered image/video size */}
         <div
-          className="max-w-full max-h-full w-full h-full flex items-center justify-center pointer-events-auto"
+          className="relative pointer-events-auto max-w-full max-h-full"
           onClick={(e) => e.stopPropagation()}
         >
-          <MediaRenderer
-            url={src}
-            mimeType={isVideo ? (artifact.mediaMimeType ?? "video/mp4") : artifact.mediaMimeType}
-            alt={artifact.name}
-          />
-        </div>
-      </motion.div>
+          {/* Title pill — overlaid on the asset, top-left corner */}
+          <div
+            className="absolute top-3 left-3 z-10 rounded-xl px-3 py-2"
+            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.10)" }}
+          >
+            <p className="text-xs font-semibold text-white leading-none">{artifact.name}</p>
+          </div>
 
-      {/* Title pill — top left */}
-      <motion.div
-        initial={{ opacity: 0, y: -6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.2, delay: 0.05 }}
-        className="fixed top-5 left-5 z-50 rounded-2xl px-4 py-2.5"
-        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.10)" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <p className="text-sm font-medium text-white leading-none">{artifact.name}</p>
+          {isVideo ? (
+            <div className="w-full h-full">
+              <MediaRenderer
+                url={src}
+                mimeType={artifact.mediaMimeType ?? "video/mp4"}
+                alt={artifact.name}
+              />
+            </div>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={artifact.name}
+              className="max-w-full max-h-full object-contain rounded-xl block"
+              style={{ maxHeight: "calc(100vh - 11rem)" }}
+            />
+          )}
+        </div>
       </motion.div>
 
       {/* Close — top right */}
@@ -221,7 +230,7 @@ function MediaLightbox({
         {artifact.isSharedToFeed && (
           <>
             <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
-            <ReactionBar
+            <ReactionBar forceLight
               artifactId={artifact.id}
               reactionCounts={artifact.reactionCounts ?? {}}
               myReactions={artifact.myReactions ?? []}
@@ -344,7 +353,7 @@ function UrlLightbox({
         <UserAvatar user={artifact.user} />
         <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
         {artifact.isSharedToFeed && (
-          <ReactionBar
+          <ReactionBar forceLight
             artifactId={artifact.id}
             reactionCounts={artifact.reactionCounts ?? {}}
             myReactions={artifact.myReactions ?? []}
@@ -461,7 +470,7 @@ function ContainerLightbox({
           <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
           <div className="flex items-center gap-4 shrink-0 ml-4">
             {artifact.isSharedToFeed && (
-              <ReactionBar
+              <ReactionBar forceLight
                 artifactId={artifact.id}
                 reactionCounts={artifact.reactionCounts ?? {}}
                 myReactions={artifact.myReactions ?? []}

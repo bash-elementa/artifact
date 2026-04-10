@@ -10,9 +10,11 @@ interface ReactionBarProps {
   reactionCounts: Record<string, number>;
   myReactions: string[];
   onReact?: (emoji: string, action: "added" | "removed") => void;
+  /** Force white text — use when rendered on a consistently dark surface (e.g. lightbox) */
+  forceLight?: boolean;
 }
 
-export function ReactionBar({ artifactId, reactionCounts, myReactions, onReact }: ReactionBarProps) {
+export function ReactionBar({ artifactId, reactionCounts, myReactions, onReact, forceLight }: ReactionBarProps) {
   const [counts, setCounts] = useState<Record<string, number>>(reactionCounts);
   const [mine, setMine] = useState<Set<string>>(new Set(myReactions));
   const [loading, setLoading] = useState<string | null>(null);
@@ -74,13 +76,21 @@ export function ReactionBar({ artifactId, reactionCounts, myReactions, onReact }
             className={cn(
               "flex items-center gap-1 rounded-full px-2.5 py-1 text-sm transition-all duration-150",
               active
-                ? "bg-[var(--accent)]/20 text-[var(--foreground)] scale-105"
-                : "bg-white/5 text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
+                ? "bg-white/20 scale-105"
+                : "bg-white/5 hover:bg-white/10",
+              forceLight
+                ? active ? "text-white" : "text-white/60 hover:text-white"
+                : active ? "text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
             )}
           >
             <span className="leading-none">{emoji}</span>
             {count > 0 && (
-              <span className={cn("text-xs font-medium", active ? "text-[var(--foreground)]" : "text-[var(--muted)]")}>
+              <span className={cn(
+                "text-xs font-medium",
+                forceLight
+                  ? active ? "text-white" : "text-white/60"
+                  : active ? "text-[var(--foreground)]" : "text-[var(--muted)]"
+              )}>
                 {count}
               </span>
             )}
