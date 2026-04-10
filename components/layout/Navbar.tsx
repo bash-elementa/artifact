@@ -18,9 +18,13 @@ import {
   FigmaLogo as PhFigma,
   Moon as PhMoon,
   Sun as PhSun,
+  X as PhX,
+  Compass as PhCompass,
+  FolderSimple as PhFolderSimple,
+  Plus as PhPlus,
 } from "@phosphor-icons/react";
 
-// ── Icons ──────────────────────────────────────────────────────────────────────
+// ── Logo ────────────────────────────────────────────────────────────────────────
 
 function ArtifactLogo() {
   return (
@@ -39,9 +43,7 @@ function ArtifactLogo() {
   );
 }
 
-
-
-// ── Dropdown card shell ────────────────────────────────────────────────────────
+// ── Desktop dropdown helpers ─────────────────────────────────────────────────────
 
 function DropdownCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
@@ -75,12 +77,79 @@ function DropdownItem({ icon, label, onClick, danger = false }: { icon: React.Re
   );
 }
 
-// ── Navbar ─────────────────────────────────────────────────────────────────────
+// ── Mobile bottom sheet wrapper ──────────────────────────────────────────────────
+
+function MobileSheet({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-[60] md:hidden"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={onClose}
+          />
+          <motion.div
+            className="fixed bottom-0 left-0 right-0 z-[61] md:hidden rounded-t-[2rem] overflow-hidden"
+            style={{
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderBottom: "none",
+              paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+            }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 400, damping: 40 }}
+            drag="y"
+            dragConstraints={{ top: 0 }}
+            dragElastic={0.08}
+            onDragEnd={(_, { velocity, offset }) => {
+              if (velocity.y > 300 || offset.y > 120) onClose();
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-9 h-1 rounded-full bg-[var(--border)]" />
+            </div>
+            {children}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ── Navbar ───────────────────────────────────────────────────────────────────────
 
 const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.ReactNode }[] = [
   { type: "media", label: "Media", icon: <PhImage size={16} /> },
   { type: "url",   label: "URL",   icon: <PhLink size={16} /> },
   { type: "figma", label: "Figma", icon: <PhFigma size={16} /> },
+];
+
+const MOBILE_UPLOAD_OPTIONS: { type: UploadType; label: string; description: string; icon: React.ReactNode }[] = [
+  { type: "media", label: "Media", description: "Photos and videos", icon: <PhImage size={24} /> },
+  { type: "url",   label: "URL",   description: "Website or link",   icon: <PhLink size={24} /> },
+  { type: "figma", label: "Figma", description: "Design file",       icon: <PhFigma size={24} /> },
+];
+
+const NAV_TABS = [
+  { href: "/explore",  label: "Explore",  Icon: PhCompass },
+  { href: "/projects", label: "Projects", Icon: PhFolderSimple },
 ];
 
 export function Navbar() {
@@ -89,18 +158,22 @@ export function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  // Upload dropdown
+  // Desktop upload dropdown
   const [uploadDropdownOpen, setUploadDropdownOpen] = useState(false);
   const [uploadType, setUploadType] = useState<UploadType | null>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
-  // Feature request button
+  // Feature request
   const [featureModalOpen, setFeatureModalOpen] = useState(false);
   const [featureThanks, setFeatureThanks] = useState(false);
 
-  // Profile dropdown
+  // Desktop profile dropdown
   const [profileOpen, setProfileOpen] = useState(false);
   const profileCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Mobile sheets
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
+  const [mobileUploadOpen, setMobileUploadOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -113,7 +186,6 @@ export function Navbar() {
     document.documentElement.setAttribute("data-theme", stored);
   }, []);
 
-  // Close upload dropdown on outside click
   useEffect(() => {
     if (!uploadDropdownOpen) return;
     function onDown(e: MouseEvent) {
@@ -163,18 +235,36 @@ export function Navbar() {
     ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
     : "?";
   const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
-
-  const tabs = [
-    { href: "/explore", label: "Explore" },
-    { href: "/projects", label: "Projects" },
-  ];
+  const displayName =
+    user?.user_metadata?.full_name ??
+    user?.user_metadata?.name ??
+    user?.email?.split("@")[0] ??
+    "You";
 
   if (pathname.startsWith("/auth")) return null;
 
+  const Avatar = ({ size = "sm" }: { size?: "sm" | "lg" }) => {
+    const cls = size === "lg"
+      ? "w-14 h-14 rounded-2xl text-base"
+      : "w-9 h-9 rounded-full text-xs";
+    return (
+      <div
+        className={cn("flex items-center justify-center font-semibold text-[var(--muted)] overflow-hidden shrink-0", cls)}
+        style={{ background: "var(--surface-2)" }}
+      >
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+        ) : initials}
+      </div>
+    );
+  };
+
   return (
     <>
+      {/* ── Desktop header ────────────────────────────────────────────────── */}
       <header
-        className="fixed inset-x-0 top-0 z-40 pointer-events-none"
+        className="hidden md:block fixed inset-x-0 top-0 z-40 pointer-events-none"
         style={{ background: "var(--nav-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)" }}
       >
         <div className="flex h-16 items-center justify-between px-6 pointer-events-auto">
@@ -188,7 +278,7 @@ export function Navbar() {
               className="flex items-center rounded-full p-1.5"
               style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
             >
-              {tabs.map((tab) => {
+              {NAV_TABS.map((tab) => {
                 const active = pathname.startsWith(tab.href);
                 return (
                   <Link
@@ -208,10 +298,9 @@ export function Navbar() {
             </nav>
           </div>
 
-          {/* Right: Upload dropdown + Theme + Avatar */}
+          {/* Right: Request feature + Upload + Theme + Avatar */}
           <div className="flex items-center gap-3 shrink-0">
 
-            {/* Request a feature */}
             <button
               onClick={() => setFeatureModalOpen(true)}
               className="rounded-2xl border border-[var(--border)] text-[var(--foreground)] px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--surface-2)]"
@@ -219,7 +308,6 @@ export function Navbar() {
               {featureThanks ? "Thanks!" : "Request a feature"}
             </button>
 
-            {/* Upload — click opens dropdown */}
             <div className="relative" ref={uploadRef}>
               <button
                 onClick={() => setUploadDropdownOpen((v) => !v)}
@@ -245,7 +333,6 @@ export function Navbar() {
               </AnimatePresence>
             </div>
 
-            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
               className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--foreground)] opacity-60 hover:opacity-100 transition-opacity"
@@ -255,7 +342,6 @@ export function Navbar() {
               {theme === "dark" ? <PhMoon size={18} /> : <PhSun size={18} />}
             </button>
 
-            {/* Avatar + profile dropdown */}
             <div className="relative" onMouseEnter={openProfile} onMouseLeave={closeProfile}>
               <button
                 className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors overflow-hidden"
@@ -298,7 +384,170 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Upload modal — opens to specific type */}
+      {/* ── Mobile top bar ────────────────────────────────────────────────── */}
+      <div
+        className="flex md:hidden fixed inset-x-0 top-0 z-40 h-14 items-center justify-between px-5 pointer-events-none"
+        style={{ background: "var(--nav-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)" }}
+      >
+        <Link href="/explore" className="pointer-events-auto text-[var(--foreground)]">
+          <ArtifactLogo />
+        </Link>
+        <button
+          className="pointer-events-auto w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold text-[var(--muted)] overflow-hidden"
+          style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
+          onClick={() => setMobileProfileOpen(true)}
+          aria-label="Open profile"
+        >
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover rounded-full" />
+          ) : initials}
+        </button>
+      </div>
+
+      {/* ── Mobile bottom tab bar ─────────────────────────────────────────── */}
+      <div
+        className="flex md:hidden fixed bottom-0 inset-x-0 z-40 items-end justify-center gap-3 pointer-events-none"
+        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+      >
+        {/* Tab pill */}
+        <nav
+          className="flex items-center rounded-full p-1.5 pointer-events-auto"
+          style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
+        >
+          {NAV_TABS.map((tab) => {
+            const active = pathname.startsWith(tab.href);
+            const { Icon } = tab;
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={cn(
+                  "flex flex-col items-center gap-0.5 px-7 py-2.5 rounded-full transition-all duration-200",
+                  active
+                    ? "bg-[var(--foreground)] text-[var(--background)]"
+                    : "text-[var(--muted)]"
+                )}
+              >
+                <Icon size={20} weight={active ? "fill" : "regular"} />
+                <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Upload circle */}
+        <button
+          className="pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition-opacity"
+          style={{ boxShadow: "var(--nav-pill-shadow)" }}
+          onClick={() => setMobileUploadOpen(true)}
+          aria-label="Upload artifact"
+        >
+          <PhPlus size={22} weight="bold" />
+        </button>
+      </div>
+
+      {/* ── Mobile profile sheet ──────────────────────────────────────────── */}
+      <MobileSheet open={mobileProfileOpen} onClose={() => setMobileProfileOpen(false)}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3">
+          <button
+            onClick={() => setMobileProfileOpen(false)}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            style={{ background: "var(--surface-2)" }}
+          >
+            <PhX size={15} />
+          </button>
+          <span className="text-sm font-semibold">You</span>
+          <div className="w-8" />
+        </div>
+
+        {/* User info */}
+        <div className="px-5 pt-1 pb-5 flex items-center gap-3.5">
+          <Avatar size="lg" />
+          <div>
+            <p className="font-semibold text-[var(--foreground)]">{displayName}</p>
+            <p className="text-sm text-[var(--muted)]">Active</p>
+          </div>
+        </div>
+
+        {/* Theme row */}
+        <div className="px-3 pb-1">
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl text-left"
+          >
+            <span className="text-[var(--muted)]">
+              {theme === "dark" ? <PhMoon size={18} /> : <PhSun size={18} />}
+            </span>
+            {theme === "dark" ? "Dark mode" : "Light mode"}
+            {/* Toggle pill */}
+            <div className="ml-auto relative w-10 h-6 rounded-full transition-colors" style={{ background: theme === "dark" ? "var(--foreground)" : "var(--border)" }}>
+              <div
+                className="absolute top-1 w-4 h-4 rounded-full transition-transform"
+                style={{
+                  background: "var(--background)",
+                  transform: theme === "dark" ? "translateX(1.25rem)" : "translateX(0.25rem)",
+                }}
+              />
+            </div>
+          </button>
+        </div>
+
+        <div className="mx-5 h-px my-2" style={{ background: "var(--border)" }} />
+
+        {/* Menu items */}
+        <div className="px-3 pb-2">
+          {user?.id && (
+            <button
+              onClick={() => { setMobileProfileOpen(false); router.push(`/profile/${user.id}`); }}
+              className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl text-left"
+            >
+              <span className="text-[var(--muted)]"><PhUser size={18} /></span>
+              View Profile
+            </button>
+          )}
+          <button
+            onClick={() => { setMobileProfileOpen(false); setFeatureModalOpen(true); }}
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl text-left"
+          >
+            <span className="text-[var(--muted)]"><PhLightbulb size={18} /></span>
+            Feature Requests
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl text-left"
+          >
+            <span className="text-[var(--muted)]"><PhSignOut size={18} /></span>
+            Sign out
+          </button>
+        </div>
+      </MobileSheet>
+
+      {/* ── Mobile upload sheet ───────────────────────────────────────────── */}
+      <MobileSheet open={mobileUploadOpen} onClose={() => setMobileUploadOpen(false)}>
+        <div className="px-5 pt-3 pb-2">
+          <h3 className="text-base font-semibold mb-4">Upload artifact</h3>
+          <div className="flex flex-col gap-2">
+            {MOBILE_UPLOAD_OPTIONS.map((opt) => (
+              <button
+                key={opt.type}
+                onClick={() => { setMobileUploadOpen(false); setUploadType(opt.type); }}
+                className="flex items-center gap-4 px-4 py-4 rounded-2xl text-left transition-colors hover:opacity-90"
+                style={{ background: "var(--surface-2)" }}
+              >
+                <span className="text-[var(--muted)]">{opt.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--foreground)]">{opt.label}</p>
+                  <p className="text-xs text-[var(--muted)]">{opt.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </MobileSheet>
+
+      {/* Upload modal */}
       {uploadType && (
         <UploadModal
           open={true}
