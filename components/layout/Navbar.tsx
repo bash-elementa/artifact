@@ -9,6 +9,16 @@ import { UploadModal, type UploadType } from "@/components/upload/UploadModal";
 import { NewFeatureRequestModal } from "@/components/feature-requests/NewFeatureRequestModal";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import {
+  User as PhUser,
+  SignOut as PhSignOut,
+  Lightbulb as PhLightbulb,
+  Image as PhImage,
+  Link as PhLink,
+  FigmaLogo as PhFigma,
+  Moon as PhMoon,
+  Sun as PhSun,
+} from "@phosphor-icons/react";
 
 // ── Icons ──────────────────────────────────────────────────────────────────────
 
@@ -29,84 +39,7 @@ function ArtifactLogo() {
   );
 }
 
-function MoonIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-    </svg>
-  );
-}
 
-function SunIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5"/>
-      <line x1="12" y1="1" x2="12" y2="3"/>
-      <line x1="12" y1="21" x2="12" y2="23"/>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-      <line x1="1" y1="12" x2="3" y2="12"/>
-      <line x1="21" y1="12" x2="23" y2="12"/>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </svg>
-  );
-}
-
-// Inline SVG icons for dropdowns
-function IconMedia() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-      <polyline points="21 15 16 10 5 21"/>
-    </svg>
-  );
-}
-function IconUrl() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-    </svg>
-  );
-}
-function IconFigma() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"/>
-      <path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"/>
-      <path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-      <path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 0 1-7 0z"/>
-      <path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"/>
-    </svg>
-  );
-}
-function IconProfile() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-      <circle cx="12" cy="7" r="4"/>
-    </svg>
-  );
-}
-function IconSignOut() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16 17 21 12 16 7"/>
-      <line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
-  );
-}
-
-function IconLightbulb() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21h6"/>
-      <path d="M12 3a6 6 0 0 1 6 6c0 2.4-1.4 4.5-3.5 5.6L14 17H10l-.5-2.4C7.4 13.5 6 11.4 6 9a6 6 0 0 1 6-6z"/>
-    </svg>
-  );
-}
 
 // ── Dropdown card shell ────────────────────────────────────────────────────────
 
@@ -145,9 +78,9 @@ function DropdownItem({ icon, label, onClick, danger = false }: { icon: React.Re
 // ── Navbar ─────────────────────────────────────────────────────────────────────
 
 const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.ReactNode }[] = [
-  { type: "media", label: "Media", icon: <IconMedia /> },
-  { type: "url",   label: "URL",   icon: <IconUrl /> },
-  { type: "figma", label: "Figma", icon: <IconFigma /> },
+  { type: "media", label: "Media", icon: <PhImage size={16} /> },
+  { type: "url",   label: "URL",   icon: <PhLink size={16} /> },
+  { type: "figma", label: "Figma", icon: <PhFigma size={16} /> },
 ];
 
 export function Navbar() {
@@ -319,7 +252,7 @@ export function Navbar() {
               style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
               aria-label="Toggle theme"
             >
-              {theme === "dark" ? <MoonIcon /> : <SunIcon />}
+              {theme === "dark" ? <PhMoon size={18} /> : <PhSun size={18} />}
             </button>
 
             {/* Avatar + profile dropdown */}
@@ -340,23 +273,20 @@ export function Navbar() {
                     <div className="p-1.5">
                       {user?.id && (
                         <DropdownItem
-                          icon={<IconProfile />}
+                          icon={<PhUser size={16} />}
                           label="Profile"
                           onClick={() => { setProfileOpen(false); router.push(`/profile/${user.id}`); }}
                         />
                       )}
-                    </div>
-                    <div className="border-t border-[var(--border)] p-1.5">
                       <DropdownItem
-                        icon={<IconLightbulb />}
+                        icon={<PhLightbulb size={16} />}
                         label="Feature Requests"
                         onClick={() => { setProfileOpen(false); router.push("/feature-requests"); }}
                       />
                       <DropdownItem
-                        icon={<IconSignOut />}
+                        icon={<PhSignOut size={16} />}
                         label="Sign out"
                         onClick={handleSignOut}
-                        danger
                       />
                     </div>
                   </DropdownCard>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
+import { Image as PhImage, Link as PhLink, FigmaLogo as PhFigma } from "@phosphor-icons/react";
 import Link from "next/link";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArtifactCard } from "@/components/projects/ArtifactCard";
@@ -127,27 +128,9 @@ function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number
 // ── Upload dropdown ────────────────────────────────────────────────────────────
 
 const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.JSX.Element }[] = [
-  { type: "media", label: "Media", icon: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-      <polyline points="21 15 16 10 5 21"/>
-    </svg>
-  )},
-  { type: "url", label: "URL", icon: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-    </svg>
-  )},
-  { type: "figma", label: "Figma", icon: (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"/>
-      <path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"/>
-      <path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-      <path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 0 1-7 0z"/>
-      <path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"/>
-    </svg>
-  )},
+  { type: "media", label: "Media", icon: <PhImage size={16} /> },
+  { type: "url",   label: "URL",   icon: <PhLink size={16} /> },
+  { type: "figma", label: "Figma", icon: <PhFigma size={16} /> },
 ];
 
 function AddButton({ onPick }: { onPick: (type: UploadType) => void }) {

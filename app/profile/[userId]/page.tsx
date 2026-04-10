@@ -3,8 +3,8 @@
 import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { ProfileCard } from "@/components/profile/ProfileCard";
+import { ArtifactCard } from "@/components/projects/ArtifactCard";
 import { ArtifactLightbox } from "@/components/explore/ArtifactLightbox";
-import { timeAgo } from "@/lib/utils";
 
 interface Artifact {
   id: string;
@@ -19,6 +19,7 @@ interface Artifact {
   figmaUrl?: string | null;
   screenSize?: string | null;
   isSharedToFeed: boolean;
+  isShareable: boolean;
   createdAt: string;
   myReactions?: string[];
   reactionCounts?: Record<string, number>;
@@ -34,13 +35,6 @@ interface ProfileUser {
   role?: string | null;
   team?: string | null;
   bio?: string | null;
-}
-
-function getPreviewUrl(a: Artifact): string | null {
-  if (a.type === "MEDIA" && a.mediaUrl) return a.mediaUrl;
-  if (a.type === "FIGMA" && a.figmaPreviewUrl) return a.figmaPreviewUrl;
-  if (a.type === "URL" && a.screenshotUrl) return a.screenshotUrl;
-  return null;
 }
 
 export default function ProfilePage({ params }: { params: Promise<{ userId: string }> }) {
@@ -97,7 +91,7 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-5xl px-5 py-10">
+      <div className="mx-auto w-full max-w-5xl px-5 pt-24 pb-10">
         <div className="flex items-start gap-5 mb-10">
           <div className="w-16 h-16 rounded-full bg-[var(--surface)] animate-pulse" />
           <div className="flex flex-col gap-2 flex-1">
@@ -105,9 +99,10 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
             <div className="h-4 w-32 rounded-lg bg-[var(--surface)] animate-pulse" />
           </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="columns-3 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-[var(--surface)] border border-[var(--border)] aspect-[4/3] animate-pulse" />
+            <div key={i} className="break-inside-avoid mb-3 rounded-2xl bg-[var(--surface-2)] animate-pulse"
+              style={{ height: [220, 300, 180, 260, 240, 200, 280, 220][i] }} />
           ))}
         </div>
       </div>
@@ -125,51 +120,28 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
 
   return (
     <>
-      <div className="mx-auto w-full max-w-5xl px-5 py-10">
+      <div className="mx-auto w-full max-w-5xl px-5 pt-24 pb-10">
         {/* Profile header */}
         <div className="mb-10">
           <ProfileCard user={user} artifactCount={artifacts.length} />
         </div>
 
-        {/* Artifacts masonry-style grid */}
+        {/* Artifacts masonry grid */}
         {artifacts.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20 text-center">
             <div className="text-4xl opacity-30">🌿</div>
             <p className="text-sm text-[var(--muted)]">No shared artifacts yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {artifacts.map((artifact) => {
-              const previewUrl = getPreviewUrl(artifact);
-              return (
-                <div
-                  key={artifact.id}
-                  className="group rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden cursor-pointer hover:border-[var(--muted)] transition-all duration-200"
+          <div className="columns-3 gap-3">
+            {artifacts.map((artifact) => (
+              <div key={artifact.id} className="break-inside-avoid mb-3">
+                <ArtifactCard
+                  artifact={artifact}
                   onClick={() => openLightbox(artifact)}
-                >
-                  <div className="relative aspect-[4/3] bg-[var(--surface-2)] overflow-hidden">
-                    {previewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={previewUrl}
-                        alt={artifact.name}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <span className="text-4xl opacity-20">
-                          {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="px-3 py-2.5">
-                    <p className="text-sm font-medium leading-snug line-clamp-1">{artifact.name}</p>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">{timeAgo(artifact.createdAt)}</p>
-                  </div>
-                </div>
-              );
-            })}
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>

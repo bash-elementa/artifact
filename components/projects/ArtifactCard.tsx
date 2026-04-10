@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, timeAgo } from "@/lib/utils";
+import { DotsThree } from "@phosphor-icons/react";
 
 interface Artifact {
   id: string;
@@ -266,34 +267,42 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             </button>
           )}
 
-          <div className="relative">
+          {(onDelete || onRename) && <div className="relative">
             <button
               onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
-              className="rounded-full bg-black/60 backdrop-blur-sm px-2 py-1 text-white text-xs hover:bg-black/80"
+              className="rounded-full bg-black/60 backdrop-blur-sm p-1.5 text-white hover:bg-black/80 flex items-center justify-center"
             >
-              ···
+              <DotsThree size={16} weight="bold" />
             </button>
-            {menuOpen && (
-              <div
-                className="absolute top-full right-0 mt-1 w-36 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl z-10 overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setRenameOpen(true); }}
-                  className="w-full px-3 py-2.5 text-left text-xs text-[var(--foreground)] hover:bg-[var(--surface-2)]"
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.96, y: -4 }}
+                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  className="absolute right-0 top-full mt-2 rounded-2xl shadow-xl z-50 overflow-hidden"
+                  style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 160 }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Rename
-                </button>
-                <div className="h-px bg-[var(--border)] mx-2" />
-                <button
-                  onClick={handleDelete}
-                  className="w-full px-3 py-2.5 text-left text-xs text-red-400 hover:bg-[var(--surface-2)]"
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
+                  <div className="p-1.5">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setRenameOpen(true); }}
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                    >
+                      Rename
+                    </button>
+                    <button
+                      onClick={handleDelete}
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>}
         </div>
       </div>
 
