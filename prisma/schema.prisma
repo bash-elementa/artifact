@@ -13,7 +13,7 @@ model User {
   name               String?
   image              String?
   role               String?
-  team               Team?
+  team               String?
   bio                String?
   storageBytes       BigInt               @default(0)
   createdAt          DateTime             @default(now())
@@ -43,14 +43,6 @@ model FeatureRequest {
   updatedAt   DateTime             @updatedAt
 }
 
-enum Team {
-  XD
-  ENGINEERING
-  PRODUCT
-  MARKETING
-  STUDIO
-  OPERATIONS
-}
 
 model Project {
   id           String               @id @default(cuid())
