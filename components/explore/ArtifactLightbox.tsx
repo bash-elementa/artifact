@@ -215,7 +215,128 @@ function MediaLightbox({
   );
 }
 
-// ── Container lightbox (URL / FIGMA / INSPO) ─────────────────────────────────
+// ── URL lightbox — floating chrome bar + iframe, same pattern as MediaLightbox ─
+
+function UrlLightbox({
+  artifact,
+  onClose,
+  onPrev,
+  onNext,
+  onReact,
+}: {
+  artifact: LightboxArtifact;
+  onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  onReact?: (artifactId: string, emoji: string, action: "added" | "removed") => void;
+}) {
+  // Reserve space for bottom pill (~64px) + some breathing room
+  const BOTTOM_RESERVED = 80;
+  const TOP_RESERVED = 32;
+  const SIDE_PADDING = 48;
+
+  // We'll pass maxWidth/maxHeight to UrlRenderer so it scales correctly
+  const maxWidth = typeof window !== "undefined"
+    ? Math.min(880, window.innerWidth - SIDE_PADDING * 2)
+    : 880;
+  const maxHeight = typeof window !== "undefined"
+    ? window.innerHeight - BOTTOM_RESERVED - TOP_RESERVED
+    : 700;
+
+  return (
+    <>
+      {/* Dark backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl"
+        onClick={onClose}
+      />
+
+      {/* Content — centered, no glass container */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+        style={{ paddingBottom: BOTTOM_RESERVED, paddingTop: TOP_RESERVED }}
+      >
+        <div
+          className="pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <UrlRenderer
+            url={artifact.websiteUrl!}
+            screenSize={artifact.screenSize}
+            screenshotUrl={artifact.screenshotUrl}
+            maxWidth={maxWidth}
+            maxHeight={maxHeight}
+          />
+        </div>
+      </motion.div>
+
+      {/* Close */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, delay: 0.05 }}
+        className="fixed top-5 right-5 z-50"
+      >
+        <GlassBtn onClick={onClose} className="w-9 h-9 text-lg">×</GlassBtn>
+      </motion.div>
+
+      {/* Nav arrows */}
+      {onPrev && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed left-5 top-1/2 -translate-y-1/2 z-50"
+        >
+          <GlassBtn onClick={onPrev} className="w-10 h-10 text-base">←</GlassBtn>
+        </motion.div>
+      )}
+      {onNext && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed right-5 top-1/2 -translate-y-1/2 z-50"
+        >
+          <GlassBtn onClick={onNext} className="w-10 h-10 text-base">→</GlassBtn>
+        </motion.div>
+      )}
+
+      {/* Info pill — bottom */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.25, delay: 0.05 }}
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 glass rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <UserAvatar user={artifact.user} />
+        <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
+        {artifact.isSharedToFeed && (
+          <ReactionBar
+            artifactId={artifact.id}
+            reactionCounts={artifact.reactionCounts ?? {}}
+            myReactions={artifact.myReactions ?? []}
+            onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
+          />
+        )}
+        <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
+      </motion.div>
+    </>
+  );
+}
+
+// ── Container lightbox (FIGMA / INSPO) ───────────────────────────────────────
 
 function ContainerLightbox({
   artifact,
@@ -254,16 +375,6 @@ function ContainerLightbox({
         <div className="flex items-center justify-between px-5 py-3 shrink-0 border-b border-white/[0.06]">
           <UserAvatar user={artifact.user} />
           <div className="flex items-center gap-2">
-            {artifact.type === "URL" && artifact.websiteUrl && (
-              <a
-                href={artifact.websiteUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full glass px-3 py-1.5 text-xs text-white/60 hover:text-white transition-colors"
-              >
-                Open ↗
-              </a>
-            )}
             {artifact.type === "FIGMA" && artifact.figmaUrl && (
               <a
                 href={artifact.figmaUrl}
@@ -298,13 +409,6 @@ function ContainerLightbox({
           )}
 
           <div className="w-full h-full flex items-center justify-center">
-            {artifact.type === "URL" && artifact.websiteUrl && (
-              <UrlRenderer
-                url={artifact.websiteUrl}
-                screenSize={artifact.screenSize}
-                screenshotUrl={artifact.screenshotUrl}
-              />
-            )}
             {artifact.type === "FIGMA" && artifact.figmaUrl && (
               <FigmaRenderer
                 figmaUrl={artifact.figmaUrl}
@@ -367,12 +471,22 @@ export function ArtifactLightbox({ artifact, onClose, onPrev, onNext, onReact }:
   }, [artifact, onClose, onPrev, onNext]);
 
   const isMedia = artifact?.type === "MEDIA" && !!artifact.mediaUrl;
+  const isUrl   = artifact?.type === "URL"   && !!artifact.websiteUrl;
 
   return (
     <AnimatePresence>
       {artifact && (
         isMedia ? (
           <MediaLightbox
+            key={artifact.id}
+            artifact={artifact}
+            onClose={onClose}
+            onPrev={onPrev}
+            onNext={onNext}
+            onReact={onReact}
+          />
+        ) : isUrl ? (
+          <UrlLightbox
             key={artifact.id}
             artifact={artifact}
             onClose={onClose}

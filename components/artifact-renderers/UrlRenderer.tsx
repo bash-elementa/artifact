@@ -19,13 +19,17 @@ interface UrlRendererProps {
   url: string;
   screenSize?: string | null;
   screenshotUrl?: string | null;
+  /** Max pixel width the render can occupy (default 880) */
+  maxWidth?: number;
+  /** Max pixel height the render can occupy — used to fit within a lightbox */
+  maxHeight?: number;
 }
 
 function proxyUrl(url: string) {
   return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
 
-function truncateUrl(url: string, max = 48) {
+function truncateUrl(url: string, max = 42) {
   try {
     const u = new URL(url);
     const display = u.hostname + (u.pathname !== "/" ? u.pathname : "");
@@ -35,19 +39,33 @@ function truncateUrl(url: string, max = 48) {
   }
 }
 
-export function UrlRenderer({ url, screenSize = "DESKTOP", screenshotUrl }: UrlRendererProps) {
+export function UrlRenderer({
+  url,
+  screenSize = "DESKTOP",
+  screenshotUrl,
+  maxWidth = 880,
+  maxHeight,
+}: UrlRendererProps) {
   const [activeSize, setActiveSize] = useState(screenSize ?? "DESKTOP");
   const [loaded, setLoaded] = useState(false);
-  const [key, setKey] = useState(0); // used to force iframe reload
+  const [key, setKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const dims = SCREEN_DIMS[activeSize] ?? SCREEN_DIMS.DESKTOP;
 
-  // Scale to fit the available container — max 880px wide
-  const maxW = 880;
-  const scale = Math.min(1, maxW / dims.width);
-  const scaledW = dims.width * scale;
-  const scaledH = dims.height * scale;
+  // Scale to fit width constraint
+  let scale = Math.min(1, maxWidth / dims.width);
+
+  // Also scale to fit height constraint if provided (account for chrome bar ~52px + gap)
+  if (maxHeight) {
+    const CHROME_HEIGHT = 52; // bar 40px + gap 12px
+    const availableH = maxHeight - CHROME_HEIGHT;
+    const scaleForH = availableH / dims.height;
+    scale = Math.min(scale, scaleForH);
+  }
+
+  const scaledW = Math.round(dims.width * scale);
+  const scaledH = Math.round(dims.height * scale);
 
   function reload() {
     setLoaded(false);
@@ -61,14 +79,18 @@ export function UrlRenderer({ url, screenSize = "DESKTOP", screenshotUrl }: UrlR
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full h-full select-none">
+    <div className="flex flex-col gap-3 select-none" style={{ width: scaledW }}>
 
-      {/* ── Browser chrome bar ──────────────────────────────────── */}
+      {/* ── Browser chrome bar — width locked to the render viewport ── */}
       <div
-        className="w-full flex items-center gap-2 rounded-2xl px-3 h-10 shrink-0"
-        style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+        className="flex items-center gap-2 rounded-2xl px-3 h-10 shrink-0"
+        style={{
+          width: scaledW,
+          background: "var(--surface-2)",
+          border: "1px solid var(--border)",
+        }}
       >
-        {/* Size toggle */}
+        {/* Viewport size toggles */}
         <div className="flex items-center gap-0.5 shrink-0">
           {(Object.keys(SCREEN_DIMS) as (keyof typeof SIZE_ICONS)[]).map((s) => {
             const Icon = SIZE_ICONS[s];
@@ -92,9 +114,8 @@ export function UrlRenderer({ url, screenSize = "DESKTOP", screenshotUrl }: UrlR
         {/* Divider */}
         <div className="w-px h-4 bg-[var(--border)] shrink-0" />
 
-        {/* URL display */}
+        {/* URL */}
         <div className="flex-1 flex items-center gap-1.5 min-w-0">
-          {/* Favicon */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(url)}&sz=16`}
@@ -133,7 +154,7 @@ export function UrlRenderer({ url, screenSize = "DESKTOP", screenshotUrl }: UrlR
           width: scaledW,
           height: scaledH,
           border: "1px solid var(--border)",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+          boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
         }}
       >
         {/* Screenshot shown as background while proxy loads */}
@@ -146,7 +167,7 @@ export function UrlRenderer({ url, screenSize = "DESKTOP", screenshotUrl }: UrlR
           />
         )}
 
-        {/* Loading shimmer overlay */}
+        {/* Loading badge */}
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 pointer-events-none">
             <div
