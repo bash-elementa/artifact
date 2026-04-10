@@ -17,52 +17,28 @@ function SignInForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"sign_in" | "sign_up">("sign_in");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam ? (ERROR_MESSAGES[errorParam] ?? "Something went wrong.") : null
   );
-  const [message, setMessage] = useState<string | null>(null);
 
   const supabase = createClient();
 
-  function validateDomain(email: string) {
+  async function handleEmailSignIn(e: React.FormEvent) {
+    e.preventDefault();
     if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
       setError(`Only @${ALLOWED_DOMAIN} email addresses are allowed.`);
-      return false;
+      return;
     }
-    return true;
-  }
-
-  async function handleEmailAuth(e: React.FormEvent) {
-    e.preventDefault();
-    if (!validateDomain(email)) return;
-
     setLoading(true);
     setError(null);
-    setMessage(null);
-
-    if (mode === "sign_in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError(error.message);
-      } else {
-        await fetch("/api/auth/ensure-user", { method: "POST" });
-        window.location.href = "/explore";
-      }
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
     } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) {
-        setError(error.message);
-      } else {
-        setMessage("Check your email for a confirmation link.");
-      }
+      await fetch("/api/auth/ensure-user", { method: "POST" });
+      window.location.href = "/explore";
     }
-
     setLoading(false);
   }
 
@@ -117,7 +93,7 @@ function SignInForm() {
         <div className="flex-1 h-px bg-[var(--border)]" />
       </div>
 
-      <form onSubmit={handleEmailAuth} className="flex flex-col gap-3">
+      <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
         <input
           type="email"
           placeholder={`you@${ALLOWED_DOMAIN}`}
@@ -136,26 +112,15 @@ function SignInForm() {
         />
 
         {error && <p className="text-xs text-red-400">{error}</p>}
-        {message && <p className="text-xs text-green-400">{message}</p>}
 
         <button
           type="submit"
           disabled={loading}
           className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {loading ? "…" : mode === "sign_in" ? "Sign in" : "Create account"}
+          {loading ? "…" : "Sign in"}
         </button>
       </form>
-
-      <p className="text-center text-xs text-[var(--muted)]">
-        {mode === "sign_in" ? "Don't have an account? " : "Already have an account? "}
-        <button
-          onClick={() => { setMode(mode === "sign_in" ? "sign_up" : "sign_in"); setError(null); setMessage(null); }}
-          className="text-[var(--foreground)] underline"
-        >
-          {mode === "sign_in" ? "Sign up" : "Sign in"}
-        </button>
-      </p>
     </div>
   );
 }

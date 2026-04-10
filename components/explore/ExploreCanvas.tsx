@@ -264,7 +264,7 @@ export function ExploreCanvas() {
   // ── View mode toggle ────────────────────────────────────────────────────────
   const ViewToggle = (
     <div
-      className="absolute top-5 right-5 z-10 flex items-center gap-0.5 rounded-2xl p-1"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-0.5 rounded-2xl p-1 shadow-lg"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
       <button
@@ -361,8 +361,6 @@ export function ExploreCanvas() {
   // ── Canvas view (default) ────────────────────────────────────────────────────
   return (
     <>
-      {ViewToggle}
-
       <div
         className="absolute cursor-grab active:cursor-grabbing select-none overflow-hidden"
         style={{ inset: "-10vmin" }}
@@ -405,6 +403,8 @@ export function ExploreCanvas() {
           lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined
         }
       />
+
+      {ViewToggle}
     </>
   );
 }

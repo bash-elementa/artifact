@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Ensure user record exists in DB
-  await prisma.user.upsert({
+  const dbUser = await prisma.user.upsert({
     where: { id: user.id },
     update: { email: user.email },
     create: {
@@ -56,7 +56,13 @@ export async function GET(request: NextRequest) {
       name: user.user_metadata?.full_name ?? user.email.split("@")[0],
       image: user.user_metadata?.avatar_url ?? null,
     },
+    select: { team: true },
   });
+
+  // New users (no team set) go through onboarding first
+  if (!dbUser.team) {
+    return NextResponse.redirect(new URL("/onboarding", origin));
+  }
 
   return NextResponse.redirect(new URL(next, origin));
 }
