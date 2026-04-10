@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { DropdownCard, DropdownItem } from "@/components/ui/Dropdown";
 import { UploadModal, type UploadType } from "@/components/upload/UploadModal";
 import { NewFeatureRequestModal } from "@/components/feature-requests/NewFeatureRequestModal";
 import { createClient } from "@/lib/supabase/client";
@@ -40,40 +41,6 @@ function ArtifactLogo() {
       <path d="M77.2158 1.2002C77.9035 1.20022 78.5271 1.24782 79.0869 1.34375C79.6629 1.42375 80.2795 1.55154 80.9355 1.72754V5.71191C80.4395 5.56791 79.9433 5.45598 79.4473 5.37598C78.9513 5.29598 78.4233 5.25586 77.8633 5.25586C76.8233 5.25587 76.119 5.43219 75.751 5.78418C75.3833 6.1202 75.1992 6.64845 75.1992 7.36816V7.53613H80.5752V11.5674H75.1992V20.0879H69.7031V11.5674H66.9434V7.53613H69.7051C69.7148 6.17563 70.0013 5.03129 70.5674 4.10352C71.1434 3.14359 71.9914 2.42333 73.1113 1.94336C74.2313 1.44739 75.5999 1.2002 77.2158 1.2002Z" fill="currentColor"/>
       <path d="M62.3838 0C63.3437 1.90517e-05 64.1041 0.232308 64.6641 0.696289C65.2398 1.16022 65.5273 1.79207 65.5273 2.5918C65.5273 3.37566 65.2399 3.99989 64.6641 4.46387C64.1041 4.92785 63.3437 5.16014 62.3838 5.16016C61.4558 5.16016 60.7039 4.92782 60.1279 4.46387C59.5519 3.99987 59.2637 3.3758 59.2637 2.5918C59.2637 1.79189 59.552 1.16025 60.1279 0.696289C60.7039 0.232298 61.4558 0 62.3838 0Z" fill="currentColor"/>
     </svg>
-  );
-}
-
-// ── Desktop dropdown helpers ─────────────────────────────────────────────────────
-
-function DropdownCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96, y: -4 }}
-      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-      className={`absolute right-0 top-full mt-2 rounded-2xl shadow-xl overflow-hidden z-50 ${className}`}
-      style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 180 }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-function DropdownItem({ icon, label, onClick, danger = false }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-left rounded-xl",
-        danger
-          ? "text-red-500 hover:bg-[var(--surface-2)]"
-          : "text-[var(--foreground)] hover:bg-[var(--surface-2)]"
-      )}
-    >
-      <span className="text-[var(--muted)]">{icon}</span>
-      {label}
-    </button>
   );
 }
 
@@ -136,15 +103,15 @@ function MobileSheet({
 // ── Navbar ───────────────────────────────────────────────────────────────────────
 
 const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.ReactNode }[] = [
-  { type: "media", label: "Media", icon: <PhImage size={16} /> },
-  { type: "url",   label: "URL",   icon: <PhLink size={16} /> },
-  { type: "figma", label: "Figma", icon: <PhFigma size={16} /> },
+  { type: "media", label: "Media",       icon: <PhImage size={16} /> },
+  { type: "url",   label: "Website URL", icon: <PhLink size={16} /> },
+  { type: "figma", label: "Figma",       icon: <PhFigma size={16} /> },
 ];
 
 const MOBILE_UPLOAD_OPTIONS: { type: UploadType; label: string; description: string; icon: React.ReactNode }[] = [
-  { type: "media", label: "Media", description: "Photos and videos", icon: <PhImage size={24} /> },
-  { type: "url",   label: "URL",   description: "Website or link",   icon: <PhLink size={24} /> },
-  { type: "figma", label: "Figma", description: "Design file",       icon: <PhFigma size={24} /> },
+  { type: "media", label: "Media",       description: "Photos and videos", icon: <PhImage size={24} /> },
+  { type: "url",   label: "Website URL", description: "Website or link",   icon: <PhLink size={24} /> },
+  { type: "figma", label: "Figma",       description: "Design file",       icon: <PhFigma size={24} /> },
 ];
 
 const NAV_TABS = [
@@ -317,7 +284,7 @@ export function Navbar() {
               </button>
               <AnimatePresence>
                 {uploadDropdownOpen && (
-                  <DropdownCard className="w-44">
+                  <DropdownCard className="right-0 w-44">
                     <div className="p-1.5">
                       {UPLOAD_OPTIONS.map((opt) => (
                         <DropdownItem
@@ -355,7 +322,7 @@ export function Navbar() {
 
               <AnimatePresence>
                 {profileOpen && (
-                  <DropdownCard className="w-52">
+                  <DropdownCard className="right-0 w-52">
                     <div className="p-1.5">
                       {user?.id && (
                         <DropdownItem

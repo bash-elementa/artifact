@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
 import { Image as PhImage, Link as PhLink, FigmaLogo as PhFigma } from "@phosphor-icons/react";
+import { DropdownCard, DropdownItem } from "@/components/ui/Dropdown";
 import Link from "next/link";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArtifactCard } from "@/components/projects/ArtifactCard";
@@ -128,9 +129,9 @@ function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number
 // ── Upload dropdown ────────────────────────────────────────────────────────────
 
 const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.JSX.Element }[] = [
-  { type: "media", label: "Media", icon: <PhImage size={16} /> },
-  { type: "url",   label: "URL",   icon: <PhLink size={16} /> },
-  { type: "figma", label: "Figma", icon: <PhFigma size={16} /> },
+  { type: "media", label: "Media",       icon: <PhImage size={16} /> },
+  { type: "url",   label: "Website URL", icon: <PhLink size={16} /> },
+  { type: "figma", label: "Figma",       icon: <PhFigma size={16} /> },
 ];
 
 function AddButton({ onPick }: { onPick: (type: UploadType) => void }) {
@@ -157,27 +158,18 @@ function AddButton({ onPick }: { onPick: (type: UploadType) => void }) {
       </button>
       <AnimatePresence>
         {open && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: -4 }}
-            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="absolute left-1/2 -translate-x-1/2 top-full mt-2 rounded-2xl shadow-xl overflow-hidden z-50"
-            style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 180 }}
-          >
+          <DropdownCard className="left-1/2 -translate-x-1/2">
             <div className="p-1.5">
               {UPLOAD_OPTIONS.map((opt) => (
-                <button
+                <DropdownItem
                   key={opt.type}
+                  icon={opt.icon}
+                  label={opt.label}
                   onClick={() => { setOpen(false); onPick(opt.type); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors text-left"
-                >
-                  <span className="text-[var(--muted)]">{opt.icon}</span>
-                  {opt.label}
-                </button>
+                />
               ))}
             </div>
-          </motion.div>
+          </DropdownCard>
         )}
       </AnimatePresence>
     </div>
