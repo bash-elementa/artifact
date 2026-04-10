@@ -10,6 +10,7 @@ import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { SquaresFour, Compass } from "@phosphor-icons/react";
 import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
+import { ReactionBar } from "@/components/reactions/ReactionBar";
 import { LoadingDots } from "@/components/ui/LoadingDots";
 
 interface FeedArtifact {
@@ -402,17 +403,28 @@ export function ExploreCanvas() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-                    <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 w-fit max-w-full overflow-hidden">
-                      {artifact.user.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={artifact.user.image} alt={artifact.user.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-                          <span className="text-[9px] font-bold text-white">{artifact.user.name.charAt(0).toUpperCase()}</span>
-                        </div>
-                      )}
-                      <span className="text-xs font-medium text-white truncate">{artifact.user.name}</span>
+                  <div className="absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {/* User pill */}
+                      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 flex-1 overflow-hidden">
+                        {artifact.user.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={artifact.user.image} alt={artifact.user.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                            <span className="text-[9px] font-bold text-white">{artifact.user.name.charAt(0).toUpperCase()}</span>
+                          </div>
+                        )}
+                        <span className="text-xs font-medium text-white truncate">{artifact.user.name}</span>
+                      </div>
+                      {/* Reactions */}
+                      <ReactionBar
+                        artifactId={artifact.id}
+                        reactionCounts={artifact.reactionCounts}
+                        myReactions={artifact.myReactions}
+                        forceLight
+                        onReact={(emoji, action) => handleReact(artifact.id, emoji, action)}
+                      />
                     </div>
                   </div>
                 </div>
