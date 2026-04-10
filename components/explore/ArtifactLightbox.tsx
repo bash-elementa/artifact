@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
 import { UrlRenderer } from "@/components/artifact-renderers/UrlRenderer";
 import { FigmaRenderer } from "@/components/artifact-renderers/FigmaRenderer";
 import { MediaRenderer } from "@/components/artifact-renderers/MediaRenderer";
@@ -202,7 +203,7 @@ function MediaLightbox({
           exit={{ opacity: 0 }}
           className="fixed left-5 top-1/2 -translate-y-1/2 z-50"
         >
-          <GlassBtn onClick={onPrev} className="w-10 h-10 text-base">←</GlassBtn>
+          <GlassBtn onClick={onPrev} className="w-10 h-10"><ArrowLeft size={18} /></GlassBtn>
         </motion.div>
       )}
       {onNext && (
@@ -212,7 +213,7 @@ function MediaLightbox({
           exit={{ opacity: 0 }}
           className="fixed right-5 top-1/2 -translate-y-1/2 z-50"
         >
-          <GlassBtn onClick={onNext} className="w-10 h-10 text-base">→</GlassBtn>
+          <GlassBtn onClick={onNext} className="w-10 h-10"><ArrowRight size={18} /></GlassBtn>
         </motion.div>
       )}
 
@@ -326,7 +327,7 @@ function UrlLightbox({
           exit={{ opacity: 0 }}
           className="fixed left-5 top-1/2 -translate-y-1/2 z-50"
         >
-          <GlassBtn onClick={onPrev} className="w-10 h-10 text-base">←</GlassBtn>
+          <GlassBtn onClick={onPrev} className="w-10 h-10"><ArrowLeft size={18} /></GlassBtn>
         </motion.div>
       )}
       {onNext && (
@@ -336,7 +337,7 @@ function UrlLightbox({
           exit={{ opacity: 0 }}
           className="fixed right-5 top-1/2 -translate-y-1/2 z-50"
         >
-          <GlassBtn onClick={onNext} className="w-10 h-10 text-base">→</GlassBtn>
+          <GlassBtn onClick={onNext} className="w-10 h-10"><ArrowRight size={18} /></GlassBtn>
         </motion.div>
       )}
 

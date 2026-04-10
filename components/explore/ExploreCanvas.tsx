@@ -406,7 +406,7 @@ export function ExploreCanvas() {
                   <div className="absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
                     <div className="flex items-center gap-1.5 min-w-0">
                       {/* User pill */}
-                      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 flex-1 overflow-hidden">
+                      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 shrink overflow-hidden">
                         {artifact.user.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={artifact.user.image} alt={artifact.user.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
