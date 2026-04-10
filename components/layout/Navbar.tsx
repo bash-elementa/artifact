@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { UploadModal, type UploadType } from "@/components/upload/UploadModal";
+import { NewFeatureRequestModal } from "@/components/feature-requests/NewFeatureRequestModal";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -98,6 +99,15 @@ function IconSignOut() {
   );
 }
 
+function IconLightbulb() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21h6"/>
+      <path d="M12 3a6 6 0 0 1 6 6c0 2.4-1.4 4.5-3.5 5.6L14 17H10l-.5-2.4C7.4 13.5 6 11.4 6 9a6 6 0 0 1 6-6z"/>
+    </svg>
+  );
+}
+
 // ── Dropdown card shell ────────────────────────────────────────────────────────
 
 function DropdownCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -150,6 +160,10 @@ export function Navbar() {
   const [uploadDropdownOpen, setUploadDropdownOpen] = useState(false);
   const [uploadType, setUploadType] = useState<UploadType | null>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
+
+  // Feature request button
+  const [featureModalOpen, setFeatureModalOpen] = useState(false);
+  const [featureThanks, setFeatureThanks] = useState(false);
 
   // Profile dropdown
   const [profileOpen, setProfileOpen] = useState(false);
@@ -207,6 +221,11 @@ export function Navbar() {
     router.push("/auth/sign-in");
   }
 
+  function handleFeatureRequestSuccess() {
+    setFeatureThanks(true);
+    setTimeout(() => setFeatureThanks(false), 2000);
+  }
+
   const initials = user?.email
     ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
     : "?";
@@ -258,6 +277,14 @@ export function Navbar() {
 
           {/* Right: Upload dropdown + Theme + Avatar */}
           <div className="flex items-center gap-3 shrink-0">
+
+            {/* Request a feature */}
+            <button
+              onClick={() => setFeatureModalOpen(true)}
+              className="rounded-2xl border border-[var(--border)] text-[var(--foreground)] px-4 py-2 text-sm font-medium transition-colors hover:bg-[var(--surface-2)]"
+            >
+              {featureThanks ? "Thanks!" : "Request a feature"}
+            </button>
 
             {/* Upload — click opens dropdown */}
             <div className="relative" ref={uploadRef}>
@@ -321,6 +348,11 @@ export function Navbar() {
                     </div>
                     <div className="border-t border-[var(--border)] p-1.5">
                       <DropdownItem
+                        icon={<IconLightbulb />}
+                        label="Feature Requests"
+                        onClick={() => { setProfileOpen(false); router.push("/feature-requests"); }}
+                      />
+                      <DropdownItem
                         icon={<IconSignOut />}
                         label="Sign out"
                         onClick={handleSignOut}
@@ -344,6 +376,13 @@ export function Navbar() {
           onClose={closeUploadModal}
         />
       )}
+
+      {/* Feature request modal */}
+      <NewFeatureRequestModal
+        open={featureModalOpen}
+        onClose={() => setFeatureModalOpen(false)}
+        onSuccess={handleFeatureRequestSuccess}
+      />
     </>
   );
 }

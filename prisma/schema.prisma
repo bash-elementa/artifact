@@ -21,6 +21,26 @@ model User {
   projects           Project[]
   reactions          Reaction[]
   contributedProjects ProjectContributor[]
+  featureRequests    FeatureRequest[]
+}
+
+enum FeatureRequestStatus {
+  NEW
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  ARCHIVED
+}
+
+model FeatureRequest {
+  id          String               @id @default(cuid())
+  title       String
+  description String
+  status      FeatureRequestStatus @default(NEW)
+  userId      String
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 }
 
 enum Team {
