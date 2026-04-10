@@ -123,6 +123,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [dbProfile, setDbProfile] = useState<{ role: string | null; team: string | null } | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   // Desktop upload dropdown
@@ -153,6 +154,8 @@ export function Navbar() {
           .then((profile) => {
             if (profile && !profile.team) {
               window.location.href = "/onboarding";
+            } else if (profile) {
+              setDbProfile({ role: profile.role ?? null, team: profile.team ?? null });
             }
           })
           .catch(() => {});
@@ -336,13 +339,35 @@ export function Navbar() {
 
               <AnimatePresence>
                 {profileOpen && (
-                  <DropdownCard className="right-0 w-52">
+                  <DropdownCard className="right-0 w-64">
+                    {/* Profile header */}
+                    <div className="px-4 pt-4 pb-3 flex flex-col items-center text-center gap-2" style={{ borderBottom: "1px solid var(--border)" }}>
+                      <div
+                        className="rounded-full overflow-hidden flex items-center justify-center font-semibold text-[var(--muted)] shrink-0"
+                        style={{ width: 56, height: 56, background: "var(--surface-2)", border: "2px solid var(--border)" }}
+                      >
+                        {avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-lg font-bold">{initials}</span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm text-[var(--foreground)] leading-tight">{displayName}</p>
+                        {(dbProfile?.role || dbProfile?.team) && (
+                          <p className="text-xs text-[var(--muted)] mt-0.5">
+                            {[dbProfile.role, dbProfile.team].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     <div className="p-1.5">
                       {user?.id && (
                         <DropdownItem
                           icon={<PhUser size={16} />}
-                          label="Profile"
-                          onClick={() => { setProfileOpen(false); router.push(`/profile/${user.id}`); }}
+                          label="View profile"
+                          onClick={() => { setProfileOpen(false); router.push(`/users/${user.id}`); }}
                         />
                       )}
                       <DropdownItem
@@ -447,11 +472,25 @@ export function Navbar() {
         </div>
 
         {/* User info */}
-        <div className="px-5 pt-1 pb-5 flex items-center gap-3.5">
-          <Avatar size="lg" />
+        <div className="px-5 pt-2 pb-5 flex flex-col items-center text-center gap-2.5">
+          <div
+            className="rounded-full overflow-hidden flex items-center justify-center font-semibold text-[var(--muted)] shrink-0"
+            style={{ width: 72, height: 72, background: "var(--surface-2)", border: "2px solid var(--border)" }}
+          >
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-bold text-[var(--foreground)]">{initials}</span>
+            )}
+          </div>
           <div>
             <p className="font-semibold text-[var(--foreground)]">{displayName}</p>
-            <p className="text-sm text-[var(--muted)]">Active</p>
+            {(dbProfile?.role || dbProfile?.team) && (
+              <p className="text-sm text-[var(--muted)] mt-0.5">
+                {[dbProfile.role, dbProfile.team].filter(Boolean).join(" · ")}
+              </p>
+            )}
           </div>
         </div>
 
@@ -484,7 +523,7 @@ export function Navbar() {
         <div className="px-3 pb-2">
           {user?.id && (
             <button
-              onClick={() => { setMobileProfileOpen(false); router.push(`/profile/${user.id}`); }}
+              onClick={() => { setMobileProfileOpen(false); router.push(`/users/${user.id}`); }}
               className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl text-left"
             >
               <span className="text-[var(--muted)]"><PhUser size={18} /></span>

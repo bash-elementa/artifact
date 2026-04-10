@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Link from "next/link";
 import {
   TransformWrapper,
   TransformComponent,
@@ -228,13 +229,33 @@ export function ExploreCanvas() {
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [viewMode, setViewMode] = useState<"canvas" | "grid">("canvas");
-  const [gridColumns, setGridColumns] = useState(4);
+  const [viewMode, setViewMode] = useState<"canvas" | "grid">(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("explore-view-mode");
+      if (stored === "grid" || stored === "canvas") return stored;
+    }
+    return "canvas";
+  });
+  const [gridColumns, setGridColumns] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = parseInt(localStorage.getItem("explore-grid-columns") ?? "", 10);
+      if (stored >= 2 && stored <= 6) return stored;
+    }
+    return 4;
+  });
   // Always derive lightbox artifact from live artifacts array so reactions stay in sync
   const lightboxArtifact = lightboxOpen ? (artifacts[lightboxIndex] ?? null) : null;
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transformRef = useRef<any>(null);
+
+  useEffect(() => {
+    localStorage.setItem("explore-view-mode", viewMode);
+  }, [viewMode]);
+
+  useEffect(() => {
+    localStorage.setItem("explore-grid-columns", String(gridColumns));
+  }, [gridColumns]);
 
   useEffect(() => {
     fetch(`/api/feed?seed=${sessionSeed.current}`)
@@ -406,7 +427,12 @@ export function ExploreCanvas() {
                   <div className="absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
                     <div className="flex items-center gap-1.5 min-w-0">
                       {/* User pill */}
-                      <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 shrink overflow-hidden">
+                      <Link
+                        href={`/users/${artifact.user.id}`}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 shrink overflow-hidden hover:bg-black/70 transition-colors"
+                      >
                         {artifact.user.image ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={artifact.user.image} alt={artifact.user.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
@@ -416,7 +442,7 @@ export function ExploreCanvas() {
                           </div>
                         )}
                         <span className="text-xs font-medium text-white truncate">{artifact.user.name}</span>
-                      </div>
+                      </Link>
                       {/* Reactions */}
                       <ReactionBar
                         artifactId={artifact.id}
