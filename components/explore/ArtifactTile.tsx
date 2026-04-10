@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -190,8 +191,13 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
         <div className="absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
           {/* Single row: user pill + reactions */}
           <div className="flex items-center gap-1.5 min-w-0">
-            {/* User pill — shrinks and truncates for long names */}
-            <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 flex-1 overflow-hidden">
+            {/* User pill — links to profile, shrinks and truncates for long names */}
+            <Link
+              href={`/users/${artifact.user.id}`}
+              onMouseDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 flex-1 overflow-hidden hover:bg-black/70 transition-colors"
+            >
               {artifact.user.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -205,7 +211,7 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
                 </div>
               )}
               <span className="text-xs font-medium text-white truncate">{artifact.user.name}</span>
-            </div>
+            </Link>
 
             {/* Reaction buttons — fixed width, never shrink */}
             {EMOJIS.map((emoji) => {

@@ -83,6 +83,9 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
           type="url"
           className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] border border-[var(--border)] focus:outline-none focus:border-[var(--muted)]"
         />
+        <p className="text-xs text-[var(--muted)] opacity-70">
+          ⚠︎ Not all websites can be previewed — some block embedding.
+        </p>
       </div>
 
       <div className="flex flex-col gap-1.5">

@@ -6,6 +6,7 @@ import {
   TransformComponent,
   useTransformEffect,
 } from "react-zoom-pan-pinch";
+import { SquaresFour, Compass } from "@phosphor-icons/react";
 import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
 import { LoadingDots } from "@/components/ui/LoadingDots";
@@ -165,6 +166,7 @@ export function ExploreCanvas() {
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<"canvas" | "grid">("canvas");
   // Always derive lightbox artifact from live artifacts array so reactions stay in sync
   const lightboxArtifact = lightboxOpen ? (artifacts[lightboxIndex] ?? null) : null;
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
@@ -259,8 +261,108 @@ export function ExploreCanvas() {
     );
   }
 
+  // ── View mode toggle ────────────────────────────────────────────────────────
+  const ViewToggle = (
+    <div
+      className="absolute top-5 right-5 z-10 flex items-center gap-0.5 rounded-2xl p-1"
+      style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+    >
+      <button
+        onClick={() => setViewMode("canvas")}
+        title="Infinite canvas"
+        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+          viewMode === "canvas"
+            ? "bg-[var(--foreground)] text-[var(--background)]"
+            : "text-[var(--muted)] hover:text-[var(--foreground)]"
+        }`}
+      >
+        <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
+      </button>
+      <button
+        onClick={() => setViewMode("grid")}
+        title="Grid"
+        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+          viewMode === "grid"
+            ? "bg-[var(--foreground)] text-[var(--background)]"
+            : "text-[var(--muted)] hover:text-[var(--foreground)]"
+        }`}
+      >
+        <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
+      </button>
+    </div>
+  );
+
+  // ── Grid view ────────────────────────────────────────────────────────────────
+  if (viewMode === "grid") {
+    return (
+      <>
+        {ViewToggle}
+        <div className="w-full h-full overflow-y-auto px-6 pt-6 pb-8" style={{ columnCount: 4, columnGap: 12 }}>
+          {artifacts.map((artifact) => {
+            const purl = previewUrl(artifact);
+            const isVideo =
+              artifact.mediaMimeType?.startsWith("video/") ||
+              (!!artifact.mediaUrl && artifact.mediaUrl.toLowerCase().includes("videodelivery.net"));
+
+            return (
+              <div
+                key={artifact.id}
+                className="break-inside-avoid mb-3 group cursor-pointer rounded-3xl overflow-hidden relative bg-[var(--surface-2)]"
+                style={{ minHeight: 120 }}
+                onClick={() => openLightbox(artifact)}
+              >
+                {purl ? (
+                  isVideo ? (
+                    <video src={purl} autoPlay muted loop playsInline className="w-full object-cover" />
+                  ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={purl} alt={artifact.name} className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90" />
+                  )
+                ) : (
+                  <div className="w-full aspect-[4/3] flex items-center justify-center">
+                    <span className="text-4xl opacity-20">
+                      {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
+                    </span>
+                  </div>
+                )}
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 flex-1 overflow-hidden">
+                      {artifact.user.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={artifact.user.image} alt={artifact.user.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                          <span className="text-[9px] font-bold text-white">{artifact.user.name.charAt(0).toUpperCase()}</span>
+                        </div>
+                      )}
+                      <span className="text-xs font-medium text-white truncate">{artifact.user.name}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <ArtifactLightbox
+          artifact={lightboxArtifact}
+          onClose={() => setLightboxOpen(false)}
+          onReact={handleReact}
+          onPrev={lightboxIndex > 0 ? () => navigateLightbox(-1) : undefined}
+          onNext={lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined}
+        />
+      </>
+    );
+  }
+
+  // ── Canvas view (default) ────────────────────────────────────────────────────
   return (
     <>
+      {ViewToggle}
+
       <div
         className="absolute cursor-grab active:cursor-grabbing select-none overflow-hidden"
         style={{ inset: "-10vmin" }}

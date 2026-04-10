@@ -30,6 +30,7 @@ interface ArtifactCardProps {
   onShareToggle?: (id: string, shared: boolean) => void;
   onDelete?: (id: string) => void;
   onRename?: (id: string, name: string, description: string | null) => void;
+  onMove?: (id: string, projectId: string) => void;
 }
 
 function RenameModal({
@@ -121,6 +122,90 @@ function RenameModal({
   );
 }
 
+function MoveModal({
+  artifactId,
+  currentProjectId,
+  onClose,
+  onMoved,
+}: {
+  artifactId: string;
+  currentProjectId?: string | null;
+  onClose: () => void;
+  onMoved: (projectId: string) => void;
+}) {
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/projects")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data)) setProjects(data.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  async function handleMove(projectId: string) {
+    setSaving(true);
+    const res = await fetch(`/api/artifacts/${artifactId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId }),
+    });
+    if (res.ok) onMoved(projectId);
+    setSaving(false);
+    onClose();
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-sm glass rounded-2xl p-6 flex flex-col gap-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-base font-semibold text-[var(--foreground)]">Move to project</h2>
+
+        {loading ? (
+          <p className="text-sm text-[var(--muted)]">Loading projects…</p>
+        ) : projects.length === 0 ? (
+          <p className="text-sm text-[var(--muted)]">No other projects found.</p>
+        ) : (
+          <div className="flex flex-col gap-1">
+            {projects
+              .filter((p) => p.id !== currentProjectId)
+              .map((p) => (
+                <button
+                  key={p.id}
+                  disabled={saving}
+                  onClick={() => handleMove(p.id)}
+                  className="w-full text-left rounded-xl px-4 py-3 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors disabled:opacity-40"
+                >
+                  {p.name}
+                </button>
+              ))}
+          </div>
+        )}
+
+        <button
+          onClick={onClose}
+          className="w-full rounded-xl border border-[var(--border)] py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+        >
+          Cancel
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 function looksLikeVideo(url: string): boolean {
   const lower = url.toLowerCase().split("?")[0];
   return (
@@ -150,11 +235,12 @@ function getPreviewUrl(artifact: Artifact): string | null {
   return null;
 }
 
-export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRename }: ArtifactCardProps) {
+export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRename, onMove }: ArtifactCardProps) {
   const [sharing, setSharing] = useState(false);
   const [isShared, setIsShared] = useState(artifact.isSharedToFeed);
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
   const [displayName, setDisplayName] = useState(artifact.name);
 
   const previewUrl = getPreviewUrl(artifact);
@@ -293,6 +379,12 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                       Rename
                     </button>
                     <button
+                      onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setMoveOpen(true); }}
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                    >
+                      Move to project
+                    </button>
+                    <button
                       onClick={handleDelete}
                       className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
                     >
@@ -314,6 +406,20 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
           artifact={{ ...artifact, name: displayName }}
           onClose={() => setRenameOpen(false)}
           onSave={handleSaveRename}
+        />
+      )}
+    </AnimatePresence>
+
+    <AnimatePresence>
+      {moveOpen && (
+        <MoveModal
+          artifactId={artifact.id}
+          currentProjectId={(artifact as Artifact & { projectId?: string }).projectId}
+          onClose={() => setMoveOpen(false)}
+          onMoved={(projectId) => {
+            onMove?.(artifact.id, projectId);
+            onDelete?.(artifact.id);
+          }}
         />
       )}
     </AnimatePresence>
