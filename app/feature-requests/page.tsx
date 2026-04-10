@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { NewFeatureRequestModal, type FeatureRequestData } from "@/components/feature-requests/NewFeatureRequestModal";
+import type { FeatureRequestData } from "@/components/feature-requests/NewFeatureRequestModal";
 
 type Status = "NEW" | "TODO" | "IN_PROGRESS" | "COMPLETED" | "ARCHIVED";
 
@@ -83,7 +83,6 @@ export default function FeatureRequestsPage() {
   const [requests, setRequests] = useState<FeatureRequestData[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
@@ -143,24 +142,13 @@ export default function FeatureRequestsPage() {
     }
   }
 
-  function handleNewRequest(request: FeatureRequestData) {
-    setRequests((prev) => [request, ...prev]);
-  }
 
   return (
     <div className="pt-24 px-6 pb-8 w-full max-w-6xl mx-auto">
       {/* Page header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-xl font-semibold text-[var(--foreground)]">Feature Requests</h1>
-          <p className="text-sm text-[var(--muted)] mt-0.5">Submitted by your team</p>
-        </div>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="bg-[var(--accent)] text-[var(--background)] rounded-xl px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
-          ＋ New request
-        </button>
+      <div className="mb-6">
+        <h1 className="text-xl font-semibold text-[var(--foreground)]">Feature Requests</h1>
+        <p className="text-sm text-[var(--muted)] mt-0.5">Submitted by your team</p>
       </div>
 
       {/* Error */}
@@ -325,11 +313,6 @@ export default function FeatureRequestsPage() {
         )}
       </div>
 
-      <NewFeatureRequestModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onSuccess={handleNewRequest}
-      />
     </div>
   );
 }
