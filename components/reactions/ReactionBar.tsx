@@ -68,6 +68,28 @@ export function ReactionBar({ artifactId, reactionCounts, myReactions, onReact, 
       {EMOJIS.map((emoji) => {
         const count = counts[emoji] ?? 0;
         const active = mine.has(emoji);
+
+        if (forceLight) {
+          // Match the ArtifactTile hover style exactly
+          return (
+            <button
+              key={emoji}
+              onClick={() => handleReact(emoji)}
+              disabled={loading === emoji}
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-semibold transition-all duration-150 backdrop-blur-sm shrink-0",
+                active
+                  ? "bg-white/30 text-white scale-105"
+                  : "bg-black/50 text-white/80 hover:bg-black/70"
+              )}
+            >
+              <span className="tabular-nums">{count}</span>
+              <span className="leading-none">{emoji}</span>
+            </button>
+          );
+        }
+
+        // Default (theme-aware) style for use in the feed / non-lightbox contexts
         return (
           <button
             key={emoji}
@@ -76,20 +98,15 @@ export function ReactionBar({ artifactId, reactionCounts, myReactions, onReact, 
             className={cn(
               "flex items-center gap-1 rounded-full px-2.5 py-1 text-sm transition-all duration-150",
               active
-                ? "bg-white/20 scale-105"
-                : "bg-white/5 hover:bg-white/10",
-              forceLight
-                ? active ? "text-white" : "text-white/60 hover:text-white"
-                : active ? "text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                ? "bg-[var(--accent)]/20 text-[var(--foreground)] scale-105"
+                : "bg-white/5 text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
             )}
           >
             <span className="leading-none">{emoji}</span>
             {count > 0 && (
               <span className={cn(
                 "text-xs font-medium",
-                forceLight
-                  ? active ? "text-white" : "text-white/60"
-                  : active ? "text-[var(--foreground)]" : "text-[var(--muted)]"
+                active ? "text-[var(--foreground)]" : "text-[var(--muted)]"
               )}>
                 {count}
               </span>
