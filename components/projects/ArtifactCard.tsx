@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn, timeAgo } from "@/lib/utils";
 
 interface Artifact {
@@ -28,6 +28,96 @@ interface ArtifactCardProps {
   onClick: () => void;
   onShareToggle?: (id: string, shared: boolean) => void;
   onDelete?: (id: string) => void;
+  onRename?: (id: string, name: string, description: string | null) => void;
+}
+
+function RenameModal({
+  artifact,
+  onClose,
+  onSave,
+}: {
+  artifact: Artifact;
+  onClose: () => void;
+  onSave: (name: string, description: string | null) => Promise<void>;
+}) {
+  const [name, setName] = useState(artifact.name);
+  const [description, setDescription] = useState(artifact.description ?? "");
+  const [saving, setSaving] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    nameRef.current?.focus();
+    nameRef.current?.select();
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+    setSaving(true);
+    await onSave(name.trim(), description.trim() || null);
+    setSaving(false);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-sm glass rounded-2xl p-6 flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-base font-semibold text-[var(--foreground)]">Rename artifact</h2>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[var(--muted)]">Name</label>
+            <input
+              ref={nameRef}
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[var(--muted)]">Description <span className="opacity-50">(optional)</span></label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Add a description…"
+              className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)] resize-none"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 rounded-xl border border-[var(--border)] py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim() || saving}
+              className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-40"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
+  );
 }
 
 function looksLikeVideo(url: string): boolean {
@@ -59,10 +149,12 @@ function getPreviewUrl(artifact: Artifact): string | null {
   return null;
 }
 
-export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: ArtifactCardProps) {
+export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRename }: ArtifactCardProps) {
   const [sharing, setSharing] = useState(false);
   const [isShared, setIsShared] = useState(artifact.isSharedToFeed);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [displayName, setDisplayName] = useState(artifact.name);
 
   const previewUrl = getPreviewUrl(artifact);
   const isVideo =
@@ -96,7 +188,21 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
     onDelete?.(artifact.id);
   }
 
+  async function handleSaveRename(name: string, description: string | null) {
+    const res = await fetch(`/api/artifacts/${artifact.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, description }),
+    });
+    if (res.ok) {
+      setDisplayName(name);
+      onRename?.(artifact.id, name, description);
+    }
+    setRenameOpen(false);
+  }
+
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -169,12 +275,19 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
             </button>
             {menuOpen && (
               <div
-                className="absolute top-full right-0 mt-1 w-32 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl z-10"
+                className="absolute top-full right-0 mt-1 w-36 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl z-10 overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setRenameOpen(true); }}
+                  className="w-full px-3 py-2.5 text-left text-xs text-[var(--foreground)] hover:bg-[var(--surface-2)]"
+                >
+                  Rename
+                </button>
+                <div className="h-px bg-[var(--border)] mx-2" />
+                <button
                   onClick={handleDelete}
-                  className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-[var(--surface-2)] rounded-xl"
+                  className="w-full px-3 py-2.5 text-left text-xs text-red-400 hover:bg-[var(--surface-2)]"
                 >
                   Delete
                 </button>
@@ -185,5 +298,16 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
       </div>
 
     </motion.div>
+
+    <AnimatePresence>
+      {renameOpen && (
+        <RenameModal
+          artifact={{ ...artifact, name: displayName }}
+          onClose={() => setRenameOpen(false)}
+          onSave={handleSaveRename}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }
