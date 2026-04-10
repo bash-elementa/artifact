@@ -110,14 +110,14 @@ function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number
           dragConstraints={{ left: 0, right: TRACK_W }}
           dragElastic={0.08}
           dragMomentum={false}
-          style={{ x, left: 0, width: THUMB, height: THUMB }}
+          style={{ x, left: 0, width: THUMB, height: THUMB, background: "var(--foreground-solid)" }}
           onDragStart={handleDragStart}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           whileDrag={{ scale: 1.12 }}
-          className="absolute top-1/2 -translate-y-1/2 rounded-2xl bg-[var(--foreground)] shadow-lg cursor-grab active:cursor-grabbing flex items-center justify-center z-10 select-none"
+          className="absolute top-1/2 -translate-y-1/2 rounded-2xl shadow-lg cursor-grab active:cursor-grabbing flex items-center justify-center z-10 select-none"
         >
-          <motion.span className="text-[11px] font-bold text-[var(--background)] pointer-events-none">
+          <motion.span className="text-[11px] font-bold pointer-events-none" style={{ color: "var(--background)" }}>
             {displayValue}
           </motion.span>
         </motion.div>

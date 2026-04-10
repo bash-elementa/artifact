@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/get-user";
 
-const VALID_EMOJIS = ["👏", "✨", "🔥", "💡", "❤️"];
+const VALID_EMOJIS = ["👏", "✨", "🔥", "💡", "❤️", "🤯"];
 
 export async function POST(req: NextRequest) {
   const user = await getUser();

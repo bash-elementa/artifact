@@ -50,7 +50,9 @@ function UserAvatar({ user }: { user?: ArtifactUser }) {
   const initials = user.name?.split(" ").map((n) => n[0]).join("") ?? "?";
   return (
     <div className="flex items-center gap-2.5">
-      <div className="w-7 h-7 rounded-full glass flex items-center justify-center text-xs font-semibold text-[var(--muted)] shrink-0">
+      <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white/60 shrink-0"
+        style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.10)" }}
+      >
         {user.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={user.image} alt={user.name} className="w-full h-full rounded-full object-cover" />
@@ -76,7 +78,8 @@ function GlassBtn({
   return (
     <button
       onClick={onClick}
-      className={`glass rounded-full flex items-center justify-center text-white/80 hover:text-white transition-colors ${className}`}
+      className={`rounded-full flex items-center justify-center text-white/80 hover:text-white transition-colors ${className}`}
+      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)" }}
     >
       {children}
     </button>
@@ -197,7 +200,8 @@ function MediaLightbox({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25, delay: 0.05 }}
-        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 glass rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.10)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
@@ -317,7 +321,8 @@ function UrlLightbox({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25, delay: 0.05 }}
-        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 glass rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.10)" }}
         onClick={(e) => e.stopPropagation()}
       >
         <UserAvatar user={artifact.user} />

@@ -26,6 +26,9 @@
   --accent:      #ffffff;      /* high-contrast action — white on dark */
   --accent-fg:   #1b1b1b;     /* text on accent                      */
 
+  /* Solid (no-alpha) foreground — for UI chrome that must be fully opaque */
+  --foreground-solid: #fcfcfc;
+
   /* Glass / nav tokens */
   --glass-bg:         rgba(27, 27, 27, 0.75);
   --glass-border:     rgba(252, 252, 252, 0.10);
@@ -44,6 +47,9 @@
   --muted:       #04040499;    /* text.tertiary    → black.500  */
   --accent:      #040404;      /* high-contrast action — black on light */
   --accent-fg:   #fcfcfc;     /* text on accent                       */
+
+  /* Solid (no-alpha) foreground — for UI chrome that must be fully opaque */
+  --foreground-solid: #040404;
 
   /* Glass / nav tokens — light overrides */
   --glass-bg:         rgba(252, 252, 252, 0.80);
