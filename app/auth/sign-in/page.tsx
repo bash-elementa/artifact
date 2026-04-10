@@ -37,7 +37,8 @@ function SignInForm() {
       setError(error.message);
     } else {
       await fetch("/api/auth/ensure-user", { method: "POST" });
-      window.location.href = "/explore";
+      const profile = await fetch("/api/auth/me").then((r) => r.json());
+      window.location.href = profile?.team ? "/explore" : "/onboarding";
     }
     setLoading(false);
   }

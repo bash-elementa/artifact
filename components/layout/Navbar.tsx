@@ -144,7 +144,21 @@ export function Navbar() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      const p = window.location.pathname;
+      if (data.user && !p.startsWith("/onboarding") && !p.startsWith("/auth")) {
+        fetch("/api/auth/me")
+          .then((r) => r.json())
+          .then((profile) => {
+            if (profile && !profile.team) {
+              window.location.href = "/onboarding";
+            }
+          })
+          .catch(() => {});
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -208,7 +222,7 @@ export function Navbar() {
     user?.email?.split("@")[0] ??
     "You";
 
-  if (pathname.startsWith("/auth")) return null;
+  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding")) return null;
 
   const Avatar = ({ size = "sm" }: { size?: "sm" | "lg" }) => {
     const cls = size === "lg"

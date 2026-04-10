@@ -6,6 +6,7 @@ import {
   TransformComponent,
   useTransformEffect,
 } from "react-zoom-pan-pinch";
+import { motion, animate, useMotionValue, useTransform } from "framer-motion";
 import { SquaresFour, Compass } from "@phosphor-icons/react";
 import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
@@ -160,6 +161,66 @@ function VirtualizedTiles({ layout, onTileClick, onReact }: { layout: Layout; on
   );
 }
 
+// ── Grid column slider ───────────────────────────────────────────────────────
+const GRID_STEPS = 5; // 2–6 columns
+const GRID_STEP_PX = 20;
+const GRID_TRACK_W = (GRID_STEPS - 1) * GRID_STEP_PX; // 80px
+const GRID_THUMB = 22;
+const GRID_SPRING = { type: "spring" as const, stiffness: 70, damping: 5, mass: 1.6 };
+
+function GridColumnSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const x = useMotionValue((value - 2) * GRID_STEP_PX);
+  const displayValue = useTransform(x, (v) => Math.round(Math.max(0, Math.min(GRID_TRACK_W, v)) / GRID_STEP_PX) + 2);
+  const isDragging = useRef(false);
+
+  useEffect(() => {
+    if (isDragging.current) return;
+    animate(x, (value - 2) * GRID_STEP_PX, GRID_SPRING);
+  }, [value, x]);
+
+  return (
+    <div className="flex items-center" style={{ width: GRID_TRACK_W + GRID_THUMB, height: GRID_THUMB }}>
+      <div className="relative flex items-center w-full h-full">
+        <div
+          className="absolute top-1/2 -translate-y-1/2 rounded-full"
+          style={{ left: GRID_THUMB / 2, width: GRID_TRACK_W, height: 2, background: "var(--border)" }}
+        />
+        {Array.from({ length: GRID_STEPS }, (_, i) => (
+          <div
+            key={i}
+            className="absolute top-1/2 -translate-y-1/2 rounded-full"
+            style={{ left: i * GRID_STEP_PX + GRID_THUMB / 2 - 3, width: 6, height: 6, background: "var(--muted)", opacity: 0.4 }}
+          />
+        ))}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: GRID_TRACK_W }}
+          dragElastic={0.08}
+          dragMomentum={false}
+          style={{ x, left: 0, width: GRID_THUMB, height: GRID_THUMB, background: "var(--foreground-solid)" }}
+          onDragStart={() => { isDragging.current = true; }}
+          onDrag={() => {
+            const raw = Math.max(0, Math.min(GRID_TRACK_W, x.get()));
+            onChange(Math.round(raw / GRID_STEP_PX) + 2);
+          }}
+          onDragEnd={() => {
+            const step = Math.round(Math.max(0, Math.min(GRID_TRACK_W, x.get())) / GRID_STEP_PX);
+            onChange(step + 2);
+            animate(x, step * GRID_STEP_PX, GRID_SPRING);
+            isDragging.current = false;
+          }}
+          whileDrag={{ scale: 1.12 }}
+          className="absolute top-1/2 -translate-y-1/2 rounded-xl shadow-md cursor-grab active:cursor-grabbing flex items-center justify-center z-10 select-none"
+        >
+          <motion.span className="text-[9px] font-bold pointer-events-none" style={{ color: "var(--background)" }}>
+            {displayValue}
+          </motion.span>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
 export function ExploreCanvas() {
   const [artifacts, setArtifacts] = useState<FeedArtifact[]>([]);
   const [dims, setDims] = useState<Dims>({});
@@ -167,6 +228,7 @@ export function ExploreCanvas() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [viewMode, setViewMode] = useState<"canvas" | "grid">("canvas");
+  const [gridColumns, setGridColumns] = useState(4);
   // Always derive lightbox artifact from live artifacts array so reactions stay in sync
   const lightboxArtifact = lightboxOpen ? (artifacts[lightboxIndex] ?? null) : null;
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
@@ -261,34 +323,45 @@ export function ExploreCanvas() {
     );
   }
 
-  // ── View mode toggle ────────────────────────────────────────────────────────
-  const ViewToggle = (
+  // ── Shared floating controls (view toggle + column slider in grid mode) ──────
+  const FloatingControls = (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-0.5 rounded-2xl p-1 shadow-lg"
+      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl px-2 py-1.5 shadow-lg"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
-      <button
-        onClick={() => setViewMode("canvas")}
-        title="Infinite canvas"
-        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-          viewMode === "canvas"
-            ? "bg-[var(--foreground)] text-[var(--background)]"
-            : "text-[var(--muted)] hover:text-[var(--foreground)]"
-        }`}
-      >
-        <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
-      </button>
-      <button
-        onClick={() => setViewMode("grid")}
-        title="Grid"
-        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-          viewMode === "grid"
-            ? "bg-[var(--foreground)] text-[var(--background)]"
-            : "text-[var(--muted)] hover:text-[var(--foreground)]"
-        }`}
-      >
-        <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
-      </button>
+      {/* Column slider — only in grid mode */}
+      {viewMode === "grid" && (
+        <GridColumnSlider value={gridColumns} onChange={setGridColumns} />
+      )}
+
+      {/* Divider when slider is visible */}
+      {viewMode === "grid" && <div className="w-px h-4 bg-[var(--border)] shrink-0" />}
+
+      {/* View toggles */}
+      <div className="flex items-center gap-0.5">
+        <button
+          onClick={() => setViewMode("canvas")}
+          title="Infinite canvas"
+          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+            viewMode === "canvas"
+              ? "bg-[var(--foreground)] text-[var(--background)]"
+              : "text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
+        </button>
+        <button
+          onClick={() => setViewMode("grid")}
+          title="Grid"
+          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
+            viewMode === "grid"
+              ? "bg-[var(--foreground)] text-[var(--background)]"
+              : "text-[var(--muted)] hover:text-[var(--foreground)]"
+          }`}
+        >
+          <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
+        </button>
+      </div>
     </div>
   );
 
@@ -296,40 +369,42 @@ export function ExploreCanvas() {
   if (viewMode === "grid") {
     return (
       <>
-        {ViewToggle}
-        <div className="w-full h-full overflow-y-auto px-6 pt-6 pb-8" style={{ columnCount: 4, columnGap: 12 }}>
-          {artifacts.map((artifact) => {
-            const purl = previewUrl(artifact);
-            const isVideo =
-              artifact.mediaMimeType?.startsWith("video/") ||
-              (!!artifact.mediaUrl && artifact.mediaUrl.toLowerCase().includes("videodelivery.net"));
+        {/* Scrollable grid — absolute so it fills the parent's overflow-hidden container */}
+        <div
+          className="absolute inset-0 overflow-y-auto px-6 pb-24"
+          style={{ paddingTop: 80 }}
+        >
+          <div style={{ columnCount: gridColumns, columnGap: 12 }}>
+            {artifacts.map((artifact) => {
+              const purl = previewUrl(artifact);
+              const isVideo =
+                artifact.mediaMimeType?.startsWith("video/") ||
+                (!!artifact.mediaUrl && artifact.mediaUrl.toLowerCase().includes("videodelivery.net"));
 
-            return (
-              <div
-                key={artifact.id}
-                className="break-inside-avoid mb-3 group cursor-pointer rounded-3xl overflow-hidden relative bg-[var(--surface-2)]"
-                style={{ minHeight: 120 }}
-                onClick={() => openLightbox(artifact)}
-              >
-                {purl ? (
-                  isVideo ? (
-                    <video src={purl} autoPlay muted loop playsInline className="w-full object-cover" />
+              return (
+                <div
+                  key={artifact.id}
+                  className="break-inside-avoid mb-3 group cursor-pointer rounded-3xl overflow-hidden relative bg-[var(--surface-2)]"
+                  style={{ minHeight: 120 }}
+                  onClick={() => openLightbox(artifact)}
+                >
+                  {purl ? (
+                    isVideo ? (
+                      <video src={purl} autoPlay muted loop playsInline className="w-full object-cover" />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={purl} alt={artifact.name} className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90" />
+                    )
                   ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={purl} alt={artifact.name} className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90" />
-                  )
-                ) : (
-                  <div className="w-full aspect-[4/3] flex items-center justify-center">
-                    <span className="text-4xl opacity-20">
-                      {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
-                    </span>
-                  </div>
-                )}
-                {/* Hover overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 min-w-0 flex-1 overflow-hidden">
+                    <div className="w-full aspect-[4/3] flex items-center justify-center">
+                      <span className="text-4xl opacity-20">
+                        {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
+                    <div className="flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1.5 w-fit max-w-full overflow-hidden">
                       {artifact.user.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={artifact.user.image} alt={artifact.user.name} className="w-5 h-5 rounded-full object-cover shrink-0" />
@@ -342,9 +417,9 @@ export function ExploreCanvas() {
                     </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
         <ArtifactLightbox
@@ -354,6 +429,8 @@ export function ExploreCanvas() {
           onPrev={lightboxIndex > 0 ? () => navigateLightbox(-1) : undefined}
           onNext={lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined}
         />
+
+        {FloatingControls}
       </>
     );
   }
@@ -404,7 +481,7 @@ export function ExploreCanvas() {
         }
       />
 
-      {ViewToggle}
+      {FloatingControls}
     </>
   );
 }
