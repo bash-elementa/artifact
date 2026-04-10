@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  name         String?
-  image        String?
-  role         String?
-  team         Team?
-  bio          String?
-  storageBytes BigInt     @default(0)
-  createdAt    DateTime   @default(now())
-  artifacts    Artifact[]
-  projects     Project[]
-  reactions    Reaction[]
+  id                 String               @id @default(cuid())
+  email              String               @unique
+  name               String?
+  image              String?
+  role               String?
+  team               Team?
+  bio                String?
+  storageBytes       BigInt               @default(0)
+  createdAt          DateTime             @default(now())
+  artifacts          Artifact[]
+  projects           Project[]
+  reactions          Reaction[]
+  contributedProjects ProjectContributor[]
 }
 
 enum Team {
@@ -32,14 +33,26 @@ enum Team {
 }
 
 model Project {
-  id          String     @id @default(cuid())
-  name        String
-  description String?
-  userId      String
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  artifacts   Artifact[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id           String               @id @default(cuid())
+  name         String
+  description  String?
+  userId       String
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artifacts    Artifact[]
+  contributors ProjectContributor[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model ProjectContributor {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
 }
 
 model Artifact {

@@ -12,6 +12,12 @@ interface ProjectPreview {
   name: string;
 }
 
+interface Contributor {
+  id: string;
+  name: string | null;
+  image: string | null;
+}
+
 interface Project {
   id: string;
   name: string;
@@ -19,6 +25,8 @@ interface Project {
   createdAt: string;
   artifacts: ProjectPreview[];
   _count: { artifacts: number };
+  contributors: Contributor[];
+  isOwner: boolean;
 }
 
 function getPreviewUrl(a: ProjectPreview): string | null {
@@ -111,6 +119,59 @@ function Mosaic({ artifacts }: { artifacts: ProjectPreview[] }) {
   );
 }
 
+function ContributorAvatars({ contributors }: { contributors: Contributor[] }) {
+  if (contributors.length === 0) return null;
+
+  const MAX_SHOWN = 3;
+  const shown = contributors.slice(0, MAX_SHOWN);
+  const overflow = contributors.length - MAX_SHOWN;
+
+  function initials(name: string | null): string {
+    if (!name) return "?";
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  return (
+    <div className="absolute bottom-2 right-2 flex items-center" style={{ gap: -4 }}>
+      {shown.map((c, i) => (
+        <div
+          key={c.id}
+          title={c.name ?? undefined}
+          className="rounded-full border-2 border-[var(--surface)] bg-[var(--surface-2)] text-[var(--foreground)] flex items-center justify-center overflow-hidden shrink-0"
+          style={{
+            width: 24,
+            height: 24,
+            fontSize: 9,
+            fontWeight: 600,
+            zIndex: shown.length - i,
+            marginLeft: i === 0 ? 0 : -6,
+          }}
+        >
+          {c.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={c.image} alt={c.name ?? ""} className="w-full h-full object-cover" />
+          ) : (
+            <span>{initials(c.name)}</span>
+          )}
+        </div>
+      ))}
+      {overflow > 0 && (
+        <div
+          className="rounded-full border-2 border-[var(--surface)] bg-[var(--surface-2)] text-[var(--muted)] flex items-center justify-center shrink-0"
+          style={{ width: 24, height: 24, fontSize: 9, fontWeight: 600, marginLeft: -6 }}
+        >
+          +{overflow}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function ProjectCard({ project, onDelete }: { project: Project; onDelete?: (id: string) => void }) {
   const count = project._count.artifacts;
   const [menuOpen, setMenuOpen] = useState(false);
@@ -130,8 +191,9 @@ export function ProjectCard({ project, onDelete }: { project: Project; onDelete?
     <div className={`group relative${deleting ? " opacity-50 pointer-events-none" : ""}`}>
       <Link href={`/projects/${project.id}`} className="block">
         {/* Image mosaic */}
-        <div className="rounded-2xl overflow-hidden aspect-[4/3] bg-[var(--surface-2)] transition-opacity duration-200 group-hover:opacity-90">
+        <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-[var(--surface-2)] transition-opacity duration-200 group-hover:opacity-90">
           <Mosaic artifacts={project.artifacts.slice(0, 3)} />
+          <ContributorAvatars contributors={project.contributors} />
         </div>
 
         {/* Text */}
@@ -146,30 +208,32 @@ export function ProjectCard({ project, onDelete }: { project: Project; onDelete?
         </div>
       </Link>
 
-      {/* ··· menu button — shown on hover */}
-      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="relative">
-          <button
-            onClick={(e) => { e.preventDefault(); setMenuOpen((v) => !v); }}
-            className="rounded-full bg-black/60 backdrop-blur-sm px-2 py-1 text-white text-xs hover:bg-black/80"
-          >
-            ···
-          </button>
-          {menuOpen && (
-            <div
-              className="absolute top-full right-0 mt-1 w-32 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl z-10"
-              onClick={(e) => e.preventDefault()}
+      {/* ··· menu button — shown on hover, only for owner */}
+      {project.isOwner && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="relative">
+            <button
+              onClick={(e) => { e.preventDefault(); setMenuOpen((v) => !v); }}
+              className="rounded-full bg-black/60 backdrop-blur-sm px-2 py-1 text-white text-xs hover:bg-black/80"
             >
-              <button
-                onClick={handleDelete}
-                className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-[var(--surface-2)] rounded-xl"
+              ···
+            </button>
+            {menuOpen && (
+              <div
+                className="absolute top-full right-0 mt-1 w-32 rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-xl z-10"
+                onClick={(e) => e.preventDefault()}
               >
-                Delete
-              </button>
-            </div>
-          )}
+                <button
+                  onClick={handleDelete}
+                  className="w-full px-3 py-2 text-left text-xs text-red-400 hover:bg-[var(--surface-2)] rounded-xl"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

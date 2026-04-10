@@ -1,19 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+
+interface UserOption {
+  id: string;
+  name: string | null;
+  image: string | null;
+  role: string | null;
+  team: string | null;
+}
 
 interface NewProjectModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess: (project: { id: string; name: string }) => void;
+  currentUserId?: string;
 }
 
-export function NewProjectModal({ open, onClose, onSuccess }: NewProjectModalProps) {
+function initials(name: string | null): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+export function NewProjectModal({ open, onClose, onSuccess, currentUserId }: NewProjectModalProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<UserOption[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!open) return;
+    fetch("/api/users")
+      .then((res) => res.ok ? res.json() : [])
+      .then((data: UserOption[]) => {
+        setUsers(data.filter((u) => u.id !== currentUserId));
+      })
+      .catch(() => {});
+  }, [open, currentUserId]);
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      setName("");
+      setDescription("");
+      setSelectedIds(new Set());
+      setError(null);
+    }
+  }, [open]);
+
+  function toggleUser(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,13 +79,15 @@ export function NewProjectModal({ open, onClose, onSuccess }: NewProjectModalPro
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, description: description || undefined }),
+        body: JSON.stringify({
+          name,
+          description: description || undefined,
+          contributorIds: Array.from(selectedIds),
+        }),
       });
 
       if (!res.ok) throw new Error("Failed to create project");
       const project = await res.json();
-      setName("");
-      setDescription("");
       onSuccess(project);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong");
@@ -88,6 +143,61 @@ export function NewProjectModal({ open, onClose, onSuccess }: NewProjectModalPro
                   maxLength={300}
                   className="w-full resize-none rounded-xl bg-[var(--surface-2)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] border border-[var(--border)] focus:outline-none focus:border-[var(--muted)]"
                 />
+              </div>
+
+              {/* Contributors section */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs text-[var(--muted)] font-medium">Add contributors (optional)</label>
+                {users.length === 0 ? (
+                  <p className="text-xs text-[var(--muted)] py-2">No other users found.</p>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)]">
+                    {users.map((u) => {
+                      const selected = selectedIds.has(u.id);
+                      return (
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => toggleUser(u.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface)] ${selected ? "bg-[var(--surface)]" : ""}`}
+                        >
+                          {/* Avatar */}
+                          <div
+                            className="rounded-full bg-[var(--border)] text-[var(--foreground)] flex items-center justify-center shrink-0 overflow-hidden"
+                            style={{ width: 28, height: 28, fontSize: 10, fontWeight: 600 }}
+                          >
+                            {u.image ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={u.image} alt={u.name ?? ""} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{initials(u.name)}</span>
+                            )}
+                          </div>
+                          {/* Name + subtitle */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-[var(--foreground)] truncate">{u.name ?? "Unknown"}</p>
+                            {(u.role || u.team) && (
+                              <p className="text-xs text-[var(--muted)] truncate">
+                                {[u.role, u.team].filter(Boolean).join(" · ")}
+                              </p>
+                            )}
+                          </div>
+                          {/* Checkmark */}
+                          {selected && (
+                            <svg
+                              width="16" height="16" viewBox="0 0 24 24"
+                              fill="none" stroke="currentColor"
+                              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                              className="text-[var(--foreground)] shrink-0"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {error && <p className="text-sm text-red-400">{error}</p>}

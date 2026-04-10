@@ -12,7 +12,16 @@ export async function GET(
 
   const { id } = await params;
   const project = await prisma.project.findFirst({
-    where: { id, userId: user.id },
+    where: {
+      id,
+      OR: [
+        { userId: user.id },
+        { contributors: { some: { userId: user.id } } },
+      ],
+    },
+    include: {
+      contributors: { include: { user: true } },
+    },
   });
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
@@ -28,6 +37,12 @@ export async function GET(
     updatedAt: project.updatedAt.toISOString(),
     artifacts: artifacts.map((a) => serializeArtifact(a, user.id)),
     _count: { artifacts: artifacts.length },
+    contributors: project.contributors.map((c) => ({
+      id: c.user.id,
+      name: c.user.name,
+      image: c.user.image,
+    })),
+    isOwner: project.userId === user.id,
   });
 }
 
@@ -64,6 +79,10 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
+
+  // Only the owner can delete
+  const project = await prisma.project.findFirst({ where: { id, userId: user.id } });
+  if (!project) return NextResponse.json({ error: "Not found or not authorized" }, { status: 404 });
 
   await prisma.$transaction([
     // Soft-delete all artifacts in the project and remove them from the feed

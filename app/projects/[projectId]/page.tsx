@@ -28,12 +28,20 @@ interface Artifact {
   user: { id: string; name: string; role: string; team: string; image: string | null };
 }
 
+interface Contributor {
+  id: string;
+  name: string | null;
+  image: string | null;
+}
+
 interface Project {
   id: string;
   name: string;
   description?: string | null;
   artifacts: Artifact[];
   _count: { artifacts: number };
+  contributors: Contributor[];
+  isOwner: boolean;
 }
 
 const STEPS = 6;
@@ -275,6 +283,33 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
           <p className="text-sm text-[var(--muted)]">
             {project._count.artifacts} {project._count.artifacts === 1 ? "artifact" : "artifacts"}
           </p>
+          {project.contributors && project.contributors.length > 0 && (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-xs text-[var(--muted)]">Contributors:</span>
+              <div className="flex items-center gap-1.5">
+                {project.contributors.map((c) => (
+                  <div key={c.id} className="flex items-center gap-1.5">
+                    <div
+                      className="rounded-full bg-[var(--surface-2)] border border-[var(--border)] text-[var(--foreground)] flex items-center justify-center overflow-hidden shrink-0"
+                      style={{ width: 20, height: 20, fontSize: 8, fontWeight: 600 }}
+                    >
+                      {c.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.image} alt={c.name ?? ""} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>
+                          {c.name
+                            ? c.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)
+                            : "?"}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-xs text-[var(--muted)]">{c.name ?? "Unknown"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Slider + Upload button */}

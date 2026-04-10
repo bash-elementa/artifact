@@ -23,7 +23,7 @@ export function serializeArtifact(a: any, currentUserId?: string) {
   };
 }
 
-export function serializeProject(p: any) {
+export function serializeProject(p: any, currentUserId?: string) {
   return {
     ...p,
     createdAt: p.createdAt instanceof Date ? p.createdAt.toISOString() : p.createdAt,
@@ -37,5 +37,11 @@ export function serializeProject(p: any) {
       screenshotUrl: a.screenshotUrl,
     })),
     _count: { artifacts: p._count?.artifacts ?? (p.artifacts?.length ?? 0) },
+    contributors: (p.contributors ?? []).map((c: any) => ({
+      id: c.user.id,
+      name: c.user.name,
+      image: c.user.image,
+    })),
+    isOwner: currentUserId !== undefined ? p.userId === currentUserId : true,
   };
 }

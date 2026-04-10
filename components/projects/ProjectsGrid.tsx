@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "framer-motion";
 import { ProjectCard } from "./ProjectCard";
 import { NewProjectModal } from "./NewProjectModal";
+import { createClient } from "@/lib/supabase/client";
 
 interface Project {
   id: string;
@@ -19,12 +20,22 @@ interface Project {
     name: string;
   }[];
   _count: { artifacts: number };
+  contributors: { id: string; name: string | null; image: string | null }[];
+  isOwner: boolean;
 }
 
 export function ProjectsGrid() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id);
+    });
+  }, []);
 
   const loadProjects = useCallback(async () => {
     setLoading(true);
@@ -56,7 +67,7 @@ export function ProjectsGrid() {
       {/* Header */}
       <div>
         <h1 className="text-xl font-semibold">Projects</h1>
-        <p className="text-sm text-[var(--muted)] mt-0.5">Your private workspace</p>
+        <p className="text-sm text-[var(--muted)] mt-0.5">Your projects and shared workspaces</p>
       </div>
 
       {/* Grid */}
@@ -87,6 +98,7 @@ export function ProjectsGrid() {
         open={newProjectOpen}
         onClose={() => setNewProjectOpen(false)}
         onSuccess={handleNewProject}
+        currentUserId={currentUserId}
       />
 
     </div>
