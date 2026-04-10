@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { NewFeatureRequestModal, type FeatureRequestData } from "@/components/feature-requests/NewFeatureRequestModal";
 
@@ -16,18 +16,12 @@ const STATUS_OPTIONS: { value: Status; label: string }[] = [
 
 function statusClass(status: string): string {
   switch (status) {
-    case "NEW":
-      return "bg-blue-500/15 text-blue-400";
-    case "TODO":
-      return "bg-[var(--surface-2)] text-[var(--muted)]";
-    case "IN_PROGRESS":
-      return "bg-orange-500/15 text-orange-400";
-    case "COMPLETED":
-      return "bg-green-500/15 text-green-400";
-    case "ARCHIVED":
-      return "bg-[var(--surface-2)] text-[var(--muted)] opacity-50";
-    default:
-      return "bg-[var(--surface-2)] text-[var(--muted)]";
+    case "NEW":        return "bg-blue-500/15 text-blue-400";
+    case "TODO":       return "bg-[var(--surface-2)] text-[var(--muted)]";
+    case "IN_PROGRESS":return "bg-orange-500/15 text-orange-400";
+    case "COMPLETED":  return "bg-green-500/15 text-green-400";
+    case "ARCHIVED":   return "bg-[var(--surface-2)] text-[var(--muted)] opacity-50";
+    default:           return "bg-[var(--surface-2)] text-[var(--muted)]";
   }
 }
 
@@ -40,9 +34,13 @@ function formatDate(iso: string): string {
   });
 }
 
-function UserAvatar({ user }: { user: FeatureRequestData["user"] | null }) {
+function Avatar({ user }: { user: FeatureRequestData["user"] | null }) {
   if (!user) {
-    return <span className="text-xs text-[var(--muted)]">Unknown</span>;
+    return (
+      <div className="w-8 h-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-xs font-semibold text-[var(--muted)]">
+        ?
+      </div>
+    );
   }
 
   const initials = user.name
@@ -50,26 +48,29 @@ function UserAvatar({ user }: { user: FeatureRequestData["user"] | null }) {
     : (user.email?.[0]?.toUpperCase() ?? "?");
 
   return (
-    <span className="flex items-center gap-1.5">
-      <span
-        className="rounded-full bg-[var(--border)] flex items-center justify-center text-[var(--foreground)] overflow-hidden shrink-0"
-        style={{ width: 20, height: 20, fontSize: 9, fontWeight: 600 }}
-      >
-        {user.image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={user.image} alt={user.name ?? ""} className="w-full h-full object-cover rounded-full" />
-        ) : (
-          initials
-        )}
-      </span>
-      <span className="text-sm text-[var(--foreground)]">{user.name ?? user.email?.split("@")[0] ?? "Unknown"}</span>
-    </span>
+    <div className="w-8 h-8 rounded-full bg-[var(--surface-2)] border border-[var(--border)] flex items-center justify-center text-xs font-semibold text-[var(--foreground)] overflow-hidden shrink-0">
+      {user.image ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={user.image} alt={user.name ?? ""} className="w-full h-full object-cover" />
+      ) : (
+        initials
+      )}
+    </div>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
   );
 }
 
 function TrashIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6M14 11v6" />
@@ -81,8 +82,9 @@ function TrashIcon() {
 export default function FeatureRequestsPage() {
   const [requests, setRequests] = useState<FeatureRequestData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetch("/api/feature-requests")
@@ -91,24 +93,29 @@ export default function FeatureRequestsPage() {
         return res.json();
       })
       .then((data: unknown) => {
-        if (Array.isArray(data)) {
-          setRequests(data as FeatureRequestData[]);
-        } else {
-          setRequests([]);
-        }
+        setRequests(Array.isArray(data) ? (data as FeatureRequestData[]) : []);
       })
       .catch((err) => {
         console.error("Failed to load feature requests:", err);
-        setError(String(err?.message ?? err));
+        setFetchError(String(err?.message ?? err));
       })
       .finally(() => setLoading(false));
   }, []);
 
-  async function handleStatusChange(id: string, status: Status) {
-    setRequests((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, status } : r))
+  const filtered = useMemo(() => {
+    if (!search.trim()) return requests;
+    const q = search.toLowerCase();
+    return requests.filter(
+      (r) =>
+        r.title.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        (r.user?.name ?? "").toLowerCase().includes(q) ||
+        (r.user?.email ?? "").toLowerCase().includes(q)
     );
+  }, [requests, search]);
 
+  async function handleStatusChange(id: string, status: Status) {
+    setRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     try {
       await fetch(`/api/feature-requests/${id}`, {
         method: "PATCH",
@@ -125,9 +132,7 @@ export default function FeatureRequestsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this feature request?")) return;
-
     setRequests((prev) => prev.filter((r) => r.id !== id));
-
     try {
       await fetch(`/api/feature-requests/${id}`, { method: "DELETE" });
     } catch {
@@ -143,80 +148,142 @@ export default function FeatureRequestsPage() {
   }
 
   return (
-    <div className="pt-24 px-6 pb-8 w-full">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+    <div className="pt-24 px-6 pb-8 w-full max-w-6xl mx-auto">
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-semibold text-[var(--foreground)]">Feature Requests</h1>
           <p className="text-sm text-[var(--muted)] mt-0.5">Submitted by your team</p>
         </div>
         <button
           onClick={() => setModalOpen(true)}
-          className="bg-[var(--accent)] text-[var(--background)] rounded-xl px-4 py-2 text-sm font-semibold"
+          className="bg-[var(--accent)] text-[var(--background)] rounded-xl px-4 py-2 text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           ＋ New request
         </button>
       </div>
 
-      {/* Error state */}
-      {error && (
+      {/* Error */}
+      {fetchError && (
         <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-          Failed to load feature requests: {error}
+          Failed to load requests: {fetchError}
         </div>
       )}
 
-      {/* Table */}
+      {/* Card */}
       <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+
+        {/* Search bar */}
+        <div className="flex items-center gap-2.5 px-4 py-3 border-b border-[var(--border)]">
+          <span className="text-[var(--muted)]"><SearchIcon /></span>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search requests…"
+            className="flex-1 bg-transparent text-sm text-[var(--foreground)] placeholder-[var(--muted)] outline-none"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="text-[var(--muted)] hover:text-[var(--foreground)] text-lg leading-none transition-colors"
+            >
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* Table */}
         <table className="w-full border-collapse">
           <thead>
             <tr className="border-b border-[var(--border)]">
-              {["Title", "Description", "Submitted by", "Date", "Status", ""].map((h, i) => (
-                <th
-                  key={i}
-                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--muted)] whitespace-nowrap"
-                >
-                  {h}
-                </th>
-              ))}
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--muted)] w-[30%]">Title</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--muted)] w-[30%]">Description</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--muted)]">Submitted by</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--muted)] whitespace-nowrap">Date</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-[var(--muted)]">Status</th>
+              <th className="px-4 py-3 w-10" />
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm text-[var(--muted)]">
-                  Loading…
-                </td>
-              </tr>
-            ) : requests.length === 0 && !error ? (
+              /* Skeleton rows */
+              Array.from({ length: 4 }).map((_, i) => (
+                <tr key={i} className="border-b border-[var(--border)] last:border-0">
+                  <td className="px-4 py-3.5">
+                    <div className="h-3.5 w-32 rounded bg-[var(--surface-2)] animate-pulse" />
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="h-3.5 w-48 rounded bg-[var(--surface-2)] animate-pulse" />
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[var(--surface-2)] animate-pulse shrink-0" />
+                      <div className="h-3.5 w-24 rounded bg-[var(--surface-2)] animate-pulse" />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="h-3.5 w-20 rounded bg-[var(--surface-2)] animate-pulse" />
+                  </td>
+                  <td className="px-4 py-3.5">
+                    <div className="h-6 w-20 rounded-lg bg-[var(--surface-2)] animate-pulse" />
+                  </td>
+                  <td className="px-4 py-3.5" />
+                </tr>
+              ))
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-16 text-center">
-                  <p className="text-sm font-medium text-[var(--foreground)]">No feature requests yet</p>
-                  <p className="text-xs text-[var(--muted)] mt-1">Hit &apos;New request&apos; to submit the first one.</p>
+                  {search ? (
+                    <>
+                      <p className="text-sm font-medium text-[var(--foreground)]">No results for &ldquo;{search}&rdquo;</p>
+                      <p className="text-xs text-[var(--muted)] mt-1">Try a different search term.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-[var(--foreground)]">No feature requests yet</p>
+                      <p className="text-xs text-[var(--muted)] mt-1">Hit &apos;New request&apos; to submit the first one.</p>
+                    </>
+                  )}
                 </td>
               </tr>
             ) : (
-              requests.map((req) => (
+              filtered.map((req) => (
                 <tr
                   key={req.id}
-                  className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors"
+                  className="group border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors"
                 >
-                  <td className="px-4 py-3 max-w-[160px]">
+                  {/* Title */}
+                  <td className="px-4 py-3.5 max-w-0">
                     <span className="text-sm font-semibold text-[var(--foreground)] truncate block" title={req.title}>
                       {req.title}
                     </span>
                   </td>
-                  <td className="px-4 py-3 max-w-[260px]">
+
+                  {/* Description */}
+                  <td className="px-4 py-3.5 max-w-0">
                     <span className="text-sm text-[var(--muted)] truncate block" title={req.description}>
                       {req.description}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <UserAvatar user={req.user} />
+
+                  {/* Submitted by */}
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar user={req.user} />
+                      <span className="text-sm text-[var(--foreground)]">
+                        {req.user?.name ?? req.user?.email?.split("@")[0] ?? "Unknown"}
+                      </span>
+                    </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="text-xs text-[var(--muted)]">{formatDate(req.createdAt)}</span>
+
+                  {/* Date */}
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <span className="text-sm text-[var(--muted)]">{formatDate(req.createdAt)}</span>
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Status */}
+                  <td className="px-4 py-3.5">
                     <select
                       value={req.status}
                       onChange={(e) => handleStatusChange(req.id, e.target.value as Status)}
@@ -230,10 +297,12 @@ export default function FeatureRequestsPage() {
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3">
+
+                  {/* Delete */}
+                  <td className="px-4 py-3.5">
                     <button
                       onClick={() => handleDelete(req.id)}
-                      className="text-[var(--muted)] hover:text-red-400 transition-colors"
+                      className="opacity-0 group-hover:opacity-100 text-[var(--muted)] hover:text-red-400 transition-all"
                       aria-label="Delete request"
                     >
                       <TrashIcon />
@@ -244,6 +313,16 @@ export default function FeatureRequestsPage() {
             )}
           </tbody>
         </table>
+
+        {/* Footer count */}
+        {!loading && filtered.length > 0 && (
+          <div className="px-4 py-2.5 border-t border-[var(--border)]">
+            <span className="text-xs text-[var(--muted)]">
+              {filtered.length} {filtered.length === 1 ? "request" : "requests"}
+              {search && requests.length !== filtered.length && ` of ${requests.length}`}
+            </span>
+          </div>
+        )}
       </div>
 
       <NewFeatureRequestModal
