@@ -23,8 +23,8 @@
   --surface-2:   #474747;      /* bg.tertiary      → onyx.800   */
   --border:      #fcfcfc33;    /* border.light     → white.300  */
   --muted:       #fcfcfc99;    /* text.tertiary    → white.500  */
-  --accent:      #7474ee;      /* bg.brand.primary → bash.500   */
-  --accent-fg:   #ffffff;      /* text on accent               */
+  --accent:      #ffffff;      /* high-contrast action — white on dark */
+  --accent-fg:   #1b1b1b;     /* text on accent                      */
 
   /* Glass / nav tokens */
   --glass-bg:         rgba(27, 27, 27, 0.75);
@@ -42,8 +42,8 @@
   --surface-2:   #e2e2e2;      /* bg.tertiary      → onyx.200   */
   --border:      #0404041a;    /* border.light     → black.200  */
   --muted:       #04040499;    /* text.tertiary    → black.500  */
-  --accent:      #4646e8;      /* bg.brand.primary → bash.700   */
-  --accent-fg:   #ffffff;
+  --accent:      #040404;      /* high-contrast action — black on light */
+  --accent-fg:   #fcfcfc;     /* text on accent                       */
 
   /* Glass / nav tokens — light overrides */
   --glass-bg:         rgba(252, 252, 252, 0.80);
