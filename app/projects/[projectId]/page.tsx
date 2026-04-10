@@ -6,7 +6,7 @@ import Link from "next/link";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
 import { ArtifactCard } from "@/components/projects/ArtifactCard";
 import { ArtifactLightbox } from "@/components/explore/ArtifactLightbox";
-import { UploadModal } from "@/components/upload/UploadModal";
+import { UploadModal, type UploadType } from "@/components/upload/UploadModal";
 
 interface Artifact {
   id: string;
@@ -116,13 +116,90 @@ function ColumnSlider({ value, onChange }: { value: number; onChange: (v: number
   );
 }
 
+// ── Upload dropdown ────────────────────────────────────────────────────────────
+
+const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.JSX.Element }[] = [
+  { type: "media", label: "Media", icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+  )},
+  { type: "url", label: "URL", icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  )},
+  { type: "figma", label: "Figma", icon: (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"/>
+      <path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"/>
+      <path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+      <path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 0 1-7 0z"/>
+      <path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"/>
+    </svg>
+  )},
+];
+
+function AddButton({ onPick }: { onPick: (type: UploadType) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-11 h-11 rounded-full bg-[var(--foreground)] text-[var(--background)] text-2xl leading-none flex items-center justify-center hover:opacity-90 transition-opacity shrink-0"
+        aria-label="Add artifact"
+      >
+        +
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: -4 }}
+            transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute left-1/2 -translate-x-1/2 top-full mt-2 rounded-2xl shadow-xl overflow-hidden z-50"
+            style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 180 }}
+          >
+            <div className="p-1.5">
+              {UPLOAD_OPTIONS.map((opt) => (
+                <button
+                  key={opt.type}
+                  onClick={() => { setOpen(false); onPick(opt.type); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors text-left"
+                >
+                  <span className="text-[var(--muted)]">{opt.icon}</span>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function ProjectPage({ params }: { params: Promise<{ projectId: string }> }) {
   const { projectId } = use(params);
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [lightboxArtifact, setLightboxArtifact] = useState<Artifact | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<UploadType | null>(null);
   const [columns, setColumns] = useState(3);
 
   const loadProject = useCallback(async () => {
@@ -204,13 +281,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
         {project.artifacts.length > 0 && (
           <div className="flex items-center justify-center gap-3 mb-8">
             <ColumnSlider value={columns} onChange={setColumns} />
-            <button
-              onClick={() => setUploadOpen(true)}
-              className="w-11 h-11 rounded-full bg-white text-black text-2xl leading-none flex items-center justify-center hover:opacity-90 transition-opacity shrink-0"
-              aria-label="Upload artifact"
-            >
-              +
-            </button>
+            <AddButton onPick={setUploadType} />
           </div>
         )}
 
@@ -222,13 +293,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
               <p className="text-base font-medium">No artifacts yet</p>
               <p className="text-sm text-[var(--muted)] mt-1">Hit the + button above to upload your first artifact.</p>
             </div>
-            <button
-              onClick={() => setUploadOpen(true)}
-              className="w-11 h-11 rounded-full bg-white text-black text-xl font-light flex items-center justify-center hover:opacity-90 transition-opacity"
-              aria-label="Upload artifact"
-            >
-              +
-            </button>
+            <AddButton onPick={setUploadType} />
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
@@ -258,8 +323,9 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
       />
 
       <UploadModal
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
+        open={uploadType !== null}
+        type={uploadType ?? "media"}
+        onClose={() => setUploadType(null)}
         defaultProjectId={projectId}
         onSuccess={loadProject}
       />
