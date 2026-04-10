@@ -176,7 +176,7 @@ function MediaLightbox({
             <img
               src={src}
               alt={artifact.name}
-              className="max-w-full max-h-full object-contain rounded-xl block"
+              className="max-w-full max-h-full object-contain rounded-3xl block"
               style={{ maxHeight: "calc(100vh - 11rem)" }}
             />
           )}

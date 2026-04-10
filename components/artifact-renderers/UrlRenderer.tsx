@@ -149,7 +149,7 @@ export function UrlRenderer({
 
       {/* ── iframe container ────────────────────────────────────── */}
       <div
-        className="relative rounded-xl overflow-hidden shrink-0"
+        className="relative rounded-2xl overflow-hidden shrink-0"
         style={{
           width: scaledW,
           height: scaledH,
