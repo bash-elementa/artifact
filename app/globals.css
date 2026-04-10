@@ -8,6 +8,12 @@
   --border: #2a2a2a;
   --muted: #6b6b6b;
   --accent: #e5ff47;
+  /* glass + nav tokens */
+  --glass-bg: rgba(16, 16, 16, 0.60);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --nav-bg: rgba(16, 16, 16, 0.60);
+  --nav-pill-bg: rgba(255, 255, 255, 0.10);
+  --nav-pill-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
 
 [data-theme="light"] {
@@ -18,6 +24,12 @@
   --border: #c8c8c8;
   --muted: #888888;
   --accent: #e5ff47;
+  /* glass + nav tokens — light overrides */
+  --glass-bg: rgba(255, 255, 255, 0.70);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --nav-bg: rgba(255, 255, 255, 0.70);
+  --nav-pill-bg: rgba(0, 0, 0, 0.08);
+  --nav-pill-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.05);
 }
 
 @theme inline {
@@ -42,12 +54,12 @@ body {
   box-sizing: border-box;
 }
 
-/* Glass surface — Apple visionOS-style */
+/* Glass surface — theme-aware */
 .glass {
-  background: rgba(16, 16, 16, 0.55);
+  background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
 }
 
 /* Scrollbar styling */

@@ -103,16 +103,22 @@ export function Navbar() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-40 pointer-events-none" style={{ background: "rgba(16,16,16,0.55)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)" }}>
+      <header
+        className="fixed inset-x-0 top-0 z-40 pointer-events-none"
+        style={{ background: "var(--nav-bg)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)" }}
+      >
         <div className="flex h-16 items-center justify-between px-6 pointer-events-auto">
 
           {/* Left: Logo + Tabs */}
           <div className="flex items-center gap-4 shrink-0">
-            <Link href="/explore" className="text-white shrink-0">
+            <Link href="/explore" className="text-[var(--foreground)] shrink-0">
               <ArtifactLogo />
             </Link>
 
-            <nav className="flex items-center rounded-full p-1.5" style={{ background: "rgba(255,255,255,0.08)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}>
+            <nav
+              className="flex items-center rounded-full p-1.5"
+              style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
+            >
               {tabs.map((tab) => {
                 const active = pathname.startsWith(tab.href);
                 return (
@@ -122,8 +128,8 @@ export function Navbar() {
                     className={cn(
                       "px-7 py-2 text-sm font-semibold rounded-full transition-all duration-200",
                       active
-                        ? "bg-white text-black shadow-sm"
-                        : "text-white/60 hover:text-white"
+                        ? "bg-[var(--foreground)] text-[var(--background)] shadow-sm"
+                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
                     )}
                   >
                     {tab.label}
@@ -133,22 +139,22 @@ export function Navbar() {
             </nav>
           </div>
 
-          {/* Right: Upload + Moon + Avatar */}
+          {/* Right: Upload + Theme toggle + Avatar */}
           <div className="flex items-center gap-3 shrink-0 pointer-events-auto">
             {/* Upload button */}
             <button
               onClick={() => setUploadOpen(true)}
-              className="rounded-2xl bg-white px-7 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+              className="rounded-2xl bg-[var(--foreground)] text-[var(--background)] px-7 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80"
             >
               Upload
             </button>
 
-            {/* Moon / dark mode toggle */}
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white/70 hover:text-white transition-colors"
-              style={{ background: "rgba(255,255,255,0.08)", boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.06)" }}
-              aria-label="Toggle dark mode"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--foreground)] opacity-60 hover:opacity-100 transition-opacity"
+              style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
+              aria-label="Toggle theme"
             >
               {theme === "dark" ? <MoonIcon /> : <SunIcon />}
             </button>
@@ -156,7 +162,8 @@ export function Navbar() {
             {/* Avatar */}
             <div className="relative" onMouseEnter={openMenu} onMouseLeave={closeMenu}>
               <button
-                className="group w-10 h-10 rounded-full glass flex items-center justify-center text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors overflow-hidden"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors overflow-hidden"
+                style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
               >
                 {avatarUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -164,19 +171,19 @@ export function Navbar() {
                 ) : initials}
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-11 w-40 glass rounded-xl shadow-lg overflow-hidden z-50">
+                <div className="absolute right-0 top-11 w-40 rounded-xl shadow-lg overflow-hidden z-50 border border-[var(--border)]" style={{ background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
                   {user?.id && (
                     <Link
                       href={`/profile/${user.id}`}
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-white/10 transition-colors"
+                      className="block px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
                     >
                       Profile
                     </Link>
                   )}
                   <button
                     onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-white/10 transition-colors"
+                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
                   >
                     Sign out
                   </button>
