@@ -161,7 +161,20 @@ function MediaLightbox({
         </div>
       </motion.div>
 
-      {/* Close */}
+      {/* Title pill — top left */}
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.2, delay: 0.05 }}
+        className="fixed top-5 left-5 z-50 rounded-2xl px-4 py-2.5"
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.10)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-sm font-medium text-white leading-none">{artifact.name}</p>
+      </motion.div>
+
+      {/* Close — top right */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -194,24 +207,27 @@ function MediaLightbox({
         </motion.div>
       )}
 
-      {/* Info pill — bottom */}
+      {/* Bottom bar — avatar + name + reactions + time */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 8 }}
         transition={{ duration: 0.25, delay: 0.05 }}
-        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 rounded-2xl px-5 py-3 flex items-center gap-5 max-w-lg w-auto"
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 rounded-2xl px-4 py-3 flex items-center gap-4"
         style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.10)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <p className="text-sm font-medium text-white truncate flex-1 min-w-0">{artifact.name}</p>
+        <UserAvatar user={artifact.user} />
         {artifact.isSharedToFeed && (
-          <ReactionBar
-            artifactId={artifact.id}
-            reactionCounts={artifact.reactionCounts ?? {}}
-            myReactions={artifact.myReactions ?? []}
-            onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
-          />
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <ReactionBar
+              artifactId={artifact.id}
+              reactionCounts={artifact.reactionCounts ?? {}}
+              myReactions={artifact.myReactions ?? []}
+              onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
+            />
+          </>
         )}
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
