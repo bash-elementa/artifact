@@ -167,7 +167,7 @@ const GRID_STEPS = 5; // 2–6 columns
 const GRID_STEP_PX = 20;
 const GRID_TRACK_W = (GRID_STEPS - 1) * GRID_STEP_PX; // 80px
 const GRID_THUMB = 22;
-const GRID_SPRING = { type: "spring" as const, stiffness: 70, damping: 5, mass: 1.6 };
+const GRID_SPRING = { type: "spring" as const, stiffness: 300, damping: 30, mass: 0.8 };
 
 function GridColumnSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const x = useMotionValue((value - 2) * GRID_STEP_PX);
@@ -323,8 +323,8 @@ export function ExploreCanvas() {
     );
   }
 
-  // ── Shared floating controls (view toggle + column slider in grid mode) ──────
-  const FloatingControls = (
+  // ── Shared floating controls — hidden when lightbox is open ─────────────────
+  const FloatingControls = lightboxOpen ? null : (
     <div
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl px-2 py-1.5 shadow-lg"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
