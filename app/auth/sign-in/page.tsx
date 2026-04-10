@@ -141,7 +141,7 @@ function SignInForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] hover:opacity-90 transition-opacity disabled:opacity-50"
         >
           {loading ? "…" : mode === "sign_in" ? "Sign in" : "Create account"}
         </button>

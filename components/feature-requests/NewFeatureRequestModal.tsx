@@ -133,7 +133,7 @@ export function NewFeatureRequestModal({ open, onClose, onSuccess }: NewFeatureR
                 <button
                   type="submit"
                   disabled={!title.trim() || !description.trim() || submitting}
-                  className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] disabled:opacity-40 transition-opacity"
+                  className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] disabled:opacity-40 transition-opacity"
                 >
                   {submitting ? "Submitting…" : "Submit request"}
                 </button>

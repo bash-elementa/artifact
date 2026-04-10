@@ -139,7 +139,7 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
       <button
         onClick={handleSubmit}
         disabled={submitting}
-        className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] transition-opacity hover:opacity-90 disabled:opacity-40"
+        className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
       >
         {status ?? "Add URL artifact"}
       </button>

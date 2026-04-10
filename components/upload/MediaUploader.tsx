@@ -247,7 +247,7 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
           <button
             onClick={handleUploadSubmit}
             disabled={uploading || files.filter((f) => !f.error).length === 0}
-            className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {uploading ? "Uploading…" : `Upload ${files.filter((f) => !f.error).length || ""} file${files.filter((f) => !f.error).length !== 1 ? "s" : ""}`}
           </button>
@@ -302,7 +302,7 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
           <button
             onClick={handleLinkSubmit}
             disabled={linkSubmitting || !linkUrl.trim() || !linkName.trim()}
-            className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {linkSubmitting ? "Saving…" : "Save media"}
           </button>

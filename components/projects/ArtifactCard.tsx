@@ -109,7 +109,7 @@ function RenameModal({
             <button
               type="submit"
               disabled={!name.trim() || saving}
-              className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-40"
+              className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] hover:opacity-90 transition-opacity disabled:opacity-40"
             >
               {saving ? "Saving…" : "Save"}
             </button>
@@ -258,7 +258,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
                 isShared
-                  ? "bg-[var(--accent)] text-[var(--background)]"
+                  ? "bg-[var(--accent)] text-[var(--accent-fg)]"
                   : "bg-black/60 text-white backdrop-blur-sm hover:bg-black/80"
               )}
             >
