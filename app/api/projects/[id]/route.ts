@@ -64,6 +64,16 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  await prisma.project.delete({ where: { id } });
+
+  await prisma.$transaction([
+    // Soft-delete all artifacts in the project and remove them from the feed
+    prisma.artifact.updateMany({
+      where: { projectId: id, deletedAt: null },
+      data: { deletedAt: new Date(), isSharedToFeed: false },
+    }),
+    // Delete the project itself
+    prisma.project.delete({ where: { id } }),
+  ]);
+
   return NextResponse.json({ success: true });
 }
