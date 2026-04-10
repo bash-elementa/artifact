@@ -25,12 +25,16 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
     if (!fileRes.ok) return null;
 
     const file = await fileRes.json();
+
+    // Use the built-in thumbnail Figma generates for the file — most reliable
+    if (file.thumbnailUrl) return file.thumbnailUrl as string;
+
+    // Fallback: export the first page as PNG
     const firstPageId = file.document?.children?.[0]?.id;
     if (!firstPageId) return null;
 
-    // Get image export
     const imgRes = await fetch(
-      `https://api.figma.com/v1/images/${fileKey}?ids=${firstPageId}&format=png&scale=2`,
+      `https://api.figma.com/v1/images/${fileKey}?ids=${firstPageId}&format=png&scale=1`,
       { headers: { "X-Figma-Token": token } }
     );
 

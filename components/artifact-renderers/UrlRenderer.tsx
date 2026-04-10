@@ -29,6 +29,15 @@ function proxyUrl(url: string) {
   return `/api/proxy?url=${encodeURIComponent(url)}`;
 }
 
+function isFigmaUrl(url: string) {
+  try {
+    const host = new URL(url).hostname;
+    return host === "figma.com" || host.endsWith(".figma.com") || host.endsWith(".figma.site");
+  } catch {
+    return false;
+  }
+}
+
 function truncateUrl(url: string, max = 42) {
   try {
     const u = new URL(url);
@@ -51,6 +60,7 @@ export function UrlRenderer({
   const [key, setKey] = useState(0);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  const isFigma = isFigmaUrl(url);
   const dims = SCREEN_DIMS[activeSize] ?? SCREEN_DIMS.DESKTOP;
 
   // Scale to fit width constraint
@@ -147,7 +157,7 @@ export function UrlRenderer({
         </div>
       </div>
 
-      {/* ── iframe container ────────────────────────────────────── */}
+      {/* ── iframe container (or screenshot-only for Figma URLs) ── */}
       <div
         className="relative rounded-2xl overflow-hidden shrink-0"
         style={{
@@ -157,45 +167,63 @@ export function UrlRenderer({
           boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
         }}
       >
-        {/* Screenshot shown as background while proxy loads */}
-        {screenshotUrl && !loaded && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={screenshotUrl}
-            alt="Loading preview…"
-            className="absolute inset-0 w-full h-full object-cover object-top"
-          />
-        )}
-
-        {/* Loading badge */}
-        {!loaded && (
-          <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 pointer-events-none">
-            <div
-              className="rounded-full px-3 py-1 text-xs font-medium"
-              style={{ background: "rgba(0,0,0,0.6)", color: "#fff", backdropFilter: "blur(8px)" }}
-            >
-              Loading live preview…
+        {isFigma ? (
+          /* Figma blocks iframes — show screenshot and prompt to open */
+          screenshotUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={screenshotUrl}
+              alt="Figma preview"
+              className="w-full h-full object-cover object-top"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[var(--surface-2)]">
+              <span className="text-4xl opacity-20">✦</span>
             </div>
-          </div>
-        )}
+          )
+        ) : (
+          <>
+            {/* Screenshot shown as background while proxy loads */}
+            {screenshotUrl && !loaded && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={screenshotUrl}
+                alt="Loading preview…"
+                className="absolute inset-0 w-full h-full object-cover object-top"
+              />
+            )}
 
-        <iframe
-          key={key}
-          ref={iframeRef}
-          src={proxyUrl(url)}
-          title="URL preview"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
-          className="absolute top-0 left-0 origin-top-left"
-          style={{
-            width: dims.width,
-            height: dims.height,
-            transform: `scale(${scale})`,
-            border: "none",
-            opacity: loaded ? 1 : 0,
-            transition: "opacity 0.3s ease",
-          }}
-          onLoad={() => setLoaded(true)}
-        />
+            {/* Loading badge */}
+            {!loaded && (
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 pointer-events-none">
+                <div
+                  className="rounded-full px-3 py-1 text-xs font-medium"
+                  style={{ background: "rgba(0,0,0,0.6)", color: "#fff", backdropFilter: "blur(8px)" }}
+                >
+                  Loading live preview…
+                </div>
+              </div>
+            )}
+
+            <iframe
+              key={key}
+              ref={iframeRef}
+              src={proxyUrl(url)}
+              title="URL preview"
+              sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
+              className="absolute top-0 left-0 origin-top-left"
+              style={{
+                width: dims.width,
+                height: dims.height,
+                transform: `scale(${scale})`,
+                border: "none",
+                opacity: loaded ? 1 : 0,
+                transition: "opacity 0.3s ease",
+              }}
+              onLoad={() => setLoaded(true)}
+            />
+          </>
+        )}
       </div>
     </div>
   );
