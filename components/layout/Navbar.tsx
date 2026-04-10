@@ -407,12 +407,15 @@ export function Navbar() {
 
       {/* ── Mobile bottom tab bar ─────────────────────────────────────────── */}
       <div
-        className="flex md:hidden fixed bottom-0 inset-x-0 z-40 items-end justify-center gap-3 pointer-events-none"
-        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-center px-5 gap-3 pointer-events-none"
+        style={{
+          paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+          background: "transparent",
+        }}
       >
-        {/* Tab pill */}
+        {/* Tab pill — fills available width */}
         <nav
-          className="flex items-center rounded-full p-1.5 pointer-events-auto"
+          className="flex-1 flex items-center rounded-full p-1.5 pointer-events-auto h-14"
           style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
         >
           {NAV_TABS.map((tab) => {
@@ -423,7 +426,7 @@ export function Navbar() {
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-7 py-2.5 rounded-full transition-all duration-200",
+                  "flex-1 h-full flex flex-col items-center justify-center gap-0.5 rounded-full transition-all duration-200",
                   active
                     ? "bg-[var(--foreground)] text-[var(--background)]"
                     : "text-[var(--muted)]"
@@ -436,9 +439,9 @@ export function Navbar() {
           })}
         </nav>
 
-        {/* Upload circle */}
+        {/* Upload circle — same height as pill */}
         <button
-          className="pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition-opacity"
+          className="pointer-events-auto w-14 h-14 shrink-0 rounded-full flex items-center justify-center bg-[var(--foreground)] text-[var(--background)] hover:opacity-90 transition-opacity"
           style={{ boxShadow: "var(--nav-pill-shadow)" }}
           onClick={() => setMobileUploadOpen(true)}
           aria-label="Upload artifact"

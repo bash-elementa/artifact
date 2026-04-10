@@ -99,7 +99,7 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
             <div className="h-4 w-32 rounded-lg bg-[var(--surface)] animate-pulse" />
           </div>
         </div>
-        <div className="columns-3 gap-3">
+        <div className="columns-2 md:columns-3 gap-3">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="break-inside-avoid mb-3 rounded-2xl bg-[var(--surface-2)] animate-pulse"
               style={{ height: [220, 300, 180, 260, 240, 200, 280, 220][i] }} />
@@ -133,7 +133,7 @@ export default function ProfilePage({ params }: { params: Promise<{ userId: stri
             <p className="text-sm text-[var(--muted)]">No shared artifacts yet.</p>
           </div>
         ) : (
-          <div className="columns-3 gap-3">
+          <div className="columns-2 md:columns-3 gap-3">
             {artifacts.map((artifact) => (
               <div key={artifact.id} className="break-inside-avoid mb-3">
                 <ArtifactCard

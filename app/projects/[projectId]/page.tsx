@@ -192,6 +192,14 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [uploadType, setUploadType] = useState<UploadType | null>(null);
   const [columns, setColumns] = useState(3);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const loadProject = useCallback(async () => {
     setLoading(true);
@@ -295,10 +303,17 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
           )}
         </div>
 
-        {/* Slider + Upload button */}
+        {/* Slider + Upload button — desktop only */}
         {project.artifacts.length > 0 && (
-          <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="hidden md:flex items-center justify-center gap-3 mb-8">
             <ColumnSlider value={columns} onChange={setColumns} />
+            <AddButton onPick={setUploadType} />
+          </div>
+        )}
+
+        {/* Mobile: just the add button */}
+        {project.artifacts.length > 0 && (
+          <div className="flex md:hidden justify-center mb-6">
             <AddButton onPick={setUploadType} />
           </div>
         )}
@@ -317,7 +332,7 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
           <AnimatePresence mode="popLayout">
             <div
               className="gap-3 transition-all duration-300"
-              style={{ columnCount: columns, columnGap: 12 }}
+              style={{ columnCount: isMobile ? 2 : columns, columnGap: 12 }}
             >
               {project.artifacts.map((artifact) => (
                 <div key={artifact.id} className="break-inside-avoid mb-3">
