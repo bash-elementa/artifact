@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { UploadModal } from "@/components/upload/UploadModal";
+import { UploadModal, type UploadType } from "@/components/upload/UploadModal";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+
+// ── Icons ──────────────────────────────────────────────────────────────────────
 
 function ArtifactLogo() {
   return (
@@ -49,14 +52,108 @@ function SunIcon() {
   );
 }
 
+// Inline SVG icons for dropdowns
+function IconMedia() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+      <polyline points="21 15 16 10 5 21"/>
+    </svg>
+  );
+}
+function IconUrl() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+  );
+}
+function IconFigma() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 5.5A3.5 3.5 0 0 1 8.5 2H12v7H8.5A3.5 3.5 0 0 1 5 5.5z"/>
+      <path d="M12 2h3.5a3.5 3.5 0 1 1 0 7H12V2z"/>
+      <path d="M12 12.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+      <path d="M5 19.5A3.5 3.5 0 0 1 8.5 16H12v3.5a3.5 3.5 0 0 1-7 0z"/>
+      <path d="M5 12.5A3.5 3.5 0 0 1 8.5 9H12v7H8.5A3.5 3.5 0 0 1 5 12.5z"/>
+    </svg>
+  );
+}
+function IconProfile() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  );
+}
+function IconSignOut() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+      <polyline points="16 17 21 12 16 7"/>
+      <line x1="21" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}
+
+// ── Dropdown card shell ────────────────────────────────────────────────────────
+
+function DropdownCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96, y: -4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.96, y: -4 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      className={`absolute right-0 top-full mt-2 rounded-2xl shadow-xl overflow-hidden z-50 ${className}`}
+      style={{ background: "var(--surface)", border: "1px solid var(--border)", minWidth: 180 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function DropdownItem({ icon, label, onClick, danger = false }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-left",
+        danger
+          ? "text-red-500 hover:bg-[var(--surface-2)]"
+          : "text-[var(--foreground)] hover:bg-[var(--surface-2)]"
+      )}
+    >
+      <span className="text-[var(--muted)]">{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────────
+
+const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.ReactNode }[] = [
+  { type: "media", label: "Media", icon: <IconMedia /> },
+  { type: "url",   label: "URL",   icon: <IconUrl /> },
+  { type: "figma", label: "Figma", icon: <IconFigma /> },
+];
+
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Upload dropdown
+  const [uploadDropdownOpen, setUploadDropdownOpen] = useState(false);
+  const [uploadType, setUploadType] = useState<UploadType | null>(null);
+  const uploadRef = useRef<HTMLDivElement>(null);
+
+  // Profile dropdown
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -69,6 +166,18 @@ export function Navbar() {
     document.documentElement.setAttribute("data-theme", stored);
   }, []);
 
+  // Close upload dropdown on outside click
+  useEffect(() => {
+    if (!uploadDropdownOpen) return;
+    function onDown(e: MouseEvent) {
+      if (uploadRef.current && !uploadRef.current.contains(e.target as Node)) {
+        setUploadDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [uploadDropdownOpen]);
+
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
@@ -76,25 +185,32 @@ export function Navbar() {
     document.documentElement.setAttribute("data-theme", next);
   }
 
-  function openMenu() {
-    if (closeTimer.current) clearTimeout(closeTimer.current);
-    setMenuOpen(true);
+  function openProfile() {
+    if (profileCloseTimer.current) clearTimeout(profileCloseTimer.current);
+    setProfileOpen(true);
+  }
+  function closeProfile() {
+    profileCloseTimer.current = setTimeout(() => setProfileOpen(false), 150);
   }
 
-  function closeMenu() {
-    closeTimer.current = setTimeout(() => setMenuOpen(false), 150);
+  function pickUploadType(type: UploadType) {
+    setUploadDropdownOpen(false);
+    setUploadType(type);
   }
 
-  const initials = user?.email
-    ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
-    : "?";
-
-  const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
+  function closeUploadModal() {
+    setUploadType(null);
+  }
 
   async function handleSignOut() {
     await fetch("/auth/sign-out", { method: "POST" });
     router.push("/auth/sign-in");
   }
+
+  const initials = user?.email
+    ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
+    : "?";
+  const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
 
   const tabs = [
     { href: "/explore", label: "Explore" },
@@ -114,7 +230,6 @@ export function Navbar() {
             <Link href="/explore" className="text-[var(--foreground)] shrink-0">
               <ArtifactLogo />
             </Link>
-
             <nav
               className="flex items-center rounded-full p-1.5"
               style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
@@ -139,15 +254,34 @@ export function Navbar() {
             </nav>
           </div>
 
-          {/* Right: Upload + Theme toggle + Avatar */}
-          <div className="flex items-center gap-3 shrink-0 pointer-events-auto">
-            {/* Upload button */}
-            <button
-              onClick={() => setUploadOpen(true)}
-              className="rounded-2xl bg-[var(--foreground)] text-[var(--background)] px-7 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80"
-            >
-              Upload
-            </button>
+          {/* Right: Upload dropdown + Theme + Avatar */}
+          <div className="flex items-center gap-3 shrink-0">
+
+            {/* Upload — click opens dropdown */}
+            <div className="relative" ref={uploadRef}>
+              <button
+                onClick={() => setUploadDropdownOpen((v) => !v)}
+                className="rounded-2xl bg-[var(--foreground)] text-[var(--background)] px-7 py-2.5 text-sm font-semibold transition-opacity hover:opacity-80"
+              >
+                Upload
+              </button>
+              <AnimatePresence>
+                {uploadDropdownOpen && (
+                  <DropdownCard className="w-44">
+                    <div className="p-1.5">
+                      {UPLOAD_OPTIONS.map((opt) => (
+                        <DropdownItem
+                          key={opt.type}
+                          icon={opt.icon}
+                          label={opt.label}
+                          onClick={() => pickUploadType(opt.type)}
+                        />
+                      ))}
+                    </div>
+                  </DropdownCard>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Theme toggle */}
             <button
@@ -159,8 +293,8 @@ export function Navbar() {
               {theme === "dark" ? <MoonIcon /> : <SunIcon />}
             </button>
 
-            {/* Avatar */}
-            <div className="relative" onMouseEnter={openMenu} onMouseLeave={closeMenu}>
+            {/* Avatar + profile dropdown */}
+            <div className="relative" onMouseEnter={openProfile} onMouseLeave={closeProfile}>
               <button
                 className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] transition-colors overflow-hidden"
                 style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
@@ -170,32 +304,44 @@ export function Navbar() {
                   <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover rounded-full" />
                 ) : initials}
               </button>
-              {menuOpen && (
-                <div className="absolute right-0 top-11 w-40 rounded-xl shadow-lg overflow-hidden z-50 border border-[var(--border)]" style={{ background: "var(--glass-bg)", backdropFilter: "blur(24px)", WebkitBackdropFilter: "blur(24px)" }}>
-                  {user?.id && (
-                    <Link
-                      href={`/profile/${user.id}`}
-                      onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2.5 text-sm text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
-                    >
-                      Profile
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
 
+              <AnimatePresence>
+                {profileOpen && (
+                  <DropdownCard className="w-52">
+                    <div className="p-1.5">
+                      {user?.id && (
+                        <DropdownItem
+                          icon={<IconProfile />}
+                          label="Profile"
+                          onClick={() => { setProfileOpen(false); router.push(`/profile/${user.id}`); }}
+                        />
+                      )}
+                    </div>
+                    <div className="border-t border-[var(--border)] p-1.5">
+                      <DropdownItem
+                        icon={<IconSignOut />}
+                        label="Sign out"
+                        onClick={handleSignOut}
+                        danger
+                      />
+                    </div>
+                  </DropdownCard>
+                )}
+              </AnimatePresence>
+            </div>
+
+          </div>
         </div>
       </header>
 
-      <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} />
+      {/* Upload modal — opens to specific type */}
+      {uploadType && (
+        <UploadModal
+          open={true}
+          type={uploadType}
+          onClose={closeUploadModal}
+        />
+      )}
     </>
   );
 }
