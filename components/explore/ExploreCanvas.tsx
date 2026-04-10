@@ -234,7 +234,6 @@ export function ExploreCanvas() {
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transformRef = useRef<any>(null);
-  const hascentered = useRef(false);
 
   useEffect(() => {
     fetch(`/api/feed?seed=${sessionSeed.current}`)
@@ -254,16 +253,16 @@ export function ExploreCanvas() {
     [artifacts, dims]
   );
 
-  // Centre viewport on the artifact cluster once dims are loaded
+  // Centre viewport on the artifact cluster — on initial load and whenever switching back to canvas
   useEffect(() => {
-    if (!transformRef.current || layout.items.length === 0 || hascentered.current) return;
-    hascentered.current = true;
+    if (viewMode !== "canvas") return;
+    if (!transformRef.current || layout.items.length === 0) return;
 
     const vmin = Math.min(window.innerWidth, window.innerHeight) * 0.1;
     const posX = window.innerWidth / 2 + vmin - layout.canvasWidth / 2;
     const posY = window.innerHeight / 2 + vmin - layout.canvasHeight / 2;
     transformRef.current.setTransform(posX, posY, 1, 0);
-  }, [layout]);
+  }, [layout, viewMode]);
 
   const handleReact = useCallback((artifactId: string, emoji: string, action: "added" | "removed") => {
     setArtifacts((prev) =>
