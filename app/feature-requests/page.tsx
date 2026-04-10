@@ -74,21 +74,13 @@ function TrashIcon() {
 export default function FeatureRequestsPage() {
   const [requests, setRequests] = useState<FeatureRequestData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/feature-requests")
-      .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text();
-          setFetchError(`API returned ${res.status}: ${text}`);
-          return [];
-        }
-        return res.json();
-      })
+      .then((res) => (res.ok ? res.json() : []))
       .then((data: FeatureRequestData[]) => setRequests(Array.isArray(data) ? data : []))
-      .catch((err) => setFetchError(String(err)))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
@@ -148,99 +140,59 @@ export default function FeatureRequestsPage() {
         </button>
       </div>
 
-      {fetchError && (
-        <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
-          {fetchError}
+      {/* Column header row */}
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
+        {/* Header */}
+        <div className="grid grid-cols-[2fr_3fr_1.5fr_1fr_1.2fr_auto] gap-4 px-4 py-3 border-b border-[var(--border)] sticky top-16 bg-[var(--surface)] z-10">
+          {["Title", "Description", "Submitted by", "Date", "Status", ""].map((h) => (
+            <span key={h} className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">{h}</span>
+          ))}
         </div>
-      )}
 
-      {/* Debug — remove once working */}
-      <pre className="mb-4 rounded-xl bg-[var(--surface-2)] p-3 text-xs text-[var(--muted)] overflow-auto max-h-40">
-        loading={String(loading)} | count={requests.length} | {JSON.stringify(requests.slice(0,1))}
-      </pre>
-      <div className="mb-4 flex flex-col gap-1">
-        {requests.map((req) => (
-          <div key={req.id} className="text-sm text-[var(--foreground)] bg-[var(--surface-2)] px-3 py-2 rounded-lg">
-            {req.title} — {req.status} — {req.user?.name ?? "no name"} — {req.user?.email ?? "no email"}
+        {/* Rows */}
+        {loading ? (
+          <div className="px-4 py-12 text-center text-sm text-[var(--muted)]">Loading…</div>
+        ) : requests.length === 0 ? (
+          <div className="px-4 py-16 text-center">
+            <p className="text-sm font-medium text-[var(--foreground)]">No feature requests yet</p>
+            <p className="text-xs text-[var(--muted)] mt-1">Hit &apos;New request&apos; to submit the first one.</p>
           </div>
-        ))}
-      </div>
-
-      {/* Table */}
-      <div className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
-        <table className="w-full border-collapse">
-          <thead className="sticky bg-[var(--surface)]" style={{ top: 64 }}>
-            <tr className="border-b border-[var(--border)]">
-              <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium uppercase tracking-wide">Title</th>
-              <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium uppercase tracking-wide">Description</th>
-              <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium uppercase tracking-wide">Submitted by</th>
-              <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium uppercase tracking-wide">Date</th>
-              <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium uppercase tracking-wide">Status</th>
-              <th className="px-4 py-3 text-left text-xs text-[var(--muted)] font-medium uppercase tracking-wide">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-sm text-[var(--muted)]">
-                  Loading…
-                </td>
-              </tr>
-            ) : requests.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-16 text-center">
-                  <p className="text-sm font-medium text-[var(--foreground)]">No feature requests yet</p>
-                  <p className="text-xs text-[var(--muted)] mt-1">Hit &apos;New request&apos; to submit the first one.</p>
-                </td>
-              </tr>
-            ) : (
-              requests.map((req) => (
-                <tr
-                  key={req.id}
-                  className="border-b border-[var(--border)] hover:bg-[var(--surface-2)] transition-colors"
-                >
-                  <td className="px-4 py-3 text-sm font-bold text-[var(--foreground)] whitespace-nowrap max-w-[200px] truncate">
-                    {req.title}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[var(--muted)] max-w-[280px] truncate" title={req.description}>
-                    {req.description}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-[var(--foreground)] whitespace-nowrap">
-                    <UserAvatar user={req.user} />
-                  </td>
-                  <td className="px-4 py-3 text-xs text-[var(--muted)] whitespace-nowrap">
-                    {formatDate(req.createdAt)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={req.status}
-                      onChange={(e) => handleStatusChange(req.id, e.target.value as Status)}
-                      className={cn(
-                        "appearance-none rounded-lg px-2.5 py-1 text-xs font-medium border-0 outline-none cursor-pointer",
-                        statusClass(req.status as Status)
-                      )}
-                    >
-                      {STATUS_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleDelete(req.id)}
-                      className="text-[var(--muted)] hover:text-red-400 transition-colors"
-                      aria-label="Delete request"
-                    >
-                      <TrashIcon />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+        ) : (
+          requests.map((req) => (
+            <div
+              key={req.id}
+              className="grid grid-cols-[2fr_3fr_1.5fr_1fr_1.2fr_auto] gap-4 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors items-center"
+            >
+              <span className="text-sm font-semibold text-[var(--foreground)] truncate" title={req.title}>
+                {req.title}
+              </span>
+              <span className="text-sm text-[var(--muted)] truncate" title={req.description}>
+                {req.description}
+              </span>
+              <UserAvatar user={req.user} />
+              <span className="text-xs text-[var(--muted)] whitespace-nowrap">{formatDate(req.createdAt)}</span>
+              <select
+                value={req.status}
+                onChange={(e) => handleStatusChange(req.id, e.target.value as Status)}
+                className={cn(
+                  "appearance-none rounded-lg px-2.5 py-1 text-xs font-medium border-0 outline-none cursor-pointer w-fit",
+                  statusClass(req.status as Status)
+                )}
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={() => handleDelete(req.id)}
+                className="text-[var(--muted)] hover:text-red-400 transition-colors"
+                aria-label="Delete request"
+              >
+                <TrashIcon />
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
       <NewFeatureRequestModal
