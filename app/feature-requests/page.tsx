@@ -14,7 +14,7 @@ const STATUS_OPTIONS: { value: Status; label: string }[] = [
   { value: "ARCHIVED", label: "Archived" },
 ];
 
-function statusClass(status: Status): string {
+function statusClass(status: string): string {
   switch (status) {
     case "NEW":
       return "bg-blue-500/15 text-blue-400";
@@ -26,10 +26,13 @@ function statusClass(status: Status): string {
       return "bg-green-500/15 text-green-400";
     case "ARCHIVED":
       return "bg-[var(--surface-2)] text-[var(--muted)] opacity-50";
+    default:
+      return "bg-[var(--surface-2)] text-[var(--muted)]";
   }
 }
 
 function formatDate(iso: string): string {
+  if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -37,10 +40,14 @@ function formatDate(iso: string): string {
   });
 }
 
-function UserAvatar({ user }: { user: FeatureRequestData["user"] }) {
+function UserAvatar({ user }: { user: FeatureRequestData["user"] | null }) {
+  if (!user) {
+    return <span className="text-xs text-[var(--muted)]">Unknown</span>;
+  }
+
   const initials = user.name
     ? user.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)
-    : user.email[0]?.toUpperCase() ?? "?";
+    : (user.email?.[0]?.toUpperCase() ?? "?");
 
   return (
     <span className="flex items-center gap-1.5">
@@ -55,7 +62,7 @@ function UserAvatar({ user }: { user: FeatureRequestData["user"] }) {
           initials
         )}
       </span>
-      <span>{user.name ?? user.email.split("@")[0]}</span>
+      <span className="text-sm text-[var(--foreground)]">{user.name ?? user.email?.split("@")[0] ?? "Unknown"}</span>
     </span>
   );
 }
@@ -74,18 +81,30 @@ function TrashIcon() {
 export default function FeatureRequestsPage() {
   const [requests, setRequests] = useState<FeatureRequestData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/feature-requests")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data: FeatureRequestData[]) => setRequests(Array.isArray(data) ? data : []))
-      .catch(() => {})
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data: unknown) => {
+        if (Array.isArray(data)) {
+          setRequests(data as FeatureRequestData[]);
+        } else {
+          setRequests([]);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load feature requests:", err);
+        setError(String(err?.message ?? err));
+      })
       .finally(() => setLoading(false));
   }, []);
 
   async function handleStatusChange(id: string, status: Status) {
-    // Optimistic update
     setRequests((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status } : r))
     );
@@ -97,10 +116,9 @@ export default function FeatureRequestsPage() {
         body: JSON.stringify({ status }),
       });
     } catch {
-      // Revert on failure — refetch
       fetch("/api/feature-requests")
         .then((res) => res.json())
-        .then(setRequests)
+        .then((data) => Array.isArray(data) && setRequests(data))
         .catch(() => {});
     }
   }
@@ -115,7 +133,7 @@ export default function FeatureRequestsPage() {
     } catch {
       fetch("/api/feature-requests")
         .then((res) => res.json())
-        .then(setRequests)
+        .then((data) => Array.isArray(data) && setRequests(data))
         .catch(() => {});
     }
   }
@@ -125,7 +143,7 @@ export default function FeatureRequestsPage() {
   }
 
   return (
-    <div className="pt-24 px-6 pb-8">
+    <div className="pt-24 px-6 pb-8 w-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -140,59 +158,92 @@ export default function FeatureRequestsPage() {
         </button>
       </div>
 
-      {/* Column header row */}
-      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
-        {/* Header */}
-        <div className="grid grid-cols-[2fr_3fr_1.5fr_1fr_1.2fr_auto] gap-4 px-4 py-3 border-b border-[var(--border)] sticky top-16 bg-[var(--surface)] z-10">
-          {["Title", "Description", "Submitted by", "Date", "Status", ""].map((h) => (
-            <span key={h} className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">{h}</span>
-          ))}
+      {/* Error state */}
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          Failed to load feature requests: {error}
         </div>
+      )}
 
-        {/* Rows */}
-        {loading ? (
-          <div className="px-4 py-12 text-center text-sm text-[var(--muted)]">Loading…</div>
-        ) : requests.length === 0 ? (
-          <div className="px-4 py-16 text-center">
-            <p className="text-sm font-medium text-[var(--foreground)]">No feature requests yet</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Hit &apos;New request&apos; to submit the first one.</p>
-          </div>
-        ) : (
-          requests.map((req) => (
-            <div
-              key={req.id}
-              className="grid grid-cols-[2fr_3fr_1.5fr_1fr_1.2fr_auto] gap-4 px-4 py-3 border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors items-center"
-            >
-              <span className="text-sm font-semibold text-[var(--foreground)] truncate" title={req.title}>
-                {req.title}
-              </span>
-              <span className="text-sm text-[var(--muted)] truncate" title={req.description}>
-                {req.description}
-              </span>
-              <UserAvatar user={req.user} />
-              <span className="text-xs text-[var(--muted)] whitespace-nowrap">{formatDate(req.createdAt)}</span>
-              <select
-                value={req.status}
-                onChange={(e) => handleStatusChange(req.id, e.target.value as Status)}
-                className={cn(
-                  "appearance-none rounded-lg px-2.5 py-1 text-xs font-medium border-0 outline-none cursor-pointer w-fit",
-                  statusClass(req.status as Status)
-                )}
-              >
-                {STATUS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => handleDelete(req.id)}
-                className="text-[var(--muted)] hover:text-red-400 transition-colors"
-                aria-label="Delete request"
-              >
-                <TrashIcon />
-              </button>
-            </div>
-          ))
-        )}
+      {/* Table */}
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--border)]">
+              {["Title", "Description", "Submitted by", "Date", "Status", ""].map((h, i) => (
+                <th
+                  key={i}
+                  className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-[var(--muted)] whitespace-nowrap"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-[var(--muted)]">
+                  Loading…
+                </td>
+              </tr>
+            ) : requests.length === 0 && !error ? (
+              <tr>
+                <td colSpan={6} className="px-4 py-16 text-center">
+                  <p className="text-sm font-medium text-[var(--foreground)]">No feature requests yet</p>
+                  <p className="text-xs text-[var(--muted)] mt-1">Hit &apos;New request&apos; to submit the first one.</p>
+                </td>
+              </tr>
+            ) : (
+              requests.map((req) => (
+                <tr
+                  key={req.id}
+                  className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors"
+                >
+                  <td className="px-4 py-3 max-w-[160px]">
+                    <span className="text-sm font-semibold text-[var(--foreground)] truncate block" title={req.title}>
+                      {req.title}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 max-w-[260px]">
+                    <span className="text-sm text-[var(--muted)] truncate block" title={req.description}>
+                      {req.description}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <UserAvatar user={req.user} />
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="text-xs text-[var(--muted)]">{formatDate(req.createdAt)}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={req.status}
+                      onChange={(e) => handleStatusChange(req.id, e.target.value as Status)}
+                      className={cn(
+                        "appearance-none rounded-lg px-2.5 py-1 text-xs font-medium border-0 outline-none cursor-pointer",
+                        statusClass(req.status)
+                      )}
+                    >
+                      {STATUS_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleDelete(req.id)}
+                      className="text-[var(--muted)] hover:text-red-400 transition-colors"
+                      aria-label="Delete request"
+                    >
+                      <TrashIcon />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       <NewFeatureRequestModal
