@@ -130,7 +130,7 @@ function DropdownItem({ icon, label, onClick, danger = false }: { icon: React.Re
     <button
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-left",
+        "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-left rounded-xl",
         danger
           ? "text-red-500 hover:bg-[var(--surface-2)]"
           : "text-[var(--foreground)] hover:bg-[var(--surface-2)]"
