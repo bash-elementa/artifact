@@ -158,6 +158,13 @@ export default function FeatureRequestsPage() {
       <pre className="mb-4 rounded-xl bg-[var(--surface-2)] p-3 text-xs text-[var(--muted)] overflow-auto max-h-40">
         loading={String(loading)} | count={requests.length} | {JSON.stringify(requests.slice(0,1))}
       </pre>
+      <div className="mb-4 flex flex-col gap-1">
+        {requests.map((req) => (
+          <div key={req.id} className="text-sm text-[var(--foreground)] bg-[var(--surface-2)] px-3 py-2 rounded-lg">
+            {req.title} — {req.status} — {req.user?.name ?? "no name"} — {req.user?.email ?? "no email"}
+          </div>
+        ))}
+      </div>
 
       {/* Table */}
       <div className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
