@@ -163,6 +163,7 @@ export function UrlRenderer({ url, screenSize = "DESKTOP", screenshotUrl }: UrlR
           ref={iframeRef}
           src={proxyUrl(url)}
           title="URL preview"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
           className="absolute top-0 left-0 origin-top-left"
           style={{
             width: dims.width,

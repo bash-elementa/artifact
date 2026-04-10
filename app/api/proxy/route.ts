@@ -78,7 +78,11 @@ export async function GET(req: NextRequest) {
       // 2. Base href — all relative URLs resolve against original origin
       `<base href="${baseHref}">`,
 
-      // 3. Link interception — same-origin navigation stays inside the proxy
+      // 3. History API patch — intercept pushState/replaceState so client-side routers
+      //    don't throw SecurityErrors when they push cross-origin URLs
+      `<script>(function(){var P='/api/proxy?url=',O=${JSON.stringify(target.origin)};function px(u){if(!u)return u;try{var r=new URL(u,O);if(r.origin===O)return P+encodeURIComponent(r.href);}catch(e){}return u;}var _push=history.pushState.bind(history),_rep=history.replaceState.bind(history);history.pushState=function(s,t,u){try{_push(s,t,px(u));}catch(e){}};history.replaceState=function(s,t,u){try{_rep(s,t,px(u));}catch(e){}};})();</script>`,
+
+      // 4. Link interception — same-origin navigation stays inside the proxy
       `<script>(function(){var P='/api/proxy?url=',O=${JSON.stringify(target.origin)};document.addEventListener('click',function(e){var a=e.target;while(a&&a.tagName!=='A')a=a.parentElement;if(!a||a.target==='_blank')return;var h=a.href;if(h&&(h.startsWith(O+'/')||h===O)){e.preventDefault();window.location.href=P+encodeURIComponent(h);}},true);})();</script>`,
     ].join("\n");
 
