@@ -169,15 +169,18 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
   return (
     <div className="flex flex-col gap-4">
       {/* Toggle */}
-      <div className="flex rounded-xl bg-[var(--surface-2)] border border-[var(--border)] p-1 gap-1">
+      <div
+        className="flex items-center rounded-full p-1.5 gap-1 self-center"
+        style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
+      >
         {(["upload", "link"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
             className={cn(
-              "flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors",
+              "px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-200",
               mode === m
-                ? "bg-[var(--foreground)] text-[var(--background)]"
+                ? "bg-[var(--foreground)] text-[var(--background)] shadow-sm"
                 : "text-[var(--muted)] hover:text-[var(--foreground)]"
             )}
           >
