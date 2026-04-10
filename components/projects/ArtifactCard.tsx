@@ -258,7 +258,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
                 isShared
-                  ? "bg-[var(--accent)] text-[var(--accent-fg)]"
+                  ? "bg-[#7474ee] text-white"
                   : "bg-black/60 text-white backdrop-blur-sm hover:bg-black/80"
               )}
             >
