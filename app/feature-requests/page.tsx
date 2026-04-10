@@ -154,6 +154,11 @@ export default function FeatureRequestsPage() {
         </div>
       )}
 
+      {/* Debug — remove once working */}
+      <pre className="mb-4 rounded-xl bg-[var(--surface-2)] p-3 text-xs text-[var(--muted)] overflow-auto max-h-40">
+        loading={String(loading)} | count={requests.length} | {JSON.stringify(requests.slice(0,1))}
+      </pre>
+
       {/* Table */}
       <div className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
         <table className="w-full border-collapse">
