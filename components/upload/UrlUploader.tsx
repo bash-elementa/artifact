@@ -1,15 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { cn } from "@/lib/utils";
 
 type ScreenSize = "DESKTOP" | "TABLET" | "MOBILE";
-
-const SCREEN_SIZES: { id: ScreenSize; label: string; dims: string }[] = [
-  { id: "DESKTOP", label: "Desktop", dims: "1512×900" },
-  { id: "TABLET", label: "Tablet", dims: "768×1024" },
-  { id: "MOBILE", label: "Mobile", dims: "390×844" },
-];
 
 interface UrlUploaderProps {
   defaultProjectId?: string;
@@ -82,7 +75,7 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-[var(--muted)] font-medium">URL *</label>
+        <label className="text-xs text-[var(--muted)] font-medium">Website URL *</label>
         <input
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -90,27 +83,6 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
           type="url"
           className="w-full rounded-xl bg-[var(--surface-2)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] border border-[var(--border)] focus:outline-none focus:border-[var(--muted)]"
         />
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-[var(--muted)] font-medium">Screen size *</label>
-        <div className="flex gap-2">
-          {SCREEN_SIZES.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setScreenSize(s.id)}
-              className={cn(
-                "flex-1 rounded-xl border px-3 py-2 text-xs font-medium transition-colors text-left",
-                screenSize === s.id
-                  ? "border-[var(--foreground)] bg-[var(--surface-2)] text-[var(--foreground)]"
-                  : "border-[var(--border)] text-[var(--muted)] hover:border-[var(--muted)]"
-              )}
-            >
-              <div>{s.label}</div>
-              <div className="text-[10px] opacity-60">{s.dims}</div>
-            </button>
-          ))}
-        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -141,7 +113,7 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
         disabled={submitting}
         className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
       >
-        {status ?? "Add URL artifact"}
+        {status ?? "Add website URL"}
       </button>
     </div>
   );

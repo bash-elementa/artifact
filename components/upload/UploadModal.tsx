@@ -9,7 +9,7 @@ export type UploadType = "media" | "url" | "figma";
 
 const TYPE_TITLES: Record<UploadType, string> = {
   media: "Upload Files",
-  url: "Add URL",
+  url: "Add website URL",
   figma: "Add Figma",
 };
 
