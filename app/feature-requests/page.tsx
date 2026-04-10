@@ -74,6 +74,7 @@ function TrashIcon() {
 export default function FeatureRequestsPage() {
   const [requests, setRequests] = useState<FeatureRequestData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
@@ -81,13 +82,13 @@ export default function FeatureRequestsPage() {
       .then(async (res) => {
         if (!res.ok) {
           const text = await res.text();
-          console.error("Feature requests API error", res.status, text);
+          setFetchError(`API returned ${res.status}: ${text}`);
           return [];
         }
         return res.json();
       })
       .then((data: FeatureRequestData[]) => setRequests(Array.isArray(data) ? data : []))
-      .catch((err) => console.error("Feature requests fetch failed", err))
+      .catch((err) => setFetchError(String(err)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -146,6 +147,12 @@ export default function FeatureRequestsPage() {
           ＋ New request
         </button>
       </div>
+
+      {fetchError && (
+        <div className="mb-4 rounded-xl bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+          {fetchError}
+        </div>
+      )}
 
       {/* Table */}
       <div className="rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
