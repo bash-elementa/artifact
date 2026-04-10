@@ -251,7 +251,7 @@ export default function FeatureRequestsPage() {
               filtered.map((req) => (
                 <tr
                   key={req.id}
-                  className="group border-b border-[var(--border)] last:border-0 hover:bg-[var(--surface-2)] transition-colors"
+                  className="group border-b border-[var(--border)] last:border-0 bg-transparent transition-colors"
                 >
                   {/* Title */}
                   <td className="px-4 py-3.5 max-w-0">
@@ -288,7 +288,7 @@ export default function FeatureRequestsPage() {
                       value={req.status}
                       onChange={(e) => handleStatusChange(req.id, e.target.value as Status)}
                       className={cn(
-                        "appearance-none rounded-lg px-2.5 py-1 text-xs font-medium border-0 outline-none cursor-pointer",
+                        "appearance-none rounded-lg px-2.5 py-1 text-xs font-medium border-0 outline-none cursor-pointer w-fit",
                         statusClass(req.status)
                       )}
                     >
