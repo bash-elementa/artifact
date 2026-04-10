@@ -217,6 +217,8 @@ export function Navbar() {
     { href: "/projects", label: "Projects" },
   ];
 
+  if (pathname.startsWith("/auth")) return null;
+
   return (
     <>
       <header

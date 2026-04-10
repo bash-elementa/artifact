@@ -103,7 +103,7 @@ export function NewProjectModal({ open, onClose, onSuccess }: NewProjectModalPro
                 <button
                   type="submit"
                   disabled={!name.trim() || submitting}
-                  className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-black disabled:opacity-40"
+                  className="flex-1 rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--background)] disabled:opacity-40"
                 >
                   {submitting ? "Creating…" : "Create project"}
                 </button>

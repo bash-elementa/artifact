@@ -7,7 +7,7 @@
   --surface-2: #1e1e1e;
   --border: #2a2a2a;
   --muted: #6b6b6b;
-  --accent: #e5ff47;
+  --accent: #ffffff;
   /* glass + nav tokens */
   --glass-bg: rgba(16, 16, 16, 0.60);
   --glass-border: rgba(255, 255, 255, 0.08);
@@ -23,7 +23,7 @@
   --surface-2: #d8d8d8;
   --border: #c8c8c8;
   --muted: #888888;
-  --accent: #e5ff47;
+  --accent: #000000;
   /* glass + nav tokens — light overrides */
   --glass-bg: rgba(255, 255, 255, 0.70);
   --glass-border: rgba(0, 0, 0, 0.08);

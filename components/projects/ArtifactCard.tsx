@@ -105,7 +105,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
       onClick={onClick}
     >
       {/* Image area — no fixed aspect, let content breathe */}
-      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)]">
+      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
         {previewUrl ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
@@ -152,7 +152,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete }: Art
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-all",
                 isShared
-                  ? "bg-[var(--accent)] text-black"
+                  ? "bg-[var(--accent)] text-[var(--background)]"
                   : "bg-black/60 text-white backdrop-blur-sm hover:bg-black/80"
               )}
             >
