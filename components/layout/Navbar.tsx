@@ -284,6 +284,7 @@ export function Navbar() {
                     {active && (
                       <motion.span
                         layoutId="nav-pill"
+                        initial={false}
                         className="absolute inset-0 rounded-full shadow-sm"
                         style={{ background: "var(--foreground)" }}
                         transition={{ type: "spring", stiffness: 500, damping: 35 }}
@@ -454,6 +455,7 @@ export function Navbar() {
                 {active && (
                   <motion.span
                     layoutId="mobile-nav-pill"
+                    initial={false}
                     className="absolute inset-0 rounded-full"
                     style={{ background: "var(--foreground)" }}
                     transition={{ type: "spring", stiffness: 500, damping: 35 }}
