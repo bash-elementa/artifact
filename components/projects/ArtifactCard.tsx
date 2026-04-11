@@ -297,15 +297,15 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area — no fixed aspect, let content breathe */}
-      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
+      {/* Image area — fixed height, object-contain so full design is visible regardless of aspect ratio */}
+      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] h-[260px]">
         {previewUrl ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
               <iframe
                 src={cfEmbedUrl(previewUrl)}
                 allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-                className="w-full aspect-video pointer-events-none"
+                className="w-full h-full pointer-events-none"
                 style={{ border: "none" }}
               />
             ) : (
@@ -315,7 +315,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                 muted
                 loop
                 playsInline
-                className="w-full object-cover"
+                className="w-full h-full object-contain"
               />
             )
           ) : (
@@ -323,11 +323,11 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
-              className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+              className="w-full h-full object-contain transition-opacity duration-200 group-hover:opacity-90"
             />
           )
         ) : (
-          <div className="w-full aspect-[4/3] flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center">
             <span className="text-4xl opacity-20">
               {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
             </span>
