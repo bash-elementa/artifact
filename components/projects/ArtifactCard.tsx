@@ -230,12 +230,6 @@ function cfEmbedUrl(url: string): string {
   return `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
 }
 
-/** Clamp dimensions so nothing is taller than 9:16 portrait. */
-function clampRatio(w: number, h: number): string {
-  const maxH = Math.round(w * (16 / 9));
-  return `${w} / ${Math.min(h, maxH)}`;
-}
-
 function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA" && artifact.mediaUrl) return artifact.mediaUrl;
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
@@ -256,22 +250,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
     artifact.mediaMimeType?.startsWith("video/") ||
     (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
 
-  // Figma aspect ratio: stored dimensions → clamped real ratio, otherwise 4/3 default.
-  // Default is set immediately so the first render is already constrained (CSS columns
-  // won't reflow reliably if we add aspect-ratio after initial layout).
-  // onLoad updates to real dimensions for old artifacts without stored values.
-  const isFigma = artifact.type === "FIGMA";
-  const [figmaRatio, setFigmaRatio] = useState<string>(
-    isFigma && artifact.figmaNodeWidth && artifact.figmaNodeHeight
-      ? clampRatio(artifact.figmaNodeWidth, artifact.figmaNodeHeight)
-      : "4 / 3"
-  );
 
-  function handleFigmaImgLoad(e: React.SyntheticEvent<HTMLImageElement>) {
-    if (artifact.figmaNodeWidth && artifact.figmaNodeHeight) return;
-    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
-    if (w && h) setFigmaRatio(clampRatio(w, h));
-  }
 
   async function toggleShare(e: React.MouseEvent) {
     e.stopPropagation();
@@ -322,17 +301,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area.
-          Figma: aspect-ratio on the container + absolutely-positioned image.
-          This works in CSS columns because aspect-ratio sets intrinsic height
-          (unlike height/max-height which columns ignore), and the absolute image
-          doesn't push the container taller. Ratio is clamped to max 9:16 portrait
-          so tall scrollable designs don't blow out the grid.
-          All other types: natural height driven by content, no constraints. */}
-      <div
-        className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
-        style={isFigma ? { aspectRatio: figmaRatio } : undefined}
-      >
+      {/* Image area — no fixed aspect, let content breathe */}
+      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
         {previewUrl ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
@@ -357,12 +327,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
-              onLoad={isFigma ? handleFigmaImgLoad : undefined}
-              className={
-                isFigma
-                  ? "absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
-                  : "w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-              }
+              className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
             />
           )
         ) : (
