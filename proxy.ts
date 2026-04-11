@@ -27,9 +27,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const isAuthPath = request.nextUrl.pathname.startsWith("/auth");
+  const isSharePath = request.nextUrl.pathname.startsWith("/share");
 
-  // Unauthenticated: redirect to sign-in (except auth routes)
-  if (!user && !isAuthPath) {
+  // Unauthenticated: redirect to sign-in (except auth/share routes)
+  if (!user && !isAuthPath && !isSharePath) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/sign-in";
     return NextResponse.redirect(url);

@@ -90,7 +90,7 @@ function GlassBtn({
 function CopyLinkButton({ artifactId }: { artifactId: string }) {
   const [copied, setCopied] = useState(false);
   function copy() {
-    navigator.clipboard.writeText(`${window.location.origin}/explore?artifact=${artifactId}`);
+    navigator.clipboard.writeText(`${window.location.origin}/share?artifact=${artifactId}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
