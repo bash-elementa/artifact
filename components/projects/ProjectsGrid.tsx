@@ -72,23 +72,41 @@ export function ProjectsGrid() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl bg-[var(--surface-2)] aspect-[4/3] animate-pulse" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-1.5">
+              <div className="rounded-xl bg-[var(--surface-2)] aspect-[4/3] animate-pulse" />
+              <div className="grid grid-cols-3 gap-1.5">
+                {[0, 1, 2].map((j) => (
+                  <div key={j} className="rounded-lg bg-[var(--surface-2)] aspect-[4/3] animate-pulse" />
+                ))}
+              </div>
+              <div className="h-3.5 w-1/2 rounded-full bg-[var(--surface-2)] animate-pulse mt-1 mx-0.5" />
+            </div>
           ))}
         </div>
       ) : (
         <AnimatePresence mode="popLayout">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} onDelete={handleDeleteProject} />
             ))}
             {/* New project tile */}
             <button
               onClick={() => setNewProjectOpen(true)}
-              className="group rounded-2xl aspect-[4/3] bg-[var(--surface)] border-2 border-dashed border-[var(--border)] hover:border-[var(--muted)] hover:bg-[var(--surface-2)] transition-all duration-200 flex items-center justify-center"
+              className="group flex flex-col gap-1.5 text-left"
             >
-              <span className="text-3xl text-[var(--border)] group-hover:text-[var(--muted)] transition-colors duration-200">+</span>
+              <div className="rounded-xl overflow-hidden aspect-[4/3] bg-[var(--surface)] border-2 border-dashed border-[var(--border)] group-hover:border-[var(--muted)] group-hover:bg-[var(--surface-2)] transition-all duration-200 flex items-center justify-center">
+                <span className="text-3xl text-[var(--border)] group-hover:text-[var(--muted)] transition-colors duration-200">+</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="rounded-lg aspect-[4/3] bg-[var(--surface)] border border-dashed border-[var(--border)] group-hover:border-[var(--muted)] transition-colors duration-200" />
+                ))}
+              </div>
+              <div className="mt-1 px-0.5">
+                <p className="text-sm font-semibold text-[var(--muted)] group-hover:text-[var(--foreground)] transition-colors duration-200">New project</p>
+              </div>
             </button>
           </div>
         </AnimatePresence>

@@ -42,81 +42,57 @@ function getPreviewUrl(a: ProjectPreview): string | null {
 function TypeIcon({ type }: { type: string }) {
   return (
     <div className="w-full h-full flex items-center justify-center bg-[var(--surface-2)]">
-      <span className="text-3xl opacity-20">
+      <span className="text-2xl opacity-20">
         {type === "URL" ? "🌐" : type === "FIGMA" ? "✦" : "🖼️"}
       </span>
     </div>
   );
 }
 
-function Mosaic({ artifacts }: { artifacts: ProjectPreview[] }) {
-  const count = artifacts.length;
+function ThumbImage({ artifact }: { artifact: ProjectPreview }) {
+  const url = getPreviewUrl(artifact);
+  return url ? (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={url} alt={artifact.name} className="w-full h-full object-cover" />
+  ) : (
+    <TypeIcon type={artifact.type} />
+  );
+}
 
-  if (count === 0) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-[var(--surface-2)]">
-        <span className="text-4xl opacity-20">📁</span>
-      </div>
-    );
-  }
-
-  if (count === 1) {
-    const url = getPreviewUrl(artifacts[0]);
-    return url ? (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={url} alt={artifacts[0].name} className="w-full h-full object-cover" />
-    ) : (
-      <TypeIcon type={artifacts[0].type} />
-    );
-  }
-
-  if (count === 2) {
-    return (
-      <div className="grid grid-cols-2 h-full gap-0.5">
-        {artifacts.map((a) => {
-          const url = getPreviewUrl(a);
-          return url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img key={a.id} src={url} alt={a.name} className="w-full h-full object-cover" />
-          ) : (
-            <TypeIcon key={a.id} type={a.type} />
-          );
-        })}
-      </div>
-    );
-  }
-
-  // 3+ artifacts: large left, 2 stacked right
-  const [first, second, third] = artifacts;
-  const url1 = getPreviewUrl(first);
-  const url2 = getPreviewUrl(second);
-  const url3 = getPreviewUrl(third);
+function ProjectLayout({ artifacts }: { artifacts: ProjectPreview[] }) {
+  const main = artifacts[0] ?? null;
+  const mainUrl = main ? getPreviewUrl(main) : null;
+  const thumbSlots: (ProjectPreview | null)[] = [
+    artifacts[1] ?? null,
+    artifacts[2] ?? null,
+    artifacts[3] ?? null,
+  ];
 
   return (
-    <div className="grid h-full gap-0.5" style={{ gridTemplateColumns: "2fr 1fr" }}>
-      <div className="overflow-hidden row-span-2">
-        {url1 ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url1} alt={first.name} className="w-full h-full object-cover" />
+    <div className="flex flex-col gap-1.5">
+      {/* Hero image */}
+      <div className="rounded-xl overflow-hidden aspect-[4/3] bg-[var(--surface-2)]">
+        {main ? (
+          mainUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={mainUrl} alt={main.name} className="w-full h-full object-cover" />
+          ) : (
+            <TypeIcon type={main.type} />
+          )
         ) : (
-          <TypeIcon type={first.type} />
+          <div className="w-full h-full flex items-center justify-center">
+            <span className="text-4xl opacity-20">📁</span>
+          </div>
         )}
       </div>
-      <div className="overflow-hidden">
-        {url2 ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url2} alt={second.name} className="w-full h-full object-cover" />
-        ) : (
-          <TypeIcon type={second.type} />
-        )}
-      </div>
-      <div className="overflow-hidden">
-        {url3 ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url3} alt={third.name} className="w-full h-full object-cover" />
-        ) : (
-          <TypeIcon type={third.type} />
-        )}
+
+      {/* Thumbnail row — always 3 slots */}
+      <div className="grid grid-cols-3 gap-1.5">
+        {thumbSlots.map((a, i) => (
+          <div key={i} className="rounded-lg overflow-hidden aspect-[4/3] bg-[var(--surface)]">
+            {a && <ThumbImage artifact={a} />}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -125,35 +101,23 @@ function Mosaic({ artifacts }: { artifacts: ProjectPreview[] }) {
 function ContributorAvatars({ contributors }: { contributors: Contributor[] }) {
   if (contributors.length === 0) return null;
 
-  const MAX_SHOWN = 3;
+  const MAX_SHOWN = 4;
   const shown = contributors.slice(0, MAX_SHOWN);
   const overflow = contributors.length - MAX_SHOWN;
 
   function initials(name: string | null): string {
     if (!name) return "?";
-    return name
-      .split(" ")
-      .map((part) => part[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+    return name.split(" ").map((part) => part[0]).join("").toUpperCase().slice(0, 2);
   }
 
   return (
-    <div className="absolute bottom-2 right-2 flex items-center" style={{ gap: -4 }}>
+    <div className="flex items-center">
       {shown.map((c, i) => (
         <div
           key={c.id}
           title={c.name ?? undefined}
-          className="rounded-full border-2 border-[var(--surface)] bg-[var(--surface-2)] text-[var(--foreground)] flex items-center justify-center overflow-hidden shrink-0"
-          style={{
-            width: 24,
-            height: 24,
-            fontSize: 9,
-            fontWeight: 600,
-            zIndex: shown.length - i,
-            marginLeft: i === 0 ? 0 : -6,
-          }}
+          className="rounded-full border-2 border-[var(--background)] bg-[var(--surface-2)] text-[var(--foreground)] flex items-center justify-center overflow-hidden shrink-0"
+          style={{ width: 20, height: 20, fontSize: 8, fontWeight: 600, zIndex: shown.length - i, marginLeft: i === 0 ? 0 : -5 }}
         >
           {c.image ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -165,8 +129,8 @@ function ContributorAvatars({ contributors }: { contributors: Contributor[] }) {
       ))}
       {overflow > 0 && (
         <div
-          className="rounded-full border-2 border-[var(--surface)] bg-[var(--surface-2)] text-[var(--muted)] flex items-center justify-center shrink-0"
-          style={{ width: 24, height: 24, fontSize: 9, fontWeight: 600, marginLeft: -6 }}
+          className="rounded-full border-2 border-[var(--background)] bg-[var(--surface-2)] text-[var(--muted)] flex items-center justify-center shrink-0"
+          style={{ width: 20, height: 20, fontSize: 8, fontWeight: 600, marginLeft: -5 }}
         >
           +{overflow}
         </div>
@@ -414,21 +378,21 @@ export function ProjectCard({ project, onDelete }: { project: Project; onDelete?
   return (
     <div className={`group relative${deleting ? " opacity-50 pointer-events-none" : ""}`}>
       <Link href={`/projects/${project.id}`} className="block">
-        {/* Image mosaic */}
-        <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-[var(--surface-2)] transition-opacity duration-200 group-hover:opacity-90">
-          <Mosaic artifacts={project.artifacts.slice(0, 3)} />
-          <ContributorAvatars contributors={contributors} />
+        {/* Dribbble-style layout */}
+        <div className="relative transition-opacity duration-200 group-hover:opacity-90">
+          <ProjectLayout artifacts={project.artifacts} />
         </div>
 
         {/* Text */}
-        <div className="mt-2.5 px-0.5">
-          <p className="text-sm font-semibold text-[var(--foreground)] leading-snug">{project.name}</p>
-          {project.description && (
-            <p className="text-xs text-[var(--muted)] mt-0.5 line-clamp-1">{project.description}</p>
-          )}
-          <p className="text-xs text-[var(--muted)] mt-0.5">
-            {count} {count === 1 ? "artifact" : "artifacts"}
-          </p>
+        <div className="mt-2.5 px-0.5 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--foreground)] leading-snug truncate">{project.name}</p>
+            <p className="text-xs text-[var(--muted)] mt-0.5">
+              {count} {count === 1 ? "artifact" : "artifacts"}
+              {contributors.length > 0 ? ` · ${contributors.length + 1} members` : ""}
+            </p>
+          </div>
+          <ContributorAvatars contributors={contributors} />
         </div>
       </Link>
 
