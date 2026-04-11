@@ -32,7 +32,9 @@ function proxyUrl(url: string) {
 function isFigmaUrl(url: string) {
   try {
     const host = new URL(url).hostname;
-    return host === "figma.com" || host.endsWith(".figma.com") || host.endsWith(".figma.site");
+    // figma.com and *.figma.com block iframes (design viewer)
+    // *.figma.site are Figma Make published web apps — they load fine in the proxy iframe
+    return host === "figma.com" || host.endsWith(".figma.com");
   } catch {
     return false;
   }
