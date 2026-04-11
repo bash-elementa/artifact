@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Artifact" ADD COLUMN IF NOT EXISTS "figmaNodeWidth" INTEGER;
+ALTER TABLE "Artifact" ADD COLUMN IF NOT EXISTS "figmaNodeHeight" INTEGER;

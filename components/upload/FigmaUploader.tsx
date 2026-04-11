@@ -32,6 +32,8 @@ export function FigmaUploader({ defaultProjectId, onSuccess }: FigmaUploaderProp
       // Attempt to get a static preview via Figma REST API
       // (server-side, uses FIGMA_SERVICE_TOKEN)
       let figmaPreviewUrl: string | undefined;
+      let figmaNodeWidth: number | undefined;
+      let figmaNodeHeight: number | undefined;
       try {
         const previewRes = await fetch("/api/figma-preview", {
           method: "POST",
@@ -41,6 +43,8 @@ export function FigmaUploader({ defaultProjectId, onSuccess }: FigmaUploaderProp
         if (previewRes.ok) {
           const previewData = await previewRes.json();
           figmaPreviewUrl = previewData.previewUrl;
+          if (previewData.width) figmaNodeWidth = previewData.width;
+          if (previewData.height) figmaNodeHeight = previewData.height;
         }
       } catch {
         // Preview fetch failed — continue without it
@@ -55,6 +59,8 @@ export function FigmaUploader({ defaultProjectId, onSuccess }: FigmaUploaderProp
           type: "FIGMA",
           figmaUrl,
           figmaPreviewUrl,
+          figmaNodeWidth,
+          figmaNodeHeight,
           projectId: defaultProjectId ?? null,
         }),
       });

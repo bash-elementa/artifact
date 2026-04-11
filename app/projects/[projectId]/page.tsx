@@ -20,6 +20,8 @@ interface Artifact {
   mediaUrl?: string | null;
   mediaMimeType?: string | null;
   figmaPreviewUrl?: string | null;
+  figmaNodeWidth?: number | null;
+  figmaNodeHeight?: number | null;
   screenshotUrl?: string | null;
   websiteUrl?: string | null;
   figmaUrl?: string | null;

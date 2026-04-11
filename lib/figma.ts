@@ -3,6 +3,12 @@
  * Uses the XD-team-owned service account token.
  */
 
+export type FigmaPreviewResult = {
+  previewUrl: string;
+  width: number | null;
+  height: number | null;
+};
+
 function extractFigmaFileKey(url: string): string | null {
   const match = url.match(/figma\.com\/(file|design|proto)\/([a-zA-Z0-9]+)/);
   return match ? match[2] : null;
@@ -10,8 +16,7 @@ function extractFigmaFileKey(url: string): string | null {
 
 /**
  * Extracts the node-id from a Figma URL query string.
- * Figma URLs use dashes (e.g. "123-456") which the Images API also accepts.
- * Works for both design links (?node-id=...) and prototype links (?node-id=...).
+ * Figma URLs use dashes (e.g. "123-456"); the API uses colons ("123:456").
  */
 function extractFigmaNodeId(url: string): string | null {
   try {
@@ -22,7 +27,7 @@ function extractFigmaNodeId(url: string): string | null {
   }
 }
 
-export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | null> {
+export async function getFigmaStaticPreview(figmaUrl: string): Promise<FigmaPreviewResult | null> {
   const token = process.env.FIGMA_SERVICE_TOKEN;
   if (!token) return null;
 
@@ -30,27 +35,45 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
   if (!fileKey) return null;
 
   const nodeId = extractFigmaNodeId(figmaUrl);
-  // Figma URLs encode node IDs with dashes ("1519-2") but the API response
-  // keys them with colons ("1519:2"). Convert for the lookup.
+  // Figma URLs use dashes ("1519-2") but the API keys responses with colons ("1519:2").
   const apiNodeId = nodeId ? nodeId.replace(/-/g, ":") : null;
 
   try {
-    // If the URL points to a specific frame or prototype starting node,
-    // render that exact node instead of the file cover thumbnail.
     if (apiNodeId) {
-      const imgRes = await fetch(
-        `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(apiNodeId)}&format=png&scale=2`,
-        { headers: { "X-Figma-Token": token } }
-      );
+      // Fetch the node image and its bounding box dimensions in parallel.
+      const [imgRes, nodeRes] = await Promise.all([
+        fetch(
+          `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(apiNodeId)}&format=png&scale=2`,
+          { headers: { "X-Figma-Token": token } }
+        ),
+        fetch(
+          `https://api.figma.com/v1/files/${fileKey}/nodes?ids=${encodeURIComponent(apiNodeId)}&depth=1`,
+          { headers: { "X-Figma-Token": token } }
+        ),
+      ]);
+
+      let previewUrl: string | null = null;
+      let width: number | null = null;
+      let height: number | null = null;
 
       if (imgRes.ok) {
         const imgData = await imgRes.json();
-        const nodeUrl = imgData.images?.[apiNodeId];
-        if (nodeUrl) return nodeUrl as string;
+        previewUrl = imgData.images?.[apiNodeId] ?? null;
       }
+
+      if (nodeRes.ok) {
+        const nodeData = await nodeRes.json();
+        const bbox = nodeData.nodes?.[apiNodeId]?.document?.absoluteBoundingBox;
+        if (bbox) {
+          width = Math.round(bbox.width);
+          height = Math.round(bbox.height);
+        }
+      }
+
+      if (previewUrl) return { previewUrl, width, height };
     }
 
-    // No node-id (plain file/design link) — use the file's cover thumbnail.
+    // No node-id (plain file link) — use the file's cover thumbnail, no dimensions.
     const fileRes = await fetch(
       `https://api.figma.com/v1/files/${fileKey}?depth=1`,
       { headers: { "X-Figma-Token": token } }
@@ -59,9 +82,9 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
     if (!fileRes.ok) return null;
 
     const file = await fileRes.json();
-    if (file.thumbnailUrl) return file.thumbnailUrl as string;
+    if (file.thumbnailUrl) return { previewUrl: file.thumbnailUrl, width: null, height: null };
 
-    // Last resort: export the first page as PNG
+    // Last resort: export the first page as PNG.
     const firstPageId = file.document?.children?.[0]?.id;
     if (!firstPageId) return null;
 
@@ -71,9 +94,9 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
     );
 
     if (!fallbackRes.ok) return null;
-
     const fallbackData = await fallbackRes.json();
-    return fallbackData.images?.[firstPageId] ?? null;
+    const fallbackUrl = fallbackData.images?.[firstPageId] ?? null;
+    return fallbackUrl ? { previewUrl: fallbackUrl, width: null, height: null } : null;
   } catch {
     return null;
   }

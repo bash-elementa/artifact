@@ -49,6 +49,8 @@ export async function POST(req: NextRequest) {
       screenshotUrl: body.screenshotUrl ?? null,
       figmaUrl: body.figmaUrl ?? null,
       figmaPreviewUrl: body.figmaPreviewUrl ?? null,
+      figmaNodeWidth: body.figmaNodeWidth ?? null,
+      figmaNodeHeight: body.figmaNodeHeight ?? null,
       sourceUrl: body.sourceUrl ?? null,
       sourceCredit: body.sourceCredit ?? null,
       tags: body.tags ?? [],

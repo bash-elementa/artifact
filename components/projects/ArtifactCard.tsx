@@ -15,6 +15,8 @@ interface Artifact {
   mediaUrl?: string | null;
   mediaMimeType?: string | null;
   figmaPreviewUrl?: string | null;
+  figmaNodeWidth?: number | null;
+  figmaNodeHeight?: number | null;
   screenshotUrl?: string | null;
   websiteUrl?: string | null;
   figmaUrl?: string | null;
@@ -297,8 +299,17 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area — height driven by content; Figma exports are capped so full-page designs don't blow out the grid */}
-      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
+      {/* Image area — height driven by content. Figma artifacts use stored node dimensions
+          for a natural aspect-ratio container; falls back to a max-height cap for older
+          artifacts that were saved before dimensions were tracked. */}
+      <div
+        className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
+        style={
+          artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
+            ? { aspectRatio: `${artifact.figmaNodeWidth} / ${artifact.figmaNodeHeight}` }
+            : undefined
+        }
+      >
         {previewUrl ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
@@ -324,7 +335,9 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
               src={previewUrl}
               alt={artifact.name}
               className={
-                artifact.type === "FIGMA"
+                artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
+                  ? "w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                  : artifact.type === "FIGMA"
                   ? "w-full object-cover object-top max-h-[400px] transition-opacity duration-200 group-hover:opacity-90"
                   : "w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
               }
