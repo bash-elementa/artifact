@@ -230,18 +230,10 @@ function cfEmbedUrl(url: string): string {
   return `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
 }
 
-/** Compute a clamped aspect-ratio string for Figma cards.
- *  Uses real node dimensions when available; otherwise 4/3.
- *  Clamps so nothing is taller than 9:16 portrait. */
-function clampedFigmaRatio(artifact: Artifact): string {
-  const w = artifact.figmaNodeWidth;
-  const h = artifact.figmaNodeHeight;
-  if (w && h) {
-    // Max portrait: 9:16 → height ≤ width × 16/9
-    const maxH = Math.round(w * (16 / 9));
-    return `${w} / ${Math.min(h, maxH)}`;
-  }
-  return "4 / 3";
+/** Clamp dimensions so nothing is taller than 9:16 portrait. */
+function clampRatio(w: number, h: number): string {
+  const maxH = Math.round(w * (16 / 9));
+  return `${w} / ${Math.min(h, maxH)}`;
 }
 
 function getPreviewUrl(artifact: Artifact): string | null {
@@ -263,6 +255,19 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const isVideo =
     artifact.mediaMimeType?.startsWith("video/") ||
     (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
+
+  // Figma aspect ratio: use stored dimensions if available, otherwise detect on image load.
+  const [figmaRatio, setFigmaRatio] = useState<string | undefined>(
+    artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
+      ? clampRatio(artifact.figmaNodeWidth, artifact.figmaNodeHeight)
+      : undefined
+  );
+
+  function handleFigmaImgLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    if (figmaRatio) return; // already have dimensions
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+    if (w && h) setFigmaRatio(clampRatio(w, h));
+  }
 
   async function toggleShare(e: React.MouseEvent) {
     e.stopPropagation();
@@ -322,7 +327,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
           All other types: natural height driven by content, no constraints. */}
       <div
         className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
-        style={artifact.type === "FIGMA" ? { aspectRatio: clampedFigmaRatio(artifact) } : undefined}
+        style={artifact.type === "FIGMA" && figmaRatio ? { aspectRatio: figmaRatio } : undefined}
       >
         {previewUrl ? (
           isVideo ? (
@@ -348,8 +353,9 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
+              onLoad={artifact.type === "FIGMA" ? handleFigmaImgLoad : undefined}
               className={
-                artifact.type === "FIGMA"
+                artifact.type === "FIGMA" && figmaRatio
                   ? "absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
                   : "w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
               }
