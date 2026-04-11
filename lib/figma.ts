@@ -8,6 +8,20 @@ function extractFigmaFileKey(url: string): string | null {
   return match ? match[2] : null;
 }
 
+/**
+ * Extracts the node-id from a Figma URL query string.
+ * Figma URLs use dashes (e.g. "123-456") which the Images API also accepts.
+ * Works for both design links (?node-id=...) and prototype links (?node-id=...).
+ */
+function extractFigmaNodeId(url: string): string | null {
+  try {
+    const { searchParams } = new URL(url);
+    return searchParams.get("node-id");
+  } catch {
+    return null;
+  }
+}
+
 export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | null> {
   const token = process.env.FIGMA_SERVICE_TOKEN;
   if (!token) return null;
@@ -15,8 +29,25 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
   const fileKey = extractFigmaFileKey(figmaUrl);
   if (!fileKey) return null;
 
+  const nodeId = extractFigmaNodeId(figmaUrl);
+
   try {
-    // First get the file to find the first page/frame
+    // If the URL points to a specific frame or prototype starting node,
+    // render that exact node instead of the file cover thumbnail.
+    if (nodeId) {
+      const imgRes = await fetch(
+        `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&format=png&scale=2`,
+        { headers: { "X-Figma-Token": token } }
+      );
+
+      if (imgRes.ok) {
+        const imgData = await imgRes.json();
+        const nodeUrl = imgData.images?.[nodeId];
+        if (nodeUrl) return nodeUrl as string;
+      }
+    }
+
+    // No node-id (plain file/design link) — use the file's cover thumbnail.
     const fileRes = await fetch(
       `https://api.figma.com/v1/files/${fileKey}?depth=1`,
       { headers: { "X-Figma-Token": token } }
@@ -25,23 +56,21 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
     if (!fileRes.ok) return null;
 
     const file = await fileRes.json();
-
-    // Use the built-in thumbnail Figma generates for the file — most reliable
     if (file.thumbnailUrl) return file.thumbnailUrl as string;
 
-    // Fallback: export the first page as PNG
+    // Last resort: export the first page as PNG
     const firstPageId = file.document?.children?.[0]?.id;
     if (!firstPageId) return null;
 
-    const imgRes = await fetch(
+    const fallbackRes = await fetch(
       `https://api.figma.com/v1/images/${fileKey}?ids=${firstPageId}&format=png&scale=1`,
       { headers: { "X-Figma-Token": token } }
     );
 
-    if (!imgRes.ok) return null;
+    if (!fallbackRes.ok) return null;
 
-    const imgData = await imgRes.json();
-    return imgData.images?.[firstPageId] ?? null;
+    const fallbackData = await fallbackRes.json();
+    return fallbackData.images?.[firstPageId] ?? null;
   } catch {
     return null;
   }
