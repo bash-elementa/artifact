@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { cn, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from "@/lib/utils";
@@ -41,6 +41,20 @@ function isVideoMime(mime: string) {
 
 export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, submitDisabled }: MediaUploaderProps) {
   const [mode, setMode] = useState<"upload" | "link">("upload");
+  const toggleNavRef = useRef<HTMLDivElement>(null);
+  const [togglePill, setTogglePill] = useState({ left: 0, width: 0, visible: false });
+
+  useEffect(() => {
+    const nav = toggleNavRef.current;
+    if (!nav) return;
+    const buttons = nav.querySelectorAll("button");
+    const activeIndex = mode === "upload" ? 0 : 1;
+    const activeBtn = buttons[activeIndex] as HTMLElement | undefined;
+    if (!activeBtn) return;
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    setTogglePill({ left: btnRect.left - navRect.left, width: btnRect.width, visible: true });
+  }, [mode]);
 
   // Upload mode state
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -172,34 +186,31 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
   return (
     <div className="flex flex-col gap-4">
       {/* Toggle */}
-      <motion.div
-        layoutRoot
-        className="flex items-center rounded-full p-1.5 gap-1 self-center"
+      <div
+        ref={toggleNavRef}
+        className="relative flex items-center rounded-full p-1.5 gap-1 self-center"
         style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
       >
+        <motion.span
+          className="absolute rounded-full shadow-sm pointer-events-none"
+          style={{ background: "var(--foreground)", top: 6, bottom: 6 }}
+          animate={{ left: togglePill.left, width: togglePill.width, opacity: togglePill.visible ? 1 : 0 }}
+          initial={{ left: togglePill.left, width: togglePill.width, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 35 }}
+        />
         {(["upload", "link"] as const).map((m) => (
           <button
             key={m}
             onClick={() => setMode(m)}
             className={cn(
-              "px-5 py-1.5 text-sm font-semibold rounded-full relative",
-              mode === m
-                ? "text-[var(--background)]"
-                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+              "relative z-10 px-5 py-1.5 text-sm font-semibold rounded-full",
+              mode === m ? "text-[var(--background)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
             )}
           >
-            {mode === m && (
-              <motion.span
-                layoutId="upload-mode-pill"
-                className="absolute inset-0 rounded-full shadow-sm"
-                style={{ background: "var(--foreground)" }}
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-              />
-            )}
-            <span className="relative z-10">{m === "upload" ? "Upload file" : "Paste link"}</span>
+            {m === "upload" ? "Upload file" : "Paste link"}
           </button>
         ))}
-      </motion.div>
+      </div>
 
       {mode === "upload" ? (
         <>
