@@ -299,21 +299,11 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area — height driven by content.
-          - Figma WITH stored dimensions: container uses exact aspect-ratio, image fills it.
-          - Figma WITHOUT dimensions (older artifacts): container is capped at 400px via
-            maxHeight + overflow-hidden, image renders at natural width and is clipped.
-          - All other types: natural height, no constraints. */}
-      <div
-        className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
-        style={
-          artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
-            ? { aspectRatio: `${artifact.figmaNodeWidth} / ${artifact.figmaNodeHeight}` }
-            : artifact.type === "FIGMA"
-            ? { height: "400px" }
-            : undefined
-        }
-      >
+      {/* Image area — no fixed aspect, let content breathe.
+          CSS multi-column layout ignores height/max-height/overflow on children,
+          so Figma images use aspect-ratio directly on the <img> to constrain
+          their intrinsic size within the column flow. */}
+      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
         {previewUrl ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
@@ -338,10 +328,13 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
-              className={
+              className="w-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
+              style={
                 artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
-                  ? "w-full h-full object-cover transition-opacity duration-200 group-hover:opacity-90"
-                  : "w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+                  ? { aspectRatio: `${artifact.figmaNodeWidth} / ${artifact.figmaNodeHeight}` }
+                  : artifact.type === "FIGMA"
+                  ? { aspectRatio: "4 / 3" }
+                  : undefined
               }
             />
           )
