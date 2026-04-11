@@ -65,9 +65,13 @@ export function ProjectsGrid() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div>
-        <h1 className="text-xl font-semibold">Projects</h1>
-        <p className="text-sm text-[var(--muted)] mt-0.5">Your projects and shared workspaces</p>
+      <div className="flex flex-col items-center text-center gap-1.5 mb-2">
+        <h1 className="text-4xl font-bold tracking-tight">Projects</h1>
+        {!loading && (
+          <p className="text-sm text-[var(--muted)]">
+            {projects.length} {projects.length === 1 ? "project" : "projects"}
+          </p>
+        )}
       </div>
 
       {/* Grid */}
