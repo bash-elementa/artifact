@@ -30,19 +30,22 @@ export async function getFigmaStaticPreview(figmaUrl: string): Promise<string | 
   if (!fileKey) return null;
 
   const nodeId = extractFigmaNodeId(figmaUrl);
+  // Figma URLs encode node IDs with dashes ("1519-2") but the API response
+  // keys them with colons ("1519:2"). Convert for the lookup.
+  const apiNodeId = nodeId ? nodeId.replace(/-/g, ":") : null;
 
   try {
     // If the URL points to a specific frame or prototype starting node,
     // render that exact node instead of the file cover thumbnail.
-    if (nodeId) {
+    if (apiNodeId) {
       const imgRes = await fetch(
-        `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(nodeId)}&format=png&scale=2`,
+        `https://api.figma.com/v1/images/${fileKey}?ids=${encodeURIComponent(apiNodeId)}&format=png&scale=2`,
         { headers: { "X-Figma-Token": token } }
       );
 
       if (imgRes.ok) {
         const imgData = await imgRes.json();
-        const nodeUrl = imgData.images?.[nodeId];
+        const nodeUrl = imgData.images?.[apiNodeId];
         if (nodeUrl) return nodeUrl as string;
       }
     }
