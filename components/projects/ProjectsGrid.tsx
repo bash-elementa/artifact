@@ -100,7 +100,7 @@ export function ProjectsGrid() {
               onClick={() => setNewProjectOpen(true)}
               className="group flex flex-col gap-1.5 text-left"
             >
-              <div className="rounded-xl overflow-hidden aspect-[4/3] bg-[var(--surface)] border-2 border-dashed border-[var(--border)] group-hover:border-[var(--muted)] group-hover:bg-[var(--surface-2)] transition-all duration-200 flex items-center justify-center">
+              <div className="rounded-xl overflow-hidden aspect-[4/3] bg-[var(--surface)] border border-dashed border-[var(--border)] group-hover:border-[var(--muted)] group-hover:bg-[var(--surface-2)] transition-all duration-200 flex items-center justify-center">
                 <span className="text-3xl text-[var(--border)] group-hover:text-[var(--muted)] transition-colors duration-200">+</span>
               </div>
               <div className="grid grid-cols-3 gap-1.5">
