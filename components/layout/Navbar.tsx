@@ -126,6 +126,12 @@ export function Navbar() {
   const [dbProfile, setDbProfile] = useState<{ role: string | null; team: string | null } | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
+  // Nav pill — measured DOM positions, no layoutId
+  const desktopNavRef = useRef<HTMLElement>(null);
+  const mobileNavRef = useRef<HTMLElement>(null);
+  const [desktopPill, setDesktopPill] = useState({ left: 0, width: 0, visible: false });
+  const [mobilePill, setMobilePill] = useState({ left: 0, width: 0, visible: false });
+
   // Desktop upload dropdown
   const [uploadDropdownOpen, setUploadDropdownOpen] = useState(false);
   const [uploadType, setUploadType] = useState<UploadType | null>(null);
@@ -180,6 +186,26 @@ export function Navbar() {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [uploadDropdownOpen]);
+
+  useEffect(() => {
+    function measure(
+      navRef: React.RefObject<HTMLElement | null>,
+      setPill: React.Dispatch<React.SetStateAction<{ left: number; width: number; visible: boolean }>>
+    ) {
+      const navEl = navRef.current;
+      if (!navEl || navEl.getBoundingClientRect().width === 0) return;
+      const activeIndex = NAV_TABS.findIndex((tab) => pathname.startsWith(tab.href));
+      if (activeIndex < 0) { setPill((p) => ({ ...p, visible: false })); return; }
+      const tabs = navEl.querySelectorAll("a");
+      const activeTab = tabs[activeIndex] as HTMLElement | undefined;
+      if (!activeTab) return;
+      const navRect = navEl.getBoundingClientRect();
+      const tabRect = activeTab.getBoundingClientRect();
+      setPill({ left: tabRect.left - navRect.left, width: tabRect.width, visible: true });
+    }
+    measure(desktopNavRef, setDesktopPill);
+    measure(mobileNavRef, setMobilePill);
+  }, [pathname]);
 
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
@@ -263,11 +289,18 @@ export function Navbar() {
             <Link href="/explore" className="text-[var(--foreground)] shrink-0">
               <ArtifactLogo />
             </Link>
-            <motion.nav
-              layoutRoot
-              className="flex items-center rounded-full p-1.5"
+            <nav
+              ref={desktopNavRef as React.RefObject<HTMLElement>}
+              className="relative flex items-center rounded-full p-1.5"
               style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
             >
+              <motion.span
+                className="absolute rounded-full shadow-sm pointer-events-none"
+                style={{ background: "var(--foreground)", top: 6, bottom: 6 }}
+                animate={{ left: desktopPill.left, width: desktopPill.width, opacity: desktopPill.visible ? 1 : 0 }}
+                initial={{ left: desktopPill.left, width: desktopPill.width, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
               {NAV_TABS.map((tab) => {
                 const active = pathname.startsWith(tab.href);
                 return (
@@ -275,26 +308,15 @@ export function Navbar() {
                     key={tab.href}
                     href={tab.href}
                     className={cn(
-                      "px-7 py-2 text-sm font-semibold rounded-full relative",
-                      active
-                        ? "text-[var(--background)]"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                      "relative z-10 px-7 py-2 text-sm font-semibold rounded-full",
+                      active ? "text-[var(--background)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
                     )}
                   >
-                    {active && (
-                      <motion.span
-                        layoutId="nav-pill"
-                        initial={false}
-                        className="absolute inset-0 rounded-full shadow-sm"
-                        style={{ background: "var(--foreground)" }}
-                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                      />
-                    )}
-                    <span className="relative z-10">{tab.label}</span>
+                    {tab.label}
                   </Link>
                 );
               })}
-            </motion.nav>
+            </nav>
           </div>
 
           {/* Right: Request feature + Upload + Theme + Avatar */}
@@ -435,11 +457,18 @@ export function Navbar() {
         }}
       >
         {/* Tab pill — fills available width */}
-        <motion.nav
-          layoutRoot
-          className="flex-1 flex items-center rounded-full p-1.5 pointer-events-auto h-14"
+        <nav
+          ref={mobileNavRef as React.RefObject<HTMLElement>}
+          className="relative flex-1 flex items-center rounded-full p-1.5 pointer-events-auto h-14"
           style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
         >
+          <motion.span
+            className="absolute rounded-full pointer-events-none"
+            style={{ background: "var(--foreground)", top: 6, bottom: 6 }}
+            animate={{ left: mobilePill.left, width: mobilePill.width, opacity: mobilePill.visible ? 1 : 0 }}
+            initial={{ left: mobilePill.left, width: mobilePill.width, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          />
           {NAV_TABS.map((tab) => {
             const active = pathname.startsWith(tab.href);
             const { Icon } = tab;
@@ -448,27 +477,16 @@ export function Navbar() {
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "flex-1 h-full flex flex-col items-center justify-center gap-0.5 rounded-full relative",
+                  "relative z-10 flex-1 h-full flex flex-col items-center justify-center gap-0.5 rounded-full",
                   active ? "text-[var(--background)]" : "text-[var(--muted)]"
                 )}
               >
-                {active && (
-                  <motion.span
-                    layoutId="mobile-nav-pill"
-                    initial={false}
-                    className="absolute inset-0 rounded-full"
-                    style={{ background: "var(--foreground)" }}
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  />
-                )}
-                <span className="relative z-10 flex flex-col items-center justify-center gap-0.5">
-                  <Icon size={20} weight={active ? "fill" : "regular"} />
-                  <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
-                </span>
+                <Icon size={20} weight={active ? "fill" : "regular"} />
+                <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
               </Link>
             );
           })}
-        </motion.nav>
+        </nav>
 
         {/* Upload circle — same height as pill */}
         <button
