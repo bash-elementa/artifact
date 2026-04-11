@@ -425,16 +425,18 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="p-1.5">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMenuOpen(false);
-                        navigator.clipboard.writeText(`${window.location.origin}/share?artifact=${artifact.id}`);
-                      }}
-                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
-                    >
-                      Copy link
-                    </button>
+                    {isShared && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setMenuOpen(false);
+                          navigator.clipboard.writeText(`${window.location.origin}/share?artifact=${artifact.id}`);
+                        }}
+                        className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                      >
+                        Copy link
+                      </button>
+                    )}
                     <button
                       onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setRenameOpen(true); }}
                       className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"

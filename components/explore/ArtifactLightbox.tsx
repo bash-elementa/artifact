@@ -258,8 +258,12 @@ function MediaLightbox({
             />
           </>
         )}
-        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
-        <CopyLinkButton artifactId={artifact.id} />
+        {artifact.isSharedToFeed && (
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <CopyLinkButton artifactId={artifact.id} />
+          </>
+        )}
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
     </>
@@ -384,8 +388,12 @@ function UrlLightbox({
             />
           </>
         )}
-        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
-        <CopyLinkButton artifactId={artifact.id} />
+        {artifact.isSharedToFeed && (
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <CopyLinkButton artifactId={artifact.id} />
+          </>
+        )}
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
     </>
@@ -538,8 +546,12 @@ function FigmaLightbox({
             />
           </>
         )}
-        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
-        <CopyLinkButton artifactId={artifact.id} />
+        {artifact.isSharedToFeed && (
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <CopyLinkButton artifactId={artifact.id} />
+          </>
+        )}
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
     </>
