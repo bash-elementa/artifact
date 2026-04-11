@@ -33,11 +33,24 @@ function isFigmaUrl(url: string) {
   try {
     const host = new URL(url).hostname;
     // figma.com and *.figma.com block iframes (design viewer)
-    // *.figma.site are Figma Make published web apps — they load fine in the proxy iframe
     return host === "figma.com" || host.endsWith(".figma.com");
   } catch {
     return false;
   }
+}
+
+/** Figma Make published sites — load directly, no proxy rewriting needed */
+function isFigmaSite(url: string) {
+  try {
+    return new URL(url).hostname.endsWith(".figma.site");
+  } catch {
+    return false;
+  }
+}
+
+function iframeUrl(url: string) {
+  // Figma Make sites are SPAs — proxy rewriting breaks them; load directly
+  return isFigmaSite(url) ? url : proxyUrl(url);
 }
 
 function truncateUrl(url: string, max = 42) {
@@ -210,7 +223,7 @@ export function UrlRenderer({
             <iframe
               key={key}
               ref={iframeRef}
-              src={proxyUrl(url)}
+              src={iframeUrl(url)}
               title="URL preview"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals"
               className="absolute top-0 left-0 origin-top-left"
