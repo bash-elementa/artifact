@@ -28,12 +28,17 @@ export async function generateMetadata(
     ? `${artifact.description} — shared by ${artifact.user?.name ?? "a teammate"}`
     : `Shared by ${artifact.user?.name ?? "a teammate"} on /artifact`;
 
+  const pageUrl = `/explore?artifact=${artifactId}`;
+
   return {
     title: `${title} — /artifact`,
     description,
     openGraph: {
+      type: "article",
+      url: pageUrl,
       title,
       description,
+      siteName: "/artifact",
       ...(imageUrl && { images: [{ url: imageUrl, width: 1200, height: 630 }] }),
     },
     twitter: {

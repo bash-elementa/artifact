@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import { useDropzone } from "react-dropzone";
 import { cn, MAX_IMAGE_SIZE, MAX_VIDEO_SIZE } from "@/lib/utils";
 
@@ -180,13 +181,21 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
             key={m}
             onClick={() => setMode(m)}
             className={cn(
-              "px-5 py-1.5 text-sm font-semibold rounded-full transition-all duration-200",
+              "px-5 py-1.5 text-sm font-semibold rounded-full relative",
               mode === m
-                ? "bg-[var(--foreground)] text-[var(--background)] shadow-sm"
+                ? "text-[var(--background)]"
                 : "text-[var(--muted)] hover:text-[var(--foreground)]"
             )}
           >
-            {m === "upload" ? "Upload file" : "Paste link"}
+            {mode === m && (
+              <motion.span
+                layoutId="upload-mode-pill"
+                className="absolute inset-0 rounded-full shadow-sm"
+                style={{ background: "var(--foreground)" }}
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative z-10">{m === "upload" ? "Upload file" : "Paste link"}</span>
           </button>
         ))}
       </div>

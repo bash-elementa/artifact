@@ -9,7 +9,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Artifact — Bash",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
+  ),
+  title: {
+    default: "Artifact — Bash",
+    template: "%s",
+  },
   description: "An internal creative sharing platform for Bash.",
 };
 

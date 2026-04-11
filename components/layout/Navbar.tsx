@@ -274,13 +274,21 @@ export function Navbar() {
                     key={tab.href}
                     href={tab.href}
                     className={cn(
-                      "px-7 py-2 text-sm font-semibold rounded-full transition-all duration-200",
+                      "px-7 py-2 text-sm font-semibold rounded-full relative",
                       active
-                        ? "bg-[var(--foreground)] text-[var(--background)] shadow-sm"
+                        ? "text-[var(--background)]"
                         : "text-[var(--muted)] hover:text-[var(--foreground)]"
                     )}
                   >
-                    {tab.label}
+                    {active && (
+                      <motion.span
+                        layoutId="nav-pill"
+                        className="absolute inset-0 rounded-full shadow-sm"
+                        style={{ background: "var(--foreground)" }}
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <span className="relative z-10">{tab.label}</span>
                   </Link>
                 );
               })}
@@ -437,14 +445,22 @@ export function Navbar() {
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "flex-1 h-full flex flex-col items-center justify-center gap-0.5 rounded-full transition-all duration-200",
-                  active
-                    ? "bg-[var(--foreground)] text-[var(--background)]"
-                    : "text-[var(--muted)]"
+                  "flex-1 h-full flex flex-col items-center justify-center gap-0.5 rounded-full relative",
+                  active ? "text-[var(--background)]" : "text-[var(--muted)]"
                 )}
               >
-                <Icon size={20} weight={active ? "fill" : "regular"} />
-                <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
+                {active && (
+                  <motion.span
+                    layoutId="mobile-nav-pill"
+                    className="absolute inset-0 rounded-full"
+                    style={{ background: "var(--foreground)" }}
+                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                  />
+                )}
+                <span className="relative z-10 flex flex-col items-center justify-center gap-0.5">
+                  <Icon size={20} weight={active ? "fill" : "regular"} />
+                  <span className="text-[10px] font-semibold leading-none">{tab.label}</span>
+                </span>
               </Link>
             );
           })}

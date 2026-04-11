@@ -323,22 +323,26 @@ export default function ProjectPage({ params }: { params: Promise<{ projectId: s
             <AddButton onPick={setUploadType} />
           </div>
         ) : (
-          <AnimatePresence mode="popLayout">
-            <div
-              className="gap-3 transition-all duration-300"
-              style={{ columnCount: isMobile ? 2 : columns, columnGap: 12 }}
-            >
-              {project.artifacts.map((artifact) => (
-                <div key={artifact.id} className="break-inside-avoid mb-3">
-                  <ArtifactCard
-                    artifact={artifact}
-                    onClick={() => openLightbox(artifact)}
-                    onDelete={handleDelete}
-                  />
-                </div>
-              ))}
-            </div>
-          </AnimatePresence>
+          <div
+            className="gap-3 transition-all duration-300"
+            style={{ columnCount: isMobile ? 2 : columns, columnGap: 12 }}
+          >
+            {project.artifacts.map((artifact, i) => (
+              <motion.div
+                key={artifact.id}
+                className="break-inside-avoid mb-3"
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeOut", delay: Math.min(i * 0.04, 0.6) }}
+              >
+                <ArtifactCard
+                  artifact={artifact}
+                  onClick={() => openLightbox(artifact)}
+                  onDelete={handleDelete}
+                />
+              </motion.div>
+            ))}
+          </div>
         )}
       </div>
 
