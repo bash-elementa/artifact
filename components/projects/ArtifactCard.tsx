@@ -310,7 +310,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
           artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
             ? { aspectRatio: `${artifact.figmaNodeWidth} / ${artifact.figmaNodeHeight}` }
             : artifact.type === "FIGMA"
-            ? { maxHeight: "400px" }
+            ? { height: "400px" }
             : undefined
         }
       >
