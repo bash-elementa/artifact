@@ -56,11 +56,27 @@ export async function PATCH(
   const { id } = await params;
   const body = await req.json();
 
+  // Only the owner can update contributors
+  const existing = await prisma.project.findFirst({ where: { id, userId: user.id } });
+  if (!existing) return NextResponse.json({ error: "Not found or not authorized" }, { status: 404 });
+
+  const contributorUpdate = body.contributorIds !== undefined
+    ? {
+        contributors: {
+          deleteMany: {},
+          create: (body.contributorIds as string[])
+            .filter((uid: string) => uid !== user.id)
+            .map((userId: string) => ({ userId })),
+        },
+      }
+    : {};
+
   const project = await prisma.project.update({
     where: { id },
     data: {
       ...(body.name && { name: body.name }),
       ...(body.description !== undefined && { description: body.description }),
+      ...contributorUpdate,
     },
   });
 

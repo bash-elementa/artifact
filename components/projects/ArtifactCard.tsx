@@ -429,7 +429,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                       onClick={(e) => {
                         e.stopPropagation();
                         setMenuOpen(false);
-                        navigator.clipboard.writeText(`${window.location.origin}/explore?artifact=${artifact.id}`);
+                        navigator.clipboard.writeText(`${window.location.origin}/share?artifact=${artifact.id}`);
                       }}
                       className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
                     >
@@ -449,7 +449,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setDeleteOpen(true); }}
-                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-red-400 hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                      style={{ color: "var(--error)" }}
                     >
                       Delete
                     </button>

@@ -35,11 +35,12 @@ export function DropdownItem({
       className={cn(
         "w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-left rounded-xl",
         danger
-          ? "text-red-500 hover:bg-[var(--surface-2)]"
+          ? "hover:bg-[var(--surface-2)]"
           : "text-[var(--foreground)] hover:bg-[var(--surface-2)]"
       )}
+      style={danger ? { color: "var(--error)" } : undefined}
     >
-      <span className="text-[var(--muted)]">{icon}</span>
+      <span style={danger ? { color: "var(--error)" } : undefined} className={danger ? "" : "text-[var(--muted)]"}>{icon}</span>
       {label}
     </button>
   );

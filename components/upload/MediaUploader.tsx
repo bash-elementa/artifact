@@ -172,7 +172,8 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
   return (
     <div className="flex flex-col gap-4">
       {/* Toggle */}
-      <div
+      <motion.div
+        layoutRoot
         className="flex items-center rounded-full p-1.5 gap-1 self-center"
         style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
       >
@@ -198,7 +199,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
             <span className="relative z-10">{m === "upload" ? "Upload file" : "Paste link"}</span>
           </button>
         ))}
-      </div>
+      </motion.div>
 
       {mode === "upload" ? (
         <>
