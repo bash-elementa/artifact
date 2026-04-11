@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   TransformWrapper,
   TransformComponent,
   useTransformEffect,
 } from "react-zoom-pan-pinch";
-import { motion, animate, useMotionValue, useTransform } from "framer-motion";
+import { motion, animate, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { SquaresFour, Compass } from "@phosphor-icons/react";
 import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
@@ -224,6 +225,8 @@ function GridColumnSlider({ value, onChange }: { value: number; onChange: (v: nu
 }
 
 export function ExploreCanvas() {
+  const searchParams = useSearchParams();
+  const deepLinkId = searchParams.get("artifact");
   const [artifacts, setArtifacts] = useState<FeedArtifact[]>([]);
   const [dims, setDims] = useState<Dims>({});
   const [loading, setLoading] = useState(true);
@@ -269,6 +272,18 @@ export function ExploreCanvas() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  // Auto-open lightbox from deep-link ?artifact=ID
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (!deepLinkId || deepLinkHandled.current || artifacts.length === 0) return;
+    const idx = artifacts.findIndex((a) => a.id === deepLinkId);
+    if (idx >= 0) {
+      deepLinkHandled.current = true;
+      setLightboxIndex(idx);
+      setLightboxOpen(true);
+    }
+  }, [deepLinkId, artifacts]);
 
   const layout = useMemo(
     () => layoutArtifacts(artifacts, dims, sessionSeed.current),
@@ -350,14 +365,6 @@ export function ExploreCanvas() {
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl px-2 py-1.5 shadow-lg"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
-      {/* Column slider — only in grid mode */}
-      {viewMode === "grid" && (
-        <GridColumnSlider value={gridColumns} onChange={setGridColumns} />
-      )}
-
-      {/* Divider when slider is visible */}
-      {viewMode === "grid" && <div className="w-px h-4 bg-[var(--border)] shrink-0" />}
-
       {/* View toggles */}
       <div className="flex items-center gap-0.5">
         <button
@@ -383,6 +390,23 @@ export function ExploreCanvas() {
           <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
         </button>
       </div>
+
+      {/* Column slider — only in grid mode, slides out to the right */}
+      <AnimatePresence initial={false}>
+        {viewMode === "grid" && (
+          <motion.div
+            key="slider"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden flex items-center gap-2"
+          >
+            <div className="w-px h-4 bg-[var(--border)] shrink-0" />
+            <GridColumnSlider value={gridColumns} onChange={setGridColumns} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 

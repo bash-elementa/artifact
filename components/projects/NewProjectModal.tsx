@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { CaretDown, X as PhX } from "@phosphor-icons/react";
 
 interface UserOption {
   id: string;
@@ -26,6 +27,167 @@ function initials(name: string | null): string {
     .join("")
     .toUpperCase()
     .slice(0, 2);
+}
+
+function ContributorPicker({
+  users,
+  selectedIds,
+  onToggle,
+}: {
+  users: UserOption[];
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filtered = users.filter((u) =>
+    (u.name ?? "").toLowerCase().includes(query.toLowerCase()) ||
+    (u.team ?? "").toLowerCase().includes(query.toLowerCase())
+  );
+
+  const selected = users.filter((u) => selectedIds.has(u.id));
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  function handleOpen() {
+    setOpen(true);
+    setQuery("");
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5" ref={containerRef}>
+      <label className="text-xs text-[var(--muted)] font-medium">Add contributors <span className="opacity-50">(optional)</span></label>
+
+      {/* Selected pills */}
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {selected.map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+            >
+              <div
+                className="rounded-full bg-[var(--border)] flex items-center justify-center shrink-0 overflow-hidden"
+                style={{ width: 16, height: 16, fontSize: 8, fontWeight: 600 }}
+              >
+                {u.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={u.image} alt={u.name ?? ""} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{initials(u.name)}</span>
+                )}
+              </div>
+              <span className="text-[var(--foreground)]">{u.name ?? "Unknown"}</span>
+              <button type="button" onClick={() => onToggle(u.id)} className="text-[var(--muted)] hover:text-[var(--foreground)] transition-colors">
+                <PhX size={10} weight="bold" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Trigger */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={handleOpen}
+          className="w-full flex items-center justify-between rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-left transition-colors focus:outline-none focus:border-[var(--muted)]"
+          style={{ color: selectedIds.size > 0 ? "var(--foreground)" : "var(--muted)" }}
+        >
+          <span>
+            {users.length === 0
+              ? "No other users found"
+              : selectedIds.size > 0
+              ? `${selectedIds.size} contributor${selectedIds.size > 1 ? "s" : ""} added`
+              : "Search teammates…"}
+          </span>
+          <CaretDown size={14} className="shrink-0 text-[var(--muted)]" />
+        </button>
+
+        <AnimatePresence>
+          {open && users.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute left-0 right-0 top-full mt-1 z-10 rounded-xl overflow-hidden shadow-xl"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              {/* Search input */}
+              <div className="p-2 border-b border-[var(--border)]">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search by name or team…"
+                  className="w-full bg-[var(--surface-2)] rounded-lg px-3 py-2 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none"
+                />
+              </div>
+
+              {/* Options */}
+              <div className="max-h-48 overflow-y-auto p-1">
+                {filtered.length === 0 ? (
+                  <p className="text-xs text-[var(--muted)] px-3 py-2">No matches</p>
+                ) : (
+                  filtered.map((u) => {
+                    const sel = selectedIds.has(u.id);
+                    return (
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => { onToggle(u.id); setQuery(""); }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors hover:bg-[var(--surface-2)] ${sel ? "bg-[var(--surface-2)]" : ""}`}
+                      >
+                        <div
+                          className="rounded-full bg-[var(--border)] flex items-center justify-center shrink-0 overflow-hidden"
+                          style={{ width: 28, height: 28, fontSize: 10, fontWeight: 600 }}
+                        >
+                          {u.image ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={u.image} alt={u.name ?? ""} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{initials(u.name)}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-[var(--foreground)] truncate">{u.name ?? "Unknown"}</p>
+                          {(u.role || u.team) && (
+                            <p className="text-xs text-[var(--muted)] truncate">{[u.role, u.team].filter(Boolean).join(" · ")}</p>
+                          )}
+                        </div>
+                        {sel && (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--foreground)] shrink-0">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
 }
 
 export function NewProjectModal({ open, onClose, onSuccess, currentUserId }: NewProjectModalProps) {
@@ -146,59 +308,7 @@ export function NewProjectModal({ open, onClose, onSuccess, currentUserId }: New
               </div>
 
               {/* Contributors section */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-[var(--muted)] font-medium">Add contributors (optional)</label>
-                {users.length === 0 ? (
-                  <p className="text-xs text-[var(--muted)] py-2">No other users found.</p>
-                ) : (
-                  <div className="max-h-48 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--surface-2)]">
-                    {users.map((u) => {
-                      const selected = selectedIds.has(u.id);
-                      return (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => toggleUser(u.id)}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[var(--surface)] ${selected ? "bg-[var(--surface)]" : ""}`}
-                        >
-                          {/* Avatar */}
-                          <div
-                            className="rounded-full bg-[var(--border)] text-[var(--foreground)] flex items-center justify-center shrink-0 overflow-hidden"
-                            style={{ width: 28, height: 28, fontSize: 10, fontWeight: 600 }}
-                          >
-                            {u.image ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={u.image} alt={u.name ?? ""} className="w-full h-full object-cover" />
-                            ) : (
-                              <span>{initials(u.name)}</span>
-                            )}
-                          </div>
-                          {/* Name + subtitle */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-[var(--foreground)] truncate">{u.name ?? "Unknown"}</p>
-                            {(u.role || u.team) && (
-                              <p className="text-xs text-[var(--muted)] truncate">
-                                {[u.role, u.team].filter(Boolean).join(" · ")}
-                              </p>
-                            )}
-                          </div>
-                          {/* Checkmark */}
-                          {selected && (
-                            <svg
-                              width="16" height="16" viewBox="0 0 24 24"
-                              fill="none" stroke="currentColor"
-                              strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                              className="text-[var(--foreground)] shrink-0"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+              <ContributorPicker users={users} selectedIds={selectedIds} onToggle={toggleUser} />
 
               {error && <p className="text-sm text-red-400">{error}</p>}
 

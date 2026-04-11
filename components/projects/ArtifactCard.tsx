@@ -124,6 +124,55 @@ function RenameModal({
   );
 }
 
+function DeleteModal({
+  artifactName,
+  onClose,
+  onConfirm,
+}: {
+  artifactName: string;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.96, y: 8 }}
+        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-sm glass rounded-2xl p-6 flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-base font-semibold text-[var(--foreground)]">Delete artifact</h2>
+          <p className="text-sm text-[var(--muted)]">
+            <span className="text-[var(--foreground)] font-medium">&ldquo;{artifactName}&rdquo;</span> will be permanently deleted. This cannot be undone.
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={onClose}
+            className="flex-1 rounded-xl border border-[var(--border)] py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="flex-1 rounded-xl bg-red-500 py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
+          >
+            Delete
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function MoveModal({
   artifactId,
   currentProjectId,
@@ -243,6 +292,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [displayName, setDisplayName] = useState(artifact.name);
 
   const previewUrl = getPreviewUrl(artifact);
@@ -271,10 +321,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
     }
   }
 
-  async function handleDelete(e: React.MouseEvent) {
-    e.stopPropagation();
-    setMenuOpen(false);
-    if (!confirm("Delete this artifact?")) return;
+  async function confirmDelete() {
+    setDeleteOpen(false);
     await fetch(`/api/artifacts/${artifact.id}`, { method: "DELETE" });
     onDelete?.(artifact.id);
   }
@@ -377,6 +425,16 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                 >
                   <div className="p-1.5">
                     <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMenuOpen(false);
+                        navigator.clipboard.writeText(`${window.location.origin}/explore?artifact=${artifact.id}`);
+                      }}
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                    >
+                      Copy link
+                    </button>
+                    <button
                       onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setRenameOpen(true); }}
                       className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
                     >
@@ -389,8 +447,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                       Move to project
                     </button>
                     <button
-                      onClick={handleDelete}
-                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors rounded-xl"
+                      onClick={(e) => { e.stopPropagation(); setMenuOpen(false); setDeleteOpen(true); }}
+                      className="w-full flex items-center px-4 py-3 text-sm font-medium text-left text-red-400 hover:bg-[var(--surface-2)] transition-colors rounded-xl"
                     >
                       Delete
                     </button>
@@ -403,6 +461,16 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       </div>
 
     </motion.div>
+
+    <AnimatePresence>
+      {deleteOpen && (
+        <DeleteModal
+          artifactName={displayName}
+          onClose={() => setDeleteOpen(false)}
+          onConfirm={confirmDelete}
+        />
+      )}
+    </AnimatePresence>
 
     <AnimatePresence>
       {renameOpen && (

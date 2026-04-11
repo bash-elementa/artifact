@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight } from "@phosphor-icons/react";
+import { ArrowLeft, ArrowRight, Link as PhLink } from "@phosphor-icons/react";
 import { UrlRenderer } from "@/components/artifact-renderers/UrlRenderer";
 import { FigmaRenderer } from "@/components/artifact-renderers/FigmaRenderer";
 import { MediaRenderer } from "@/components/artifact-renderers/MediaRenderer";
@@ -83,6 +83,25 @@ function GlassBtn({
       style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.12)" }}
     >
       {children}
+    </button>
+  );
+}
+
+function CopyLinkButton({ artifactId }: { artifactId: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(`${window.location.origin}/explore?artifact=${artifactId}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+  return (
+    <button
+      onClick={copy}
+      title="Copy link"
+      className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition-colors shrink-0"
+    >
+      <PhLink size={13} />
+      {copied ? "Copied!" : "Copy link"}
     </button>
   );
 }
@@ -239,6 +258,8 @@ function MediaLightbox({
             />
           </>
         )}
+        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+        <CopyLinkButton artifactId={artifact.id} />
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
     </>
@@ -267,8 +288,8 @@ function UrlLightbox({
 
   // We'll pass maxWidth/maxHeight to UrlRenderer so it scales correctly
   const maxWidth = typeof window !== "undefined"
-    ? Math.min(880, window.innerWidth - SIDE_PADDING * 2)
-    : 880;
+    ? Math.min(1100, window.innerWidth - SIDE_PADDING * 2)
+    : 1100;
   const maxHeight = typeof window !== "undefined"
     ? window.innerHeight - BOTTOM_RESERVED - TOP_RESERVED
     : 700;
@@ -353,13 +374,17 @@ function UrlLightbox({
       >
         <UserAvatar user={artifact.user} />
         {artifact.isSharedToFeed && (
-          <ReactionBar forceLight
-            artifactId={artifact.id}
-            reactionCounts={artifact.reactionCounts ?? {}}
-            myReactions={artifact.myReactions ?? []}
-            onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
-          />
+          <>
+            <ReactionBar forceLight
+              artifactId={artifact.id}
+              reactionCounts={artifact.reactionCounts ?? {}}
+              myReactions={artifact.myReactions ?? []}
+              onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
+            />
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+          </>
         )}
+        <CopyLinkButton artifactId={artifact.id} />
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
     </>
@@ -383,11 +408,11 @@ function FigmaLightbox({
 }) {
   const BOTTOM_RESERVED = 80;
   const TOP_RESERVED = 32;
-  const SIDE_PADDING = 48;
+  const SIDE_PADDING = 24;
 
   const maxWidth = typeof window !== "undefined"
-    ? Math.min(960, window.innerWidth - SIDE_PADDING * 2)
-    : 960;
+    ? Math.min(1400, window.innerWidth - SIDE_PADDING * 2)
+    : 1200;
   const maxHeight = typeof window !== "undefined"
     ? window.innerHeight - BOTTOM_RESERVED - TOP_RESERVED
     : 700;
@@ -512,6 +537,8 @@ function FigmaLightbox({
             />
           </>
         )}
+        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+        <CopyLinkButton artifactId={artifact.id} />
         <span className="text-xs text-white/40 shrink-0">{timeAgo(artifact.createdAt)}</span>
       </motion.div>
     </>

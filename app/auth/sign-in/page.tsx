@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -21,6 +21,12 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(
     errorParam ? (ERROR_MESSAGES[errorParam] ?? "Something went wrong.") : null
   );
+  const [lastMethod, setLastMethod] = useState<"google" | "email" | null>(null);
+
+  useEffect(() => {
+    const m = localStorage.getItem("last-auth-method");
+    if (m === "google" || m === "email") setLastMethod(m);
+  }, []);
 
   const supabase = createClient();
 
@@ -36,6 +42,7 @@ function SignInForm() {
     if (error) {
       setError(error.message);
     } else {
+      localStorage.setItem("last-auth-method", "email");
       await fetch("/api/auth/ensure-user", { method: "POST" });
       const profile = await fetch("/api/auth/me").then((r) => r.json());
       window.location.href = profile?.team ? "/explore" : "/onboarding";
@@ -46,6 +53,7 @@ function SignInForm() {
   async function handleGoogle() {
     setLoading(true);
     setError(null);
+    localStorage.setItem("last-auth-method", "google");
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -79,14 +87,19 @@ function SignInForm() {
         </p>
       </div>
 
-      <button
-        onClick={handleGoogle}
-        disabled={loading}
-        className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50"
-      >
-        <GoogleIcon />
-        Continue with Google
-      </button>
+      <div className="flex flex-col gap-1">
+        <button
+          onClick={handleGoogle}
+          disabled={loading}
+          className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50"
+        >
+          <GoogleIcon />
+          Continue with Google
+        </button>
+        {lastMethod === "google" && (
+          <p className="text-center text-xs text-[var(--muted)] opacity-60">Last used</p>
+        )}
+      </div>
 
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px bg-[var(--border)]" />
@@ -95,6 +108,9 @@ function SignInForm() {
       </div>
 
       <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
+        {lastMethod === "email" && (
+          <p className="text-center text-xs text-[var(--muted)] opacity-60 -mb-1">Last used</p>
+        )}
         <input
           type="email"
           placeholder={`you@${ALLOWED_DOMAIN}`}

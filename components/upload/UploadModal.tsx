@@ -1,6 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { CaretDown } from "@phosphor-icons/react";
 import { MediaUploader } from "./MediaUploader";
 import { UrlUploader } from "./UrlUploader";
 import { FigmaUploader } from "./FigmaUploader";
@@ -21,11 +23,86 @@ interface UploadModalProps {
   onSuccess?: () => void;
 }
 
+function ProjectSelector({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/projects")
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
+        if (Array.isArray(data)) setProjects(data.map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
+      })
+      .catch(() => {});
+  }, []);
+
+  const selected = projects.find((p) => p.id === value);
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs text-[var(--muted)] font-medium">Add to project <span className="opacity-50">(optional)</span></label>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-left transition-colors focus:outline-none"
+          style={{ color: selected ? "var(--foreground)" : "var(--muted)" }}
+        >
+          <span>{selected ? selected.name : "No project"}</span>
+          <CaretDown size={14} className="shrink-0 text-[var(--muted)]" />
+        </button>
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute left-0 right-0 top-full mt-1 z-10 rounded-xl overflow-hidden shadow-xl"
+              style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+            >
+              <div className="p-1 max-h-48 overflow-y-auto">
+                <button
+                  type="button"
+                  onClick={() => { onChange(null); setOpen(false); }}
+                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${!value ? "font-semibold text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
+                >
+                  No project
+                </button>
+                {projects.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => { onChange(p.id); setOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${value === p.id ? "font-semibold text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
 export function UploadModal({ open, onClose, type = "media", defaultProjectId, onSuccess }: UploadModalProps) {
+  const [projectId, setProjectId] = useState<string | null>(defaultProjectId ?? null);
+
+  // Reset when modal opens with a new defaultProjectId
+  useEffect(() => {
+    if (open) setProjectId(defaultProjectId ?? null);
+  }, [open, defaultProjectId]);
+
   function handleSuccess() {
     onSuccess?.();
     onClose();
   }
+
+  // Show project selector only when not already scoped to a project
+  const showProjectSelector = !defaultProjectId;
 
   return (
     <AnimatePresence>
@@ -62,15 +139,18 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, o
             </div>
 
             {/* Content */}
-            <div className="px-6 pb-6">
+            <div className="px-6 pb-6 flex flex-col gap-4">
+              {showProjectSelector && (
+                <ProjectSelector value={projectId} onChange={setProjectId} />
+              )}
               {type === "media" && (
-                <MediaUploader defaultProjectId={defaultProjectId} onSuccess={handleSuccess} />
+                <MediaUploader defaultProjectId={projectId ?? undefined} onSuccess={handleSuccess} />
               )}
               {type === "url" && (
-                <UrlUploader defaultProjectId={defaultProjectId} onSuccess={handleSuccess} />
+                <UrlUploader defaultProjectId={projectId ?? undefined} onSuccess={handleSuccess} />
               )}
               {type === "figma" && (
-                <FigmaUploader defaultProjectId={defaultProjectId} onSuccess={handleSuccess} />
+                <FigmaUploader defaultProjectId={projectId ?? undefined} onSuccess={handleSuccess} />
               )}
             </div>
           </motion.div>

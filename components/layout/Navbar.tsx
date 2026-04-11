@@ -206,8 +206,13 @@ export function Navbar() {
   }
 
   async function handleSignOut() {
-    await fetch("/auth/sign-out", { method: "POST" });
-    router.push("/auth/sign-in");
+    const supabase = createClient();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // proceed with redirect regardless
+    }
+    window.location.replace("/auth/sign-in");
   }
 
   function handleFeatureRequestSuccess() {
