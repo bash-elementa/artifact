@@ -163,8 +163,8 @@ function DeleteModal({
           </button>
           <button
             onClick={onConfirm}
-            className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white hover:opacity-90 transition-opacity"
-            style={{ background: "var(--error-secondary)" }}
+            className="flex-1 rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
+            style={{ background: "var(--error)", color: "var(--error-fg)" }}
           >
             Delete
           </button>

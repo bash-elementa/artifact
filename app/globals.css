@@ -30,9 +30,9 @@
   --foreground-solid: #fcfcfc;
 
   /* Brand / semantic extras */
-  --violet:            #7474ee;  /* colour.brand.bash.500 */
-  --error:             #ef4444;  /* primary error red     */
-  --error-secondary:   #f87171;  /* secondary error red   */
+  --violet:            #7474ee;  /* colour.brand.bash.500   */
+  --error:             #EB1F20;  /* elementa error — dark   */
+  --error-fg:          #000000;  /* text on error — dark    */
 
   /* Glass / nav tokens */
   --glass-bg:         rgba(27, 27, 27, 0.75);
@@ -56,10 +56,10 @@
   /* Solid (no-alpha) foreground — for UI chrome that must be fully opaque */
   --foreground-solid: #040404;
 
-  /* Brand / semantic extras (same across themes) */
-  --violet:            #7474ee;
-  --error:             #ef4444;
-  --error-secondary:   #f87171;
+  /* Brand / semantic extras */
+  --violet:            #7474ee;  /* colour.brand.bash.500   */
+  --error:             #CB0210;  /* elementa error — light  */
+  --error-fg:          #ffffff;  /* text on error — light   */
 
   /* Glass / nav tokens — light overrides */
   --glass-bg:         rgba(252, 252, 252, 0.80);
