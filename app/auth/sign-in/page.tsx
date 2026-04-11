@@ -54,6 +54,7 @@ function SignInForm() {
     setLoading(true);
     setError(null);
     localStorage.setItem("last-auth-method", "google");
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -62,14 +63,43 @@ function SignInForm() {
         skipBrowserRedirect: true,
       },
     });
-    if (error) {
-      setError(error.message);
+
+    if (error || !data.url) {
+      setError(error?.message ?? "OAuth failed");
       setLoading(false);
       return;
     }
-    if (data.url) {
-      window.location.href = data.url;
-    }
+
+    // Open in a controlled popup so the current page stays in focus
+    const popup = window.open(
+      data.url,
+      "oauth_popup",
+      "width=520,height=620,scrollbars=yes,resizable=yes"
+    );
+
+    // When Supabase writes the session to localStorage the main window fires
+    // SIGNED_IN — close the popup and navigate here (never opens a new tab)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === "SIGNED_IN" && session) {
+          subscription.unsubscribe();
+          clearInterval(closedTimer);
+          popup?.close();
+          await fetch("/api/auth/ensure-user", { method: "POST" });
+          const profile = await fetch("/api/auth/me").then((r) => r.json());
+          window.location.replace(profile?.team ? "/explore" : "/onboarding");
+        }
+      }
+    );
+
+    // Safety: if popup is closed without completing auth, reset loading
+    const closedTimer = setInterval(() => {
+      if (popup?.closed) {
+        clearInterval(closedTimer);
+        subscription.unsubscribe();
+        setLoading(false);
+      }
+    }, 500);
   }
 
   return (
@@ -102,7 +132,7 @@ function SignInForm() {
           Continue with Google
         </button>
         {lastMethod === "google" && (
-          <p className="text-center text-xs mt-4" style={{ color: "#7474ee" }}>Last used</p>
+          <p className="text-center text-xs font-semibold mt-2" style={{ color: "#7474ee" }}>Last used</p>
         )}
       </div>
 
@@ -114,7 +144,7 @@ function SignInForm() {
 
       <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
         {lastMethod === "email" && (
-          <p className="text-center text-xs mb-4" style={{ color: "#7474ee" }}>Last used</p>
+          <p className="text-center text-xs font-semibold mb-2" style={{ color: "#7474ee" }}>Last used</p>
         )}
         <input
           type="email"

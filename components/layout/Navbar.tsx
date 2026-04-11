@@ -581,6 +581,7 @@ export function Navbar() {
           open={true}
           type={uploadType}
           onClose={closeUploadModal}
+          requireProject={true}
         />
       )}
 

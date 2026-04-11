@@ -6,9 +6,10 @@ interface FigmaUploaderProps {
   defaultProjectId?: string;
   onSuccess: () => void;
   projectSelector?: React.ReactNode;
+  submitDisabled?: boolean;
 }
 
-export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector }: FigmaUploaderProps) {
+export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector, submitDisabled }: FigmaUploaderProps) {
   const [figmaUrl, setFigmaUrl] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -120,7 +121,7 @@ export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector }: 
 
       <button
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || submitDisabled}
         className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
       >
         {submitting ? "Saving…" : "Add Figma artifact"}

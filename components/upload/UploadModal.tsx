@@ -20,10 +20,11 @@ interface UploadModalProps {
   onClose: () => void;
   type?: UploadType;
   defaultProjectId?: string;
+  requireProject?: boolean;
   onSuccess?: () => void;
 }
 
-function ProjectSelector({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+function ProjectSelector({ value, onChange, required }: { value: string | null; onChange: (id: string | null) => void; required?: boolean }) {
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [open, setOpen] = useState(false);
 
@@ -48,27 +49,29 @@ function ProjectSelector({ value, onChange }: { value: string | null; onChange: 
           className="w-full flex items-center justify-between rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-left transition-colors focus:outline-none"
           style={{ color: selected ? "var(--foreground)" : "var(--muted)" }}
         >
-          <span>{selected ? selected.name : "No project"}</span>
+          <span>{selected ? selected.name : required ? "Select a project" : "No project"}</span>
           <CaretDown size={14} className="shrink-0 text-[var(--muted)]" />
         </button>
         <AnimatePresence>
           {open && (
             <motion.div
-              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              initial={{ opacity: 0, y: 4, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              exit={{ opacity: 0, y: 4, scale: 0.98 }}
               transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute left-0 right-0 top-full mt-1 z-10 rounded-xl overflow-hidden shadow-xl"
+              className="absolute left-0 right-0 bottom-full mb-1 z-50 rounded-xl overflow-hidden shadow-xl"
               style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
             >
               <div className="p-1 max-h-48 overflow-y-auto">
-                <button
-                  type="button"
-                  onClick={() => { onChange(null); setOpen(false); }}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${!value ? "font-semibold text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
-                >
-                  No project
-                </button>
+                {!required && (
+                  <button
+                    type="button"
+                    onClick={() => { onChange(null); setOpen(false); }}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors ${!value ? "font-semibold text-[var(--foreground)]" : "text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface-2)]"}`}
+                  >
+                    No project
+                  </button>
+                )}
                 {projects.map((p) => (
                   <button
                     key={p.id}
@@ -88,7 +91,7 @@ function ProjectSelector({ value, onChange }: { value: string | null; onChange: 
   );
 }
 
-export function UploadModal({ open, onClose, type = "media", defaultProjectId, onSuccess }: UploadModalProps) {
+export function UploadModal({ open, onClose, type = "media", defaultProjectId, requireProject, onSuccess }: UploadModalProps) {
   const [projectId, setProjectId] = useState<string | null>(defaultProjectId ?? null);
 
   // Reset when modal opens with a new defaultProjectId
@@ -103,6 +106,7 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, o
 
   // Show project selector only when not already scoped to a project
   const showProjectSelector = !defaultProjectId;
+  const submitDisabled = !!(requireProject && !projectId);
 
   return (
     <AnimatePresence>
@@ -144,21 +148,24 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, o
                 <MediaUploader
                   defaultProjectId={projectId ?? undefined}
                   onSuccess={handleSuccess}
-                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} /> : undefined}
+                  submitDisabled={submitDisabled}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
                 />
               )}
               {type === "url" && (
                 <UrlUploader
                   defaultProjectId={projectId ?? undefined}
                   onSuccess={handleSuccess}
-                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} /> : undefined}
+                  submitDisabled={submitDisabled}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
                 />
               )}
               {type === "figma" && (
                 <FigmaUploader
                   defaultProjectId={projectId ?? undefined}
                   onSuccess={handleSuccess}
-                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} /> : undefined}
+                  submitDisabled={submitDisabled}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
                 />
               )}
             </div>

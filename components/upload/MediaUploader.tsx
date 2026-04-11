@@ -16,6 +16,7 @@ interface MediaUploaderProps {
   defaultProjectId?: string;
   onSuccess: () => void;
   projectSelector?: React.ReactNode;
+  submitDisabled?: boolean;
 }
 
 function inferMimeType(url: string): string {
@@ -37,7 +38,7 @@ function isVideoMime(mime: string) {
   return mime.startsWith("video/");
 }
 
-export function MediaUploader({ defaultProjectId, onSuccess, projectSelector }: MediaUploaderProps) {
+export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, submitDisabled }: MediaUploaderProps) {
   const [mode, setMode] = useState<"upload" | "link">("upload");
 
   // Upload mode state
@@ -252,7 +253,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector }: 
 
           <button
             onClick={handleUploadSubmit}
-            disabled={uploading || files.filter((f) => !f.error).length === 0}
+            disabled={uploading || files.filter((f) => !f.error).length === 0 || submitDisabled}
             className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {uploading ? "Uploading…" : `Upload ${files.filter((f) => !f.error).length || ""} file${files.filter((f) => !f.error).length !== 1 ? "s" : ""}`}
@@ -309,7 +310,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector }: 
 
           <button
             onClick={handleLinkSubmit}
-            disabled={linkSubmitting || !linkUrl.trim() || !linkName.trim()}
+            disabled={linkSubmitting || !linkUrl.trim() || !linkName.trim() || submitDisabled}
             className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {linkSubmitting ? "Saving…" : "Save media"}

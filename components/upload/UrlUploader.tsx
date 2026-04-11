@@ -6,9 +6,10 @@ interface UrlUploaderProps {
   defaultProjectId?: string;
   onSuccess: () => void;
   projectSelector?: React.ReactNode;
+  submitDisabled?: boolean;
 }
 
-export function UrlUploader({ defaultProjectId, onSuccess, projectSelector }: UrlUploaderProps) {
+export function UrlUploader({ defaultProjectId, onSuccess, projectSelector, submitDisabled }: UrlUploaderProps) {
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -113,7 +114,7 @@ export function UrlUploader({ defaultProjectId, onSuccess, projectSelector }: Ur
 
       <button
         onClick={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || submitDisabled}
         className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
       >
         {status ?? "Add website URL"}

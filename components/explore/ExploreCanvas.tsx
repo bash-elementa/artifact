@@ -382,30 +382,32 @@ export function ExploreCanvas() {
         )}
       </AnimatePresence>
 
-      {/* View toggles */}
-      <div className="flex items-center gap-0.5">
-        <button
-          onClick={() => setViewMode("canvas")}
-          title="Infinite canvas"
-          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-            viewMode === "canvas"
-              ? "bg-[var(--foreground)] text-[var(--background)]"
-              : "text-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
-        >
-          <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
-        </button>
-        <button
-          onClick={() => setViewMode("grid")}
-          title="Grid"
-          className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors ${
-            viewMode === "grid"
-              ? "bg-[var(--foreground)] text-[var(--background)]"
-              : "text-[var(--muted)] hover:text-[var(--foreground)]"
-          }`}
-        >
-          <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
-        </button>
+      {/* View toggles — sliding active pill */}
+      <div className="flex items-center gap-0.5 relative">
+        {(["canvas", "grid"] as const).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            title={mode === "canvas" ? "Infinite canvas" : "Grid"}
+            className="w-8 h-8 rounded-xl flex items-center justify-center relative z-10"
+            style={{ color: viewMode === mode ? "var(--background)" : "var(--muted)" }}
+          >
+            {viewMode === mode && (
+              <motion.span
+                layoutId="tab-pill"
+                className="absolute inset-0 rounded-xl"
+                style={{ background: "var(--foreground)" }}
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+              />
+            )}
+            <span className="relative z-10">
+              {mode === "canvas"
+                ? <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
+                : <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
+              }
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -420,15 +422,18 @@ export function ExploreCanvas() {
           style={{ paddingTop: 80 }}
         >
           <div style={{ columnCount: gridColumns, columnGap: 12 }}>
-            {artifacts.map((artifact) => {
+            {artifacts.map((artifact, i) => {
               const purl = previewUrl(artifact);
               const isVideo =
                 artifact.mediaMimeType?.startsWith("video/") ||
                 (!!artifact.mediaUrl && artifact.mediaUrl.toLowerCase().includes("videodelivery.net"));
 
               return (
-                <div
+                <motion.div
                   key={artifact.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1], delay: Math.min(i * 0.04, 0.6) }}
                   className="break-inside-avoid mb-3 group cursor-pointer rounded-3xl overflow-hidden relative bg-[var(--surface-2)]"
                   style={{ minHeight: 120 }}
                   onClick={() => openLightbox(artifact)}
@@ -477,7 +482,7 @@ export function ExploreCanvas() {
                       />
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
