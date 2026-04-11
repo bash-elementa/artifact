@@ -230,6 +230,20 @@ function cfEmbedUrl(url: string): string {
   return `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
 }
 
+/** Compute a clamped aspect-ratio string for Figma cards.
+ *  Uses real node dimensions when available; otherwise 4/3.
+ *  Clamps so nothing is taller than 9:16 portrait. */
+function clampedFigmaRatio(artifact: Artifact): string {
+  const w = artifact.figmaNodeWidth;
+  const h = artifact.figmaNodeHeight;
+  if (w && h) {
+    // Max portrait: 9:16 → height ≤ width × 16/9
+    const maxH = Math.round(w * (16 / 9));
+    return `${w} / ${Math.min(h, maxH)}`;
+  }
+  return "4 / 3";
+}
+
 function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA" && artifact.mediaUrl) return artifact.mediaUrl;
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
@@ -299,11 +313,17 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area — no fixed aspect, let content breathe.
-          CSS multi-column layout ignores height/max-height/overflow on children,
-          so Figma images use aspect-ratio directly on the <img> to constrain
-          their intrinsic size within the column flow. */}
-      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
+      {/* Image area.
+          Figma: aspect-ratio on the container + absolutely-positioned image.
+          This works in CSS columns because aspect-ratio sets intrinsic height
+          (unlike height/max-height which columns ignore), and the absolute image
+          doesn't push the container taller. Ratio is clamped to max 9:16 portrait
+          so tall scrollable designs don't blow out the grid.
+          All other types: natural height driven by content, no constraints. */}
+      <div
+        className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
+        style={artifact.type === "FIGMA" ? { aspectRatio: clampedFigmaRatio(artifact) } : undefined}
+      >
         {previewUrl ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
@@ -328,13 +348,10 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
-              className="w-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
-              style={
-                artifact.type === "FIGMA" && artifact.figmaNodeWidth && artifact.figmaNodeHeight
-                  ? { aspectRatio: `${artifact.figmaNodeWidth} / ${artifact.figmaNodeHeight}` }
-                  : artifact.type === "FIGMA"
-                  ? { aspectRatio: "4 / 3" }
-                  : undefined
+              className={
+                artifact.type === "FIGMA"
+                  ? "absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
+                  : "w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
               }
             />
           )
