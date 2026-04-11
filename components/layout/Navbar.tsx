@@ -263,7 +263,8 @@ export function Navbar() {
             <Link href="/explore" className="text-[var(--foreground)] shrink-0">
               <ArtifactLogo />
             </Link>
-            <nav
+            <motion.nav
+              layoutRoot
               className="flex items-center rounded-full p-1.5"
               style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
             >
@@ -292,7 +293,7 @@ export function Navbar() {
                   </Link>
                 );
               })}
-            </nav>
+            </motion.nav>
           </div>
 
           {/* Right: Request feature + Upload + Theme + Avatar */}
@@ -433,7 +434,8 @@ export function Navbar() {
         }}
       >
         {/* Tab pill — fills available width */}
-        <nav
+        <motion.nav
+          layoutRoot
           className="flex-1 flex items-center rounded-full p-1.5 pointer-events-auto h-14"
           style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
         >
@@ -464,7 +466,7 @@ export function Navbar() {
               </Link>
             );
           })}
-        </nav>
+        </motion.nav>
 
         {/* Upload circle — same height as pill */}
         <button
