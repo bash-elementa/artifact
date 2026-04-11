@@ -86,7 +86,7 @@ export function ProjectsGrid() {
             {/* New project tile */}
             <button
               onClick={() => setNewProjectOpen(true)}
-              className="group rounded-2xl aspect-[4/3] bg-[var(--surface-2)] border-2 border-dashed border-[var(--border)] hover:border-[var(--muted)] hover:bg-[var(--surface)] transition-all duration-200 flex items-center justify-center"
+              className="group rounded-2xl aspect-[4/3] bg-[var(--surface)] border-2 border-dashed border-[var(--border)] hover:border-[var(--muted)] hover:bg-[var(--surface-2)] transition-all duration-200 flex items-center justify-center"
             >
               <span className="text-3xl text-[var(--border)] group-hover:text-[var(--muted)] transition-colors duration-200">+</span>
             </button>
