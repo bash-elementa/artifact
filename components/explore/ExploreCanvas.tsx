@@ -365,6 +365,23 @@ export function ExploreCanvas() {
       className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl px-2 py-1.5 shadow-lg"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
+      {/* Column slider — only in grid mode, slides out to the left */}
+      <AnimatePresence initial={false}>
+        {viewMode === "grid" && (
+          <motion.div
+            key="slider"
+            initial={{ opacity: 0, width: 0 }}
+            animate={{ opacity: 1, width: "auto" }}
+            exit={{ opacity: 0, width: 0 }}
+            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden flex items-center gap-2"
+          >
+            <GridColumnSlider value={gridColumns} onChange={setGridColumns} />
+            <div className="w-px h-4 bg-[var(--border)] shrink-0" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* View toggles */}
       <div className="flex items-center gap-0.5">
         <button
@@ -390,23 +407,6 @@ export function ExploreCanvas() {
           <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
         </button>
       </div>
-
-      {/* Column slider — only in grid mode, slides out to the right */}
-      <AnimatePresence initial={false}>
-        {viewMode === "grid" && (
-          <motion.div
-            key="slider"
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className="overflow-hidden flex items-center gap-2"
-          >
-            <div className="w-px h-4 bg-[var(--border)] shrink-0" />
-            <GridColumnSlider value={gridColumns} onChange={setGridColumns} />
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 

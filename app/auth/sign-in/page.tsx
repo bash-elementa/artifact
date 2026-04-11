@@ -54,16 +54,21 @@ function SignInForm() {
     setLoading(true);
     setError(null);
     localStorage.setItem("last-auth-method", "google");
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
         queryParams: { hd: ALLOWED_DOMAIN },
+        skipBrowserRedirect: true,
       },
     });
     if (error) {
       setError(error.message);
       setLoading(false);
+      return;
+    }
+    if (data.url) {
+      window.location.href = data.url;
     }
   }
 
@@ -97,7 +102,7 @@ function SignInForm() {
           Continue with Google
         </button>
         {lastMethod === "google" && (
-          <p className="text-center text-xs text-[var(--muted)] opacity-60">Last used</p>
+          <p className="text-center text-xs mt-4" style={{ color: "#7474ee" }}>Last used</p>
         )}
       </div>
 
@@ -109,7 +114,7 @@ function SignInForm() {
 
       <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
         {lastMethod === "email" && (
-          <p className="text-center text-xs text-[var(--muted)] opacity-60 -mb-1">Last used</p>
+          <p className="text-center text-xs mb-4" style={{ color: "#7474ee" }}>Last used</p>
         )}
         <input
           type="email"

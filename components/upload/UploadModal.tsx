@@ -40,7 +40,7 @@ function ProjectSelector({ value, onChange }: { value: string | null; onChange: 
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-xs text-[var(--muted)] font-medium">Add to project <span className="opacity-50">(optional)</span></label>
+      <label className="text-xs text-[var(--muted)] font-medium">Add to project</label>
       <div className="relative">
         <button
           type="button"
@@ -140,17 +140,26 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, o
 
             {/* Content */}
             <div className="px-6 pb-6 flex flex-col gap-4">
-              {showProjectSelector && (
-                <ProjectSelector value={projectId} onChange={setProjectId} />
-              )}
               {type === "media" && (
-                <MediaUploader defaultProjectId={projectId ?? undefined} onSuccess={handleSuccess} />
+                <MediaUploader
+                  defaultProjectId={projectId ?? undefined}
+                  onSuccess={handleSuccess}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} /> : undefined}
+                />
               )}
               {type === "url" && (
-                <UrlUploader defaultProjectId={projectId ?? undefined} onSuccess={handleSuccess} />
+                <UrlUploader
+                  defaultProjectId={projectId ?? undefined}
+                  onSuccess={handleSuccess}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} /> : undefined}
+                />
               )}
               {type === "figma" && (
-                <FigmaUploader defaultProjectId={projectId ?? undefined} onSuccess={handleSuccess} />
+                <FigmaUploader
+                  defaultProjectId={projectId ?? undefined}
+                  onSuccess={handleSuccess}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} /> : undefined}
+                />
               )}
             </div>
           </motion.div>

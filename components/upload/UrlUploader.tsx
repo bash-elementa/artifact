@@ -1,26 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Desktop, DeviceTablet, DeviceMobile } from "@phosphor-icons/react";
-
-type ScreenSize = "DESKTOP" | "TABLET" | "MOBILE";
-
-const SCREEN_OPTIONS: { value: ScreenSize; label: string; Icon: React.ComponentType<{ size: number; weight: "bold" | "regular" }> }[] = [
-  { value: "DESKTOP", label: "Desktop", Icon: Desktop },
-  { value: "TABLET",  label: "Tablet",  Icon: DeviceTablet },
-  { value: "MOBILE",  label: "Mobile",  Icon: DeviceMobile },
-];
 
 interface UrlUploaderProps {
   defaultProjectId?: string;
   onSuccess: () => void;
+  projectSelector?: React.ReactNode;
 }
 
-export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
+export function UrlUploader({ defaultProjectId, onSuccess, projectSelector }: UrlUploaderProps) {
   const [url, setUrl] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [screenSize, setScreenSize] = useState<ScreenSize>("DESKTOP");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +55,7 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
           description: description || undefined,
           type: "URL",
           websiteUrl: validUrl,
-          screenSize,
+          screenSize: "DESKTOP",
           screenshotUrl: screenshotUrl ?? null,
           projectId: defaultProjectId ?? null,
         }),
@@ -116,29 +107,9 @@ export function UrlUploader({ defaultProjectId, onSuccess }: UrlUploaderProps) {
         />
       </div>
 
-      {/* Screen size */}
-      <div className="flex flex-col gap-1.5">
-        <label className="text-xs text-[var(--muted)] font-medium">Capture at breakpoint</label>
-        <div className="flex gap-2">
-          {SCREEN_OPTIONS.map(({ value, label, Icon }) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setScreenSize(value)}
-              className={`flex-1 flex flex-col items-center gap-1.5 rounded-xl border py-3 text-xs font-medium transition-colors ${
-                screenSize === value
-                  ? "border-[var(--foreground)] bg-[var(--surface-2)] text-[var(--foreground)]"
-                  : "border-[var(--border)] text-[var(--muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <Icon size={18} weight={screenSize === value ? "bold" : "regular"} />
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {error && <p className="text-sm text-red-400">{error}</p>}
+
+      {projectSelector}
 
       <button
         onClick={handleSubmit}

@@ -5,9 +5,10 @@ import { useState } from "react";
 interface FigmaUploaderProps {
   defaultProjectId?: string;
   onSuccess: () => void;
+  projectSelector?: React.ReactNode;
 }
 
-export function FigmaUploader({ defaultProjectId, onSuccess }: FigmaUploaderProps) {
+export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector }: FigmaUploaderProps) {
   const [figmaUrl, setFigmaUrl] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -114,6 +115,8 @@ export function FigmaUploader({ defaultProjectId, onSuccess }: FigmaUploaderProp
       </div>
 
       {error && <p className="text-sm text-red-400">{error}</p>}
+
+      {projectSelector}
 
       <button
         onClick={handleSubmit}

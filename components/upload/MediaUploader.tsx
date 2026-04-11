@@ -15,6 +15,7 @@ interface FileItem {
 interface MediaUploaderProps {
   defaultProjectId?: string;
   onSuccess: () => void;
+  projectSelector?: React.ReactNode;
 }
 
 function inferMimeType(url: string): string {
@@ -36,7 +37,7 @@ function isVideoMime(mime: string) {
   return mime.startsWith("video/");
 }
 
-export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProps) {
+export function MediaUploader({ defaultProjectId, onSuccess, projectSelector }: MediaUploaderProps) {
   const [mode, setMode] = useState<"upload" | "link">("upload");
 
   // Upload mode state
@@ -247,6 +248,8 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
 
           {uploadError && <p className="text-sm text-red-400">{uploadError}</p>}
 
+          {projectSelector}
+
           <button
             onClick={handleUploadSubmit}
             disabled={uploading || files.filter((f) => !f.error).length === 0}
@@ -301,6 +304,8 @@ export function MediaUploader({ defaultProjectId, onSuccess }: MediaUploaderProp
           </div>
 
           {linkError && <p className="text-sm text-red-400">{linkError}</p>}
+
+          {projectSelector}
 
           <button
             onClick={handleLinkSubmit}
