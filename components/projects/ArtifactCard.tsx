@@ -315,7 +315,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                 muted
                 loop
                 playsInline
-                className="w-full h-full object-contain"
+                className="w-full h-full object-cover object-top"
               />
             )
           ) : (
@@ -323,7 +323,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
-              className="w-full h-full object-contain transition-opacity duration-200 group-hover:opacity-90"
+              className="w-full h-full object-cover object-top transition-opacity duration-200 group-hover:opacity-90"
             />
           )
         ) : (
