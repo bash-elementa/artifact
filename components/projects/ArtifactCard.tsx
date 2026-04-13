@@ -382,7 +382,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
         ) : (
           <div className="w-full aspect-[4/3] flex items-center justify-center">
             <span className="text-4xl opacity-20">
-              {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
+              {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : artifact.type === "HTML" ? "</>" : "🖼️"}
             </span>
           </div>
         )}

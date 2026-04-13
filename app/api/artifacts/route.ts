@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       figmaPreviewUrl: body.figmaPreviewUrl ?? null,
       figmaNodeWidth: body.figmaNodeWidth ?? null,
       figmaNodeHeight: body.figmaNodeHeight ?? null,
+      htmlContent: body.htmlContent ?? null,
       sourceUrl: body.sourceUrl ?? null,
       sourceCredit: body.sourceCredit ?? null,
       tags: body.tags ?? [],

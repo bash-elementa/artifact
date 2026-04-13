@@ -91,6 +91,9 @@ model Artifact {
   figmaNodeWidth  Int?
   figmaNodeHeight Int?
 
+  // HTML
+  htmlContent  String?   @db.Text
+
   // Inspo
   sourceUrl    String?
   sourceCredit String?
@@ -111,6 +114,7 @@ enum ArtifactType {
   URL
   FIGMA
   INSPO
+  HTML
 }
 
 enum ScreenSize {

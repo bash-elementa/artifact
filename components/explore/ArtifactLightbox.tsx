@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, Link as PhLink } from "@phosphor-icons/react";
 import { UrlRenderer } from "@/components/artifact-renderers/UrlRenderer";
 import { FigmaRenderer } from "@/components/artifact-renderers/FigmaRenderer";
 import { MediaRenderer } from "@/components/artifact-renderers/MediaRenderer";
+import { HtmlRenderer } from "@/components/artifact-renderers/HtmlRenderer";
 import { ReactionBar } from "@/components/reactions/ReactionBar";
 import { timeAgo } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ interface LightboxArtifact {
   screenshotUrl?: string | null;
   figmaUrl?: string | null;
   figmaPreviewUrl?: string | null;
+  htmlContent?: string | null;
   sourceUrl?: string | null;
   sourceCredit?: string | null;
   isSharedToFeed?: boolean;
@@ -678,6 +680,109 @@ function ContainerLightbox({
   );
 }
 
+// ── HTML lightbox ─────────────────────────────────────────────────────────────
+
+function HtmlLightbox({
+  artifact,
+  onClose,
+  onPrev,
+  onNext,
+  onReact,
+}: {
+  artifact: LightboxArtifact;
+  onClose: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  onReact?: (artifactId: string, emoji: string, action: "added" | "removed") => void;
+}) {
+  const BOTTOM_RESERVED = 80;
+  const TOP_RESERVED = 32;
+  const SIDE_PADDING = 48;
+
+  const maxWidth = typeof window !== "undefined"
+    ? Math.min(1100, window.innerWidth - SIDE_PADDING * 2)
+    : 1100;
+  const maxHeight = typeof window !== "undefined"
+    ? window.innerHeight - BOTTOM_RESERVED - TOP_RESERVED - 52 // 52 = chrome bar + gap
+    : 700;
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.96 }}
+        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+        style={{ paddingBottom: BOTTOM_RESERVED, paddingTop: TOP_RESERVED }}
+      >
+        <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+          <HtmlRenderer
+            htmlContent={artifact.htmlContent!}
+            maxWidth={maxWidth}
+            maxHeight={maxHeight}
+          />
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, delay: 0.05 }}
+        className="fixed top-5 right-5 z-50"
+      >
+        <GlassBtn onClick={onClose} className="w-9 h-9 text-lg">×</GlassBtn>
+      </motion.div>
+
+      {onPrev && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed left-5 top-1/2 -translate-y-1/2 z-50">
+          <GlassBtn onClick={onPrev} className="w-10 h-10"><ArrowLeft size={18} /></GlassBtn>
+        </motion.div>
+      )}
+      {onNext && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed right-5 top-1/2 -translate-y-1/2 z-50">
+          <GlassBtn onClick={onNext} className="w-10 h-10"><ArrowRight size={18} /></GlassBtn>
+        </motion.div>
+      )}
+
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.25, delay: 0.05 }}
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 rounded-2xl px-4 py-3 flex items-center gap-4"
+        style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(20px)", border: "1px solid rgba(255,255,255,0.10)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <UserAvatar user={artifact.user} />
+        {artifact.isSharedToFeed && (
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <ReactionBar forceLight
+              artifactId={artifact.id}
+              reactionCounts={artifact.reactionCounts ?? {}}
+              myReactions={artifact.myReactions ?? []}
+              onReact={(emoji, action) => onReact?.(artifact.id, emoji, action)}
+            />
+          </>
+        )}
+        <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+        <span className="text-xs text-white/50 shrink-0">{timeAgo(artifact.createdAt)}</span>
+      </motion.div>
+    </>
+  );
+}
+
 // ── Root ─────────────────────────────────────────────────────────────────────
 
 export function ArtifactLightbox({ artifact, onClose, onPrev, onNext, onReact }: ArtifactLightboxProps) {
@@ -695,6 +800,7 @@ export function ArtifactLightbox({ artifact, onClose, onPrev, onNext, onReact }:
   const isMedia = artifact?.type === "MEDIA" && !!artifact.mediaUrl;
   const isUrl   = artifact?.type === "URL"   && !!artifact.websiteUrl;
   const isFigma = artifact?.type === "FIGMA" && !!artifact.figmaUrl;
+  const isHtml  = artifact?.type === "HTML"  && !!artifact.htmlContent;
 
   return (
     <AnimatePresence>
@@ -719,6 +825,15 @@ export function ArtifactLightbox({ artifact, onClose, onPrev, onNext, onReact }:
           />
         ) : isFigma ? (
           <FigmaLightbox
+            key={artifact.id}
+            artifact={artifact}
+            onClose={onClose}
+            onPrev={onPrev}
+            onNext={onNext}
+            onReact={onReact}
+          />
+        ) : isHtml ? (
+          <HtmlLightbox
             key={artifact.id}
             artifact={artifact}
             onClose={onClose}
