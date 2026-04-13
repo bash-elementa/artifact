@@ -179,7 +179,7 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-[var(--surface-2)]">
             <span className="text-4xl opacity-30">
-              {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : artifact.type === "HTML" ? "</>" : "🖼️"}
+              {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : "🖼️"}
             </span>
           </div>
         )}
