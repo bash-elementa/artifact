@@ -8,11 +8,11 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+const appUrl = "https://artifact-bash.vercel.app";
+const bannerUrl = `${appUrl}/artifact-banner.png`;
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-  ),
+  metadataBase: new URL(appUrl),
   title: {
     default: "Artifact — Bash",
     template: "%s",
@@ -22,13 +22,13 @@ export const metadata: Metadata = {
     title: "Artifact — Bash",
     description: "An internal creative sharing platform for Bash.",
     siteName: "/artifact",
-    images: [{ url: "/artifact-banner.png", width: 1200, height: 630 }],
+    images: [{ url: bannerUrl, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Artifact — Bash",
     description: "An internal creative sharing platform for Bash.",
-    images: ["/artifact-banner.png"],
+    images: [bannerUrl],
   },
 };
 

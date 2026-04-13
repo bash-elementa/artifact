@@ -22,7 +22,7 @@ export async function generateMetadata({
     artifact.screenshotUrl ??
     (artifact as any).figmaPreviewUrl ??
     artifact.mediaUrl ??
-    "/artifact-banner.png";
+    "https://artifact-bash.vercel.app/artifact-banner.png";
 
   const title = artifact.name;
   const description = artifact.description
