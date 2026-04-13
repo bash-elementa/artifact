@@ -18,6 +18,18 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description: "An internal creative sharing platform for Bash.",
+  openGraph: {
+    title: "Artifact — Bash",
+    description: "An internal creative sharing platform for Bash.",
+    siteName: "/artifact",
+    images: [{ url: "/artifact-banner.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Artifact — Bash",
+    description: "An internal creative sharing platform for Bash.",
+    images: ["/artifact-banner.png"],
+  },
 };
 
 export default function RootLayout({
