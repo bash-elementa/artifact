@@ -111,6 +111,7 @@ enum ArtifactType {
   URL
   FIGMA
   INSPO
+  HTML
 }
 
 enum ScreenSize {
