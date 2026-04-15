@@ -73,7 +73,7 @@ export function NewFeatureRequestModal({ open, onClose, onSuccess }: NewFeatureR
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -81,19 +81,20 @@ export function NewFeatureRequestModal({ open, onClose, onSuccess }: NewFeatureR
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.96, y: 8 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-3xl bg-[var(--surface)] shadow-2xl overflow-hidden"
+            style={{ border: "1px solid var(--border)" }}
           >
-            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-              <h2 className="text-sm font-semibold">New feature request</h2>
+            <div className="flex items-center justify-between px-6 py-5">
+              <h2 className="text-base font-semibold text-[var(--foreground)]">New feature request</h2>
               <button
                 onClick={onClose}
-                className="text-[var(--muted)] hover:text-[var(--foreground)] text-lg leading-none"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--muted)] hover:bg-[var(--surface-2)] hover:text-[var(--foreground)] transition-colors text-xl leading-none"
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-6 pb-6">
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs text-[var(--muted)] font-medium">Title *</label>
                 <input

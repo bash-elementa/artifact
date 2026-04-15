@@ -354,6 +354,7 @@ export function ProjectCard({ project, onDelete }: { project: Project; onDelete?
   const count = project._count.artifacts;
   const [menuOpen, setMenuOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [contributors, setContributors] = useState<Contributor[]>(project.contributors);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -367,9 +368,13 @@ export function ProjectCard({ project, onDelete }: { project: Project; onDelete?
     return () => document.removeEventListener("mousedown", onDown);
   }, [menuOpen]);
 
-  async function handleDelete() {
+  function handleDelete() {
     setMenuOpen(false);
-    if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
+    setDeleteOpen(true);
+  }
+
+  async function confirmDelete() {
+    setDeleteOpen(false);
     setDeleting(true);
     await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
     onDelete?.(project.id);
@@ -434,6 +439,44 @@ export function ProjectCard({ project, onDelete }: { project: Project; onDelete?
             onClose={() => setManageOpen(false)}
             onUpdated={(updated) => setContributors(updated)}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deleteOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteOpen(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-sm glass rounded-2xl p-6 flex flex-col gap-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col gap-1.5">
+                <h2 className="text-base font-semibold text-[var(--foreground)]">Delete project</h2>
+                <p className="text-sm text-[var(--muted)]">
+                  <span className="text-[var(--foreground)] font-medium">&ldquo;{project.name}&rdquo;</span> and all its artifacts will be permanently deleted. This cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setDeleteOpen(false)}
+                  className="flex-1 rounded-xl border border-[var(--border)] py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface-2)] transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="flex-1 rounded-xl py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity"
+                  style={{ background: "var(--error)", color: "var(--error-fg)" }}
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
