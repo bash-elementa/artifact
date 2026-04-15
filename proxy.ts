@@ -28,9 +28,10 @@ export async function proxy(request: NextRequest) {
 
   const isAuthPath = request.nextUrl.pathname.startsWith("/auth");
   const isSharePath = request.nextUrl.pathname.startsWith("/share");
+  const isHelloPath = request.nextUrl.pathname.startsWith("/hello");
 
-  // Unauthenticated: redirect to sign-in (except auth/share routes)
-  if (!user && !isAuthPath && !isSharePath) {
+  // Unauthenticated: redirect to sign-in (except auth/share/hello routes)
+  if (!user && !isAuthPath && !isSharePath && !isHelloPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/sign-in";
     return NextResponse.redirect(url);
@@ -48,6 +49,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|fonts/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|woff|woff2|json)$).*)",
   ],
 };

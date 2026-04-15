@@ -179,7 +179,10 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--background)] px-4" style={{
+        backgroundImage: "radial-gradient(circle, rgba(4,4,4,0.12) 1px, transparent 1px)",
+        backgroundSize: "24px 24px",
+      }}>
       <Suspense>
         <SignInForm />
       </Suspense>

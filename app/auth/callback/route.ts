@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   // New users (no team set) go through onboarding first
   if (!dbUser.team) {
-    return NextResponse.redirect(new URL("/onboarding", origin));
+    return NextResponse.redirect(new URL("/hello", origin));
   }
 
   return NextResponse.redirect(new URL(next, origin));

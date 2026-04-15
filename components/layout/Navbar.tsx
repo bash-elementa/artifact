@@ -124,7 +124,7 @@ export function Navbar() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [dbProfile, setDbProfile] = useState<{ role: string | null; team: string | null } | null>(null);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
 
   // Nav pill — measured DOM positions, no layoutId
   const desktopNavRef = useRef<HTMLElement>(null);
@@ -154,12 +154,12 @@ export function Navbar() {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       const p = window.location.pathname;
-      if (data.user && !p.startsWith("/onboarding") && !p.startsWith("/auth")) {
+      if (data.user && !p.startsWith("/onboarding") && !p.startsWith("/auth") && !p.startsWith("/hello")) {
         fetch("/api/auth/me")
           .then((r) => r.json())
           .then((profile) => {
             if (profile && !profile.team) {
-              window.location.href = "/onboarding";
+              window.location.href = "/hello";
             } else if (profile) {
               setDbProfile({ role: profile.role ?? null, team: profile.team ?? null });
             }
@@ -171,7 +171,7 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    const stored = (localStorage.getItem("theme") ?? "dark") as "dark" | "light";
+    const stored = (localStorage.getItem("theme") ?? "light") as "dark" | "light";
     setTheme(stored);
     document.documentElement.setAttribute("data-theme", stored);
   }, []);
@@ -256,7 +256,7 @@ export function Navbar() {
     user?.email?.split("@")[0] ??
     "You";
 
-  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding")) return null;
+  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/hello")) return null;
 
   const Avatar = ({ size = "sm" }: { size?: "sm" | "lg" }) => {
     const cls = size === "lg"
