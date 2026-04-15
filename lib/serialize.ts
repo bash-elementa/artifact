@@ -15,6 +15,7 @@ export function serializeArtifact(a: any, currentUserId?: string) {
     createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : a.createdAt,
     updatedAt: a.updatedAt instanceof Date ? a.updatedAt.toISOString() : a.updatedAt,
     deletedAt: a.deletedAt instanceof Date ? a.deletedAt.toISOString() : (a.deletedAt ?? null),
+    sharedToFeedAt: a.sharedToFeedAt instanceof Date ? a.sharedToFeedAt.toISOString() : (a.sharedToFeedAt ?? null),
     user: a.user
       ? { id: a.user.id, name: a.user.name, role: a.user.role, team: a.user.team, image: a.user.image }
       : null,

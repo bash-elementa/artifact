@@ -40,7 +40,10 @@ export async function PATCH(
     data: {
       ...(body.name !== undefined && { name: body.name }),
       ...(body.description !== undefined && { description: body.description }),
-      ...(body.isSharedToFeed !== undefined && { isSharedToFeed: body.isSharedToFeed }),
+      ...(body.isSharedToFeed !== undefined && {
+        isSharedToFeed: body.isSharedToFeed,
+        sharedToFeedAt: body.isSharedToFeed ? new Date() : null,
+      }),
       ...(body.projectId !== undefined && { projectId: body.projectId }),
       ...(body.tags !== undefined && { tags: body.tags }),
     },

@@ -21,8 +21,14 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const seed = searchParams.get("seed");
 
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   const feedArtifacts = await prisma.artifact.findMany({
-    where: { isSharedToFeed: true, isShareable: true, deletedAt: null },
+    where: {
+      isSharedToFeed: true,
+      isShareable: true,
+      deletedAt: null,
+      sharedToFeedAt: { gte: thirtyDaysAgo },
+    },
     include: { user: true, reactions: true },
   });
 

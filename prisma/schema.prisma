@@ -74,6 +74,7 @@ model Artifact {
   type           ArtifactType
   isShareable    Boolean      @default(true)
   isSharedToFeed Boolean      @default(false)
+  sharedToFeedAt DateTime?
   storageBytes   BigInt       @default(0)
 
   // Media

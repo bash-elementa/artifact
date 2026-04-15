@@ -5,6 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn, timeAgo } from "@/lib/utils";
 import { DotsThree } from "@phosphor-icons/react";
 
+const FEED_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
+
+function isSharedAndActive(isSharedToFeed: boolean, sharedToFeedAt?: string | null): boolean {
+  if (!isSharedToFeed || !sharedToFeedAt) return false;
+  return Date.now() - new Date(sharedToFeedAt).getTime() < FEED_EXPIRY_MS;
+}
+
 interface Artifact {
   id: string;
   name: string;
@@ -12,6 +19,7 @@ interface Artifact {
   type: string;
   isSharedToFeed: boolean;
   isShareable: boolean;
+  sharedToFeedAt?: string | null;
   mediaUrl?: string | null;
   mediaMimeType?: string | null;
   figmaPreviewUrl?: string | null;
@@ -289,7 +297,9 @@ function getPreviewUrl(artifact: Artifact): string | null {
 
 export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRename, onMove }: ArtifactCardProps) {
   const [sharing, setSharing] = useState(false);
-  const [isShared, setIsShared] = useState(artifact.isSharedToFeed);
+  const [isShared, setIsShared] = useState(
+    isSharedAndActive(artifact.isSharedToFeed, artifact.sharedToFeedAt)
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
