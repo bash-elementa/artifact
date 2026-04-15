@@ -61,6 +61,9 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // Shared tag
+  const [tag, setTag] = useState<"work" | "inspo" | null>(null);
+
   // Link mode state
   const [linkUrl, setLinkUrl] = useState("");
   const [linkName, setLinkName] = useState("");
@@ -139,6 +142,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
             screenshotUrl: isVideo ? (uploadData.thumbnailUrl ?? null) : null,
             storageBytes: item.file.size,
             projectId: defaultProjectId ?? null,
+            tags: tag ? [tag] : [],
           }),
         });
       }
@@ -173,6 +177,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
           mediaMimeType: mimeType,
           storageBytes: 0,
           projectId: defaultProjectId ?? null,
+          tags: tag ? [tag] : [],
         }),
       });
       onSuccess();
@@ -270,11 +275,13 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
 
           {uploadError && <p className="text-sm text-red-400">{uploadError}</p>}
 
+          <TagChips tag={tag} onChange={setTag} />
+
           {projectSelector}
 
           <button
             onClick={handleUploadSubmit}
-            disabled={uploading || files.filter((f) => !f.error).length === 0 || submitDisabled}
+            disabled={uploading || !tag || files.filter((f) => !f.error).length === 0 || submitDisabled}
             className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {uploading ? "Uploading…" : `Upload ${files.filter((f) => !f.error).length || ""} file${files.filter((f) => !f.error).length !== 1 ? "s" : ""}`}
@@ -327,17 +334,39 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
 
           {linkError && <p className="text-sm text-red-400">{linkError}</p>}
 
+          <TagChips tag={tag} onChange={setTag} />
+
           {projectSelector}
 
           <button
             onClick={handleLinkSubmit}
-            disabled={linkSubmitting || !linkUrl.trim() || !linkName.trim() || submitDisabled}
+            disabled={linkSubmitting || !tag || !linkUrl.trim() || !linkName.trim() || submitDisabled}
             className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             {linkSubmitting ? "Saving…" : "Save media"}
           </button>
         </>
       )}
+    </div>
+  );
+}
+
+function TagChips({ tag, onChange }: { tag: "work" | "inspo" | null; onChange: (t: "work" | "inspo") => void }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs text-[var(--muted)] font-medium">Category *</label>
+      <div className="flex gap-2">
+        {(["work", "inspo"] as const).map((t) => (
+          <button key={t} type="button" onClick={() => onChange(t)}
+            className="flex-1 py-2 rounded-xl text-sm font-medium capitalize transition-colors"
+            style={tag === t
+              ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
+              : { background: "transparent", color: "var(--muted)", border: "1px solid var(--border)" }}
+          >
+            {t === "work" ? "Work" : "Inspo"}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

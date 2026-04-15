@@ -13,6 +13,7 @@ export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector, su
   const [figmaUrl, setFigmaUrl] = useState("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [tag, setTag] = useState<"work" | "inspo" | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +65,7 @@ export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector, su
           figmaNodeWidth,
           figmaNodeHeight,
           projectId: defaultProjectId ?? null,
+          tags: tag ? [tag] : [],
         }),
       });
 
@@ -115,13 +117,29 @@ export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector, su
         />
       </div>
 
+      <div className="flex flex-col gap-1.5">
+        <label className="text-xs text-[var(--muted)] font-medium">Category *</label>
+        <div className="flex gap-2">
+          {(["work", "inspo"] as const).map((t) => (
+            <button key={t} type="button" onClick={() => setTag(t)}
+              className="flex-1 py-2 rounded-xl text-sm font-medium capitalize transition-colors"
+              style={tag === t
+                ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
+                : { background: "transparent", color: "var(--muted)", border: "1px solid var(--border)" }}
+            >
+              {t === "work" ? "Work" : "Inspo"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       {projectSelector}
 
       <button
         onClick={handleSubmit}
-        disabled={submitting || submitDisabled}
+        disabled={submitting || !tag || submitDisabled}
         className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] transition-opacity hover:opacity-90 disabled:opacity-40"
       >
         {submitting ? "Saving…" : "Add Figma artifact"}

@@ -9,9 +9,9 @@ import { FigmaUploader } from "./FigmaUploader";
 export type UploadType = "media" | "url" | "figma";
 
 const TYPE_TITLES: Record<UploadType, string> = {
-  media: "Upload Files",
-  url: "Add website URL",
-  figma: "Add Figma",
+  media: "Upload media artifact",
+  url: "Add website artifact",
+  figma: "Add Figma artifact",
 };
 
 interface UploadModalProps {

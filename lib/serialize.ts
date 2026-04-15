@@ -36,6 +36,7 @@ export function serializeProject(p: any, currentUserId?: string) {
       mediaUrl: a.mediaUrl,
       figmaPreviewUrl: a.figmaPreviewUrl,
       screenshotUrl: a.screenshotUrl,
+      websiteUrl: a.websiteUrl,
     })),
     _count: { artifacts: p._count?.artifacts ?? (p.artifacts?.length ?? 0) },
     contributors: (p.contributors ?? []).map((c: any) => ({

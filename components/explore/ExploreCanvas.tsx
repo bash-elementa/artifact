@@ -9,7 +9,7 @@ import {
   useTransformEffect,
 } from "react-zoom-pan-pinch";
 import { motion, animate, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
-import { SquaresFour, Compass } from "@phosphor-icons/react";
+import { SquaresFour, Compass, Funnel } from "@phosphor-icons/react";
 import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
 import { ReactionBar } from "@/components/reactions/ReactionBar";
@@ -27,6 +27,7 @@ interface FeedArtifact {
   websiteUrl?: string | null;
   figmaUrl?: string | null;
   screenSize?: string | null;
+  tags: string[];
   isSharedToFeed: boolean;
   createdAt: string;
   reactionCounts: Record<string, number>;
@@ -239,6 +240,9 @@ export function ExploreCanvas() {
     }
     return "canvas";
   });
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [activeTag, setActiveTag] = useState<"work" | "inspo" | null>(null);
+  const [activeTeam, setActiveTeam] = useState<string | null>(null);
   const [gridColumns, setGridColumns] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = parseInt(localStorage.getItem("explore-grid-columns") ?? "", 10);
@@ -285,9 +289,23 @@ export function ExploreCanvas() {
     }
   }, [deepLinkId, artifacts]);
 
+  const uniqueTeams = useMemo(
+    () => [...new Set(artifacts.map((a) => a.user?.team).filter(Boolean) as string[])].sort(),
+    [artifacts]
+  );
+
+  const filteredArtifacts = useMemo(
+    () => artifacts.filter((a) => {
+      if (activeTag && !a.tags?.includes(activeTag)) return false;
+      if (activeTeam && a.user?.team !== activeTeam) return false;
+      return true;
+    }),
+    [artifacts, activeTag, activeTeam]
+  );
+
   const layout = useMemo(
-    () => layoutArtifacts(artifacts, dims, sessionSeed.current),
-    [artifacts, dims]
+    () => layoutArtifacts(filteredArtifacts, dims, sessionSeed.current),
+    [filteredArtifacts, dims]
   );
 
   // Centre viewport on the artifact cluster — on initial load and whenever switching back to canvas
@@ -336,6 +354,17 @@ export function ExploreCanvas() {
     setLightboxIndex(next);
   }
 
+  // Close filter popover when clicking outside
+  const filterRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!filterOpen) return;
+    function onDown(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [filterOpen]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full gap-4">
@@ -358,6 +387,8 @@ export function ExploreCanvas() {
       </div>
     );
   }
+
+  const isFiltered = !!(activeTag || activeTeam);
 
   // ── Shared floating controls — hidden when lightbox is open ─────────────────
   const FloatingControls = lightboxOpen ? null : (
@@ -409,6 +440,80 @@ export function ExploreCanvas() {
           </button>
         ))}
       </div>
+
+      {/* Filter button */}
+      <div className="w-px h-4 bg-[var(--border)] shrink-0" />
+      <div className="relative" ref={filterRef}>
+        <button
+          onClick={() => setFilterOpen((v) => !v)}
+          title="Filter"
+          className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+          style={{ color: isFiltered ? "var(--foreground)" : "var(--muted)" }}
+        >
+          <Funnel size={15} weight={isFiltered ? "fill" : "regular"} />
+        </button>
+
+        <AnimatePresence>
+          {filterOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 8, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 8, scale: 0.96 }}
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute bottom-full right-0 mb-2 rounded-2xl p-3 flex flex-col gap-3"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", minWidth: 220, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
+            >
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium" style={{ color: "var(--muted)" }}>Category</p>
+                <div className="flex gap-1.5">
+                  {(["work", "inspo"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setActiveTag(activeTag === t ? null : t)}
+                      className="flex-1 py-1.5 rounded-xl text-sm font-medium capitalize transition-colors"
+                      style={activeTag === t
+                        ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
+                        : { background: "var(--surface)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                    >
+                      {t === "work" ? "Work" : "Inspo"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {uniqueTeams.length > 0 && (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs font-medium" style={{ color: "var(--muted)" }}>Team</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {uniqueTeams.map((team) => (
+                      <button
+                        key={team}
+                        onClick={() => setActiveTeam(activeTeam === team ? null : team)}
+                        className="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+                        style={activeTeam === team
+                          ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
+                          : { background: "var(--surface)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                      >
+                        {team}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isFiltered && (
+                <button
+                  onClick={() => { setActiveTag(null); setActiveTeam(null); }}
+                  className="text-xs font-medium text-center transition-colors"
+                  style={{ color: "var(--muted)" }}
+                >
+                  Clear filters
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 
@@ -422,7 +527,7 @@ export function ExploreCanvas() {
           style={{ paddingTop: 80 }}
         >
           <div style={{ columnCount: gridColumns, columnGap: 12 }}>
-            {artifacts.map((artifact, i) => {
+            {filteredArtifacts.map((artifact, i) => {
               const purl = previewUrl(artifact);
               const isVideo =
                 artifact.mediaMimeType?.startsWith("video/") ||

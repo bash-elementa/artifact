@@ -11,6 +11,7 @@ interface ProjectPreview {
   mediaUrl?: string | null;
   figmaPreviewUrl?: string | null;
   screenshotUrl?: string | null;
+  websiteUrl?: string | null;
   type: string;
   name: string;
 }
@@ -32,10 +33,35 @@ interface Project {
   isOwner: boolean;
 }
 
+function isVideoUrl(url: string): boolean {
+  return (
+    url.includes("videodelivery.net") ||
+    url.includes("cloudflarestream.com") ||
+    /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(url)
+  );
+}
+
+function extractYouTubeThumbnail(url: string): string | null {
+  try {
+    const u = new URL(url);
+    let id: string | null = null;
+    if (u.hostname.includes("youtube.com")) id = u.searchParams.get("v");
+    else if (u.hostname === "youtu.be") id = u.pathname.slice(1).split("?")[0];
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+  } catch { return null; }
+}
+
 function getPreviewUrl(a: ProjectPreview): string | null {
-  if (a.mediaUrl) return a.mediaUrl;
-  if (a.figmaPreviewUrl) return a.figmaPreviewUrl;
+  // Prefer static thumbnails — renders in <img> without video player overhead
   if (a.screenshotUrl) return a.screenshotUrl;
+  if (a.figmaPreviewUrl) return a.figmaPreviewUrl;
+  // Only use mediaUrl if it's not a raw video stream
+  if (a.mediaUrl && !isVideoUrl(a.mediaUrl)) return a.mediaUrl;
+  // For URL artifacts, extract YouTube thumbnail from the source URL
+  if (a.websiteUrl) {
+    const ytThumb = extractYouTubeThumbnail(a.websiteUrl);
+    if (ytThumb) return ytThumb;
+  }
   return null;
 }
 
