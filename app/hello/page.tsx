@@ -23,6 +23,7 @@ const TEAMS = [
 type Phase = "onboarding" | "loading" | "welcome";
 type Step = 1 | 2 | 3 | 4;
 
+
 export default function HelloPage() {
   const [font, setFont] = useState<TegakiBundle | null>(null);
   const [phase, setPhase] = useState<Phase>("onboarding");
@@ -40,6 +41,7 @@ export default function HelloPage() {
   const [selectedTeam, setSelectedTeam] = useState("");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [exiting, setExiting] = useState(false);
 
   const rendererRef = useRef<TegakiRendererHandle>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +119,10 @@ export default function HelloPage() {
     }
 
     setPhase("welcome");
-    setTimeout(() => { window.location.href = "/explore"; }, 2500);
+    setTimeout(() => {
+      setExiting(true);
+      setTimeout(() => { window.location.href = "/explore"; }, 700);
+    }, 2000);
   }
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -389,6 +394,20 @@ export default function HelloPage() {
             </motion.div>
           )}
 
+        </AnimatePresence>
+
+        {/* Full-page fade-out before navigating to /explore */}
+        <AnimatePresence>
+          {exiting && (
+            <motion.div
+              key="exit-fade"
+              className="absolute inset-0 z-50"
+              style={{ background: "var(--background)" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.6, ease: "easeInOut" }}
+            />
+          )}
         </AnimatePresence>
       </div>
     </>
