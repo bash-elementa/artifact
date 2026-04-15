@@ -249,14 +249,8 @@ export function Navbar() {
   const initials = user?.email
     ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
     : "?";
-  // Only resolve avatar/name once the DB profile has loaded — avoids a flash
-  // of the Google-sourced image before the onboarding data arrives.
-  const avatarUrl = dbProfile !== null
-    ? (dbProfile.image ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null)
-    : null;
-  const displayName = dbProfile !== null
-    ? (dbProfile.name ?? user?.user_metadata?.full_name ?? user?.user_metadata?.name ?? user?.email?.split("@")[0] ?? "You")
-    : (user?.email?.split("@")[0] ?? "You");
+  const avatarUrl = dbProfile?.image ?? null;
+  const displayName = dbProfile?.name ?? user?.email?.split("@")[0] ?? "You";
 
   if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/hello")) return null;
 
