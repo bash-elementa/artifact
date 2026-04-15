@@ -123,7 +123,7 @@ export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [dbProfile, setDbProfile] = useState<{ role: string | null; team: string | null } | null>(null);
+  const [dbProfile, setDbProfile] = useState<{ role: string | null; team: string | null; name: string | null; image: string | null } | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("light");
 
   // Nav pill — measured DOM positions, no layoutId
@@ -161,7 +161,7 @@ export function Navbar() {
             if (profile && !profile.team) {
               window.location.href = "/hello";
             } else if (profile) {
-              setDbProfile({ role: profile.role ?? null, team: profile.team ?? null });
+              setDbProfile({ role: profile.role ?? null, team: profile.team ?? null, name: profile.name ?? null, image: profile.image ?? null });
             }
           })
           .catch(() => {});
@@ -249,8 +249,9 @@ export function Navbar() {
   const initials = user?.email
     ? user.email.split("@")[0].split(".").map((s) => s[0]?.toUpperCase() ?? "").join("").slice(0, 2)
     : "?";
-  const avatarUrl = user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
+  const avatarUrl = dbProfile?.image ?? user?.user_metadata?.avatar_url ?? user?.user_metadata?.picture ?? null;
   const displayName =
+    dbProfile?.name ??
     user?.user_metadata?.full_name ??
     user?.user_metadata?.name ??
     user?.email?.split("@")[0] ??
