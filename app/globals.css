@@ -100,6 +100,12 @@ body {
   border: 1px solid var(--glass-border);
 }
 
+/* Input fields — use --surface (lighter) instead of --surface-2 globally */
+:root input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
+:root textarea {
+  background-color: var(--surface);
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;

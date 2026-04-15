@@ -126,7 +126,7 @@ function SignInForm() {
         <button
           onClick={handleGoogle}
           disabled={loading}
-          className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--border)] transition-colors disabled:opacity-50"
+          className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-transparent px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors disabled:opacity-50"
         >
           <GoogleIcon />
           Continue with Google
