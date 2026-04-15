@@ -45,7 +45,7 @@ function ProjectSelector({ value, onChange, required }: { value: string | null; 
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-left transition-colors focus:outline-none"
+          className="w-full flex items-center justify-between rounded-xl bg-[var(--surface)] border border-[var(--border)] px-4 py-2.5 text-sm text-left transition-colors focus:outline-none"
           style={{ color: selected ? "var(--foreground)" : "var(--muted)" }}
         >
           <span>{selected ? selected.name : required ? "Select a project" : "No project"}</span>

@@ -102,7 +102,8 @@ body {
 
 /* Input fields — use --surface (lighter) instead of --surface-2 globally */
 :root input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]):not([type="color"]),
-:root textarea {
+:root textarea,
+:root select {
   background-color: var(--surface);
 }
 
