@@ -310,7 +310,13 @@ function cfEmbedUrl(url: string): string {
 }
 
 function getPreviewUrl(artifact: Artifact): string | null {
-  if (artifact.type === "MEDIA" && artifact.mediaUrl) return artifact.mediaUrl;
+  if (artifact.type === "MEDIA" && artifact.mediaUrl) {
+    // For CF Stream videos, show the thumbnail image rather than the live embed —
+    // the embed forces 16:9, can show "Video not found" while still processing,
+    // and is unnecessary since the lightbox handles playback.
+    if (isCFStream(artifact.mediaUrl) && artifact.screenshotUrl) return artifact.screenshotUrl;
+    return artifact.mediaUrl;
+  }
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
   if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.type === "HTML"  && artifact.screenshotUrl) return artifact.screenshotUrl;
@@ -388,25 +394,18 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       {/* Image area — no fixed aspect, let content breathe */}
       <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
         {previewUrl ? (
-          isVideo ? (
-            isCFStream(previewUrl) ? (
-              <iframe
-                src={cfEmbedUrl(previewUrl)}
-                allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
-                className="w-full aspect-video pointer-events-none"
-                style={{ border: "none" }}
-              />
-            ) : (
-              <video
-                src={previewUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                className="w-full block"
-              />
-            )
+          isVideo && !isCFStream(artifact.mediaUrl ?? "") ? (
+            // Direct R2 video — play inline at natural aspect ratio
+            <video
+              src={previewUrl}
+              autoPlay
+              muted
+              loop
+              playsInline
+              className="w-full block"
+            />
           ) : (
+            // Image, CF Stream thumbnail, or any static preview
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={previewUrl}
