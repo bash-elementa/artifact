@@ -123,7 +123,7 @@ export default function HelloPage() {
       setExiting(true);
       setTimeout(() => {
         localStorage.setItem("show-tour", "1");
-        window.location.href = "/explore";
+        window.location.replace("/explore");
       }, 700);
     }, 2000);
   }
