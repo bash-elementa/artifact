@@ -177,15 +177,17 @@ function MediaLightbox({
           className="relative pointer-events-auto max-w-full max-h-full"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Title pill — overlaid on the asset, top-left corner */}
-          <div
-            className="absolute top-3 left-3 z-10 rounded-xl px-3 py-2 flex items-center gap-2"
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.10)" }}
-          >
-            <p className="text-xs font-semibold text-white leading-none">{artifact.name}</p>
+          {/* Title pill + tag chip — overlaid on the asset, top-left corner */}
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
+            <div
+              className="rounded-xl px-3 py-2"
+              style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.10)" }}
+            >
+              <p className="text-xs font-semibold text-white leading-none">{artifact.name}</p>
+            </div>
             {artifact.tags?.[0] && TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG] && (
               <span
-                className="px-2 py-0.5 rounded-full text-[10px] font-semibold leading-none shrink-0"
+                className="px-2.5 py-1 rounded-full text-xs font-semibold leading-none"
                 style={{
                   background: TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].bg,
                   color: "#fff",
