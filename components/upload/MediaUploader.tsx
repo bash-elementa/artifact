@@ -361,7 +361,7 @@ function TagChips({ tag, onChange }: { tag: "work" | "inspo" | null; onChange: (
           <button key={t} type="button" onClick={() => onChange(t)}
             className="px-5 py-1.5 rounded-full text-sm font-semibold transition-all"
             style={tag === t
-              ? { background: TAG_CONFIG[t].bg, color: TAG_CONFIG[t].text }
+              ? { background: TAG_CONFIG[t].bg, color: TAG_CONFIG[t].text, border: "1.5px solid transparent" }
               : { background: `${TAG_CONFIG[t].bg}18`, color: TAG_CONFIG[t].bg, border: `1.5px solid ${TAG_CONFIG[t].bg}50` }}
           >
             {TAG_CONFIG[t].label}

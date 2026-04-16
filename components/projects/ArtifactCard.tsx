@@ -122,7 +122,7 @@ function RenameModal({
                 <button key={t} type="button" onClick={() => setTag(tag === t ? null : t)}
                   className="px-5 py-1.5 rounded-full text-sm font-semibold transition-all"
                   style={tag === t
-                    ? { background: TAG_CONFIG[t].bg, color: TAG_CONFIG[t].text }
+                    ? { background: TAG_CONFIG[t].bg, color: TAG_CONFIG[t].text, border: "1.5px solid transparent" }
                     : { background: `${TAG_CONFIG[t].bg}18`, color: TAG_CONFIG[t].bg, border: `1.5px solid ${TAG_CONFIG[t].bg}50` }}
                 >
                   {TAG_CONFIG[t].label}
@@ -326,6 +326,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const [moveOpen, setMoveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [displayName, setDisplayName] = useState(artifact.name);
+  const [localTags, setLocalTags] = useState<string[]>(artifact.tags ?? []);
 
   const previewUrl = getPreviewUrl(artifact);
   const isVideo =
@@ -367,6 +368,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
     });
     if (res.ok) {
       setDisplayName(name);
+      setLocalTags(tags);
       onRename?.(artifact.id, name, description);
     }
     setRenameOpen(false);
@@ -420,6 +422,21 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
 
         {/* Hover overlay actions */}
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 rounded-2xl" />
+
+        {/* Tag chip — top-left on hover */}
+        {localTags[0] && TAG_CONFIG[localTags[0] as keyof typeof TAG_CONFIG] && (
+          <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
+            <span
+              className="px-2.5 py-1 rounded-full text-xs font-semibold leading-none"
+              style={{
+                background: TAG_CONFIG[localTags[0] as keyof typeof TAG_CONFIG].bg,
+                color: "#fff",
+              }}
+            >
+              {TAG_CONFIG[localTags[0] as keyof typeof TAG_CONFIG].label}
+            </span>
+          </div>
+        )}
 
         <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           {artifact.isShareable && (

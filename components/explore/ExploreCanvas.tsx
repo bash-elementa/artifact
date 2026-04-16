@@ -466,17 +466,17 @@ export function ExploreCanvas() {
             >
               <div className="flex flex-col gap-2">
                 <p className="text-xs font-medium" style={{ color: "var(--muted)" }}>Category</p>
-                <div className="flex gap-1.5">
+                <div className="flex gap-2">
                   {(["work", "inspo"] as const).map((t) => (
                     <button
                       key={t}
                       onClick={() => setActiveTag(activeTag === t ? null : t)}
-                      className="flex-1 py-1.5 rounded-xl text-sm font-medium capitalize transition-colors"
+                      className="px-5 py-1.5 rounded-full text-sm font-semibold transition-all"
                       style={activeTag === t
-                        ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
-                        : { background: "var(--surface)", color: "var(--muted)", border: "1px solid var(--border)" }}
+                        ? { background: TAG_CONFIG[t].bg, color: TAG_CONFIG[t].text, border: "1.5px solid transparent" }
+                        : { background: `${TAG_CONFIG[t].bg}18`, color: TAG_CONFIG[t].bg, border: `1.5px solid ${TAG_CONFIG[t].bg}50` }}
                     >
-                      {t === "work" ? "Work" : "Inspo"}
+                      {TAG_CONFIG[t].label}
                     </button>
                   ))}
                 </div>
