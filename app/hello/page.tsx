@@ -50,6 +50,12 @@ export default function HelloPage() {
   useEffect(() => {
     loadFont().then(setFont);
     inputRef.current?.focus();
+
+    // Prevent back navigation into onboarding
+    history.pushState(null, "", window.location.href);
+    const onPop = () => history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   useEffect(() => {

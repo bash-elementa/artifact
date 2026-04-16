@@ -26,6 +26,12 @@ function SignInForm() {
   useEffect(() => {
     const m = localStorage.getItem("last-auth-method");
     if (m === "google" || m === "email") setLastMethod(m);
+
+    // Prevent back navigation into the sign-in page
+    history.pushState(null, "", window.location.href);
+    const onPop = () => history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   const supabase = createClient();
@@ -45,7 +51,7 @@ function SignInForm() {
       localStorage.setItem("last-auth-method", "email");
       await fetch("/api/auth/ensure-user", { method: "POST" });
       const profile = await fetch("/api/auth/me").then((r) => r.json());
-      window.location.href = profile?.team ? "/explore" : "/onboarding";
+      window.location.replace(profile?.team ? "/explore" : "/hello");
     }
     setLoading(false);
   }
@@ -87,7 +93,7 @@ function SignInForm() {
           popup?.close();
           await fetch("/api/auth/ensure-user", { method: "POST" });
           const profile = await fetch("/api/auth/me").then((r) => r.json());
-          window.location.replace(profile?.team ? "/explore" : "/onboarding");
+          window.location.replace(profile?.team ? "/explore" : "/hello");
         }
       }
     );
