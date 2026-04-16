@@ -293,6 +293,27 @@ function getCFStreamUID(url: string): string | null {
 }
 
 /**
+ * Detect a direct video file's ratio via metadata, then clamp portrait to 3:4.
+ */
+function useDirectVideoCardRatio(src: string | null): string {
+  const [ratio, setRatio] = useState<string | null>(null);
+  useEffect(() => {
+    if (!src) return;
+    const vid = document.createElement("video");
+    vid.onloadedmetadata = () => {
+      if (!vid.videoWidth || !vid.videoHeight) return;
+      const w = vid.videoWidth;
+      const h = vid.videoHeight;
+      setRatio(h > w ? "3/4" : `${w}/${h}`);
+    };
+    vid.src = src;
+    vid.load();
+    return () => { vid.src = ""; };
+  }, [src]);
+  return ratio ?? "16/9";
+}
+
+/**
  * Detect CF Stream thumbnail ratio, then clamp portrait videos to at most 3:4
  * so they don't dominate the masonry grid. The full ratio is used in the lightbox.
  */
@@ -369,6 +390,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const isCFStreamVideo = isVideo && isCFStream(artifact.mediaUrl ?? "");
   const cfUid = useMemo(() => isCFStreamVideo ? getCFStreamUID(artifact.mediaUrl ?? "") : null, [isCFStreamVideo, artifact.mediaUrl]);
   const cfAspectRatio = useCFStreamCardRatio(cfUid);
+  const directVideoSrc = isVideo && !isCFStreamVideo ? previewUrl : null;
+  const directVideoRatio = useDirectVideoCardRatio(directVideoSrc);
 
 
 
@@ -423,18 +446,24 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       {/* Image area */}
       <div
         className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
-        style={isCFStreamVideo ? { aspectRatio: cfAspectRatio, maxHeight: "420px" } : undefined}
+        style={
+          isCFStreamVideo
+            ? { aspectRatio: cfAspectRatio }
+            : isVideo
+            ? { aspectRatio: directVideoRatio }
+            : undefined
+        }
       >
         {previewUrl ? (
           isVideo && !isCFStreamVideo ? (
-            // Direct R2 video — play inline at natural aspect ratio
+            // Direct R2 video — capped to detected ratio via container
             <video
               src={previewUrl}
               autoPlay
               muted
               loop
               playsInline
-              className="w-full block"
+              className="w-full h-full object-cover block"
             />
           ) : (
             // Image, CF Stream thumbnail, or any static preview
