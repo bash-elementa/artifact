@@ -161,6 +161,10 @@ export function Navbar() {
             if (profile && !profile.team) {
               window.location.replace("/hello");
             } else if (profile) {
+              // Ensure the onboarded cookie is set (backfill for existing users)
+              if (!document.cookie.includes("onboarded=1")) {
+                document.cookie = "onboarded=1; path=/; max-age=31536000; samesite=lax";
+              }
               setDbProfile({ role: profile.role ?? null, team: profile.team ?? null, name: profile.name ?? null, image: profile.image ?? null });
             }
           })

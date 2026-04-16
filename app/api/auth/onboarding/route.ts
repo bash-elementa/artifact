@@ -21,5 +21,13 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ ok: true });
+  const res = NextResponse.json({ ok: true });
+  // Set a long-lived cookie so middleware can block back-navigation to auth/onboarding
+  res.cookies.set("onboarded", "1", {
+    path: "/",
+    httpOnly: false,
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    sameSite: "lax",
+  });
+  return res;
 }

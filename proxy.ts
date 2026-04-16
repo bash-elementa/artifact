@@ -30,6 +30,7 @@ export async function proxy(request: NextRequest) {
   const isSharePath = request.nextUrl.pathname.startsWith("/share");
   const isHelloPath = request.nextUrl.pathname.startsWith("/hello");
   const isTourPath = request.nextUrl.pathname.startsWith("/tour");
+  const isOnboarded = request.cookies.get("onboarded")?.value === "1";
 
   // Unauthenticated: redirect to sign-in (except auth/share/hello/tour routes)
   if (!user && !isAuthPath && !isSharePath && !isHelloPath && !isTourPath) {
@@ -38,8 +39,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user on sign-in page: send to explore
-  if (user && request.nextUrl.pathname === "/auth/sign-in") {
+  // Onboarded users must not be able to go back to sign-in or onboarding
+  if (user && isOnboarded && (isAuthPath || isHelloPath)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/explore";
+    return NextResponse.redirect(url);
+  }
+
+  // Authenticated but not onboarded on sign-in page: send to explore
+  if (user && !isOnboarded && request.nextUrl.pathname === "/auth/sign-in") {
     const url = request.nextUrl.clone();
     url.pathname = "/explore";
     return NextResponse.redirect(url);
