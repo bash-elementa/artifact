@@ -201,13 +201,12 @@ function MediaLightbox({
           </div>
 
           {isVideo ? (
-            <div className="w-full h-full">
-              <MediaRenderer
-                url={src}
-                mimeType={artifact.mediaMimeType ?? "video/mp4"}
-                alt={artifact.name}
-              />
-            </div>
+            <MediaRenderer
+              url={src}
+              mimeType={artifact.mediaMimeType ?? "video/mp4"}
+              alt={artifact.name}
+              maxHeight="calc(100vh - 11rem)"
+            />
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
             <img

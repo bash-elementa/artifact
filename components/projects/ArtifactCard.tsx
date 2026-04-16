@@ -403,7 +403,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
                 muted
                 loop
                 playsInline
-                className="w-full object-cover"
+                className="w-full block"
               />
             )
           ) : (

@@ -79,7 +79,7 @@ export function ReactUploader({ defaultProjectId, onSuccess, projectSelector, su
       }
 
       setStatus("Saving…");
-      await fetch("/api/artifacts", {
+      const saveRes = await fetch("/api/artifacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,6 +95,7 @@ export function ReactUploader({ defaultProjectId, onSuccess, projectSelector, su
           tags: tag ? [tag] : [],
         }),
       });
+      if (!saveRes.ok) throw new Error("Failed to save artifact");
 
       onSuccess();
     } catch (e) {
