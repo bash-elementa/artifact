@@ -52,12 +52,9 @@ function extractYouTubeThumbnail(url: string): string | null {
 }
 
 function getPreviewUrl(a: ProjectPreview): string | null {
-  // Prefer static thumbnails — renders in <img> without video player overhead
   if (a.screenshotUrl) return a.screenshotUrl;
   if (a.figmaPreviewUrl) return a.figmaPreviewUrl;
-  // Only use mediaUrl if it's not a raw video stream
-  if (a.mediaUrl && !isVideoUrl(a.mediaUrl)) return a.mediaUrl;
-  // For URL artifacts, extract YouTube thumbnail from the source URL
+  if (a.mediaUrl) return a.mediaUrl;
   if (a.websiteUrl) {
     const ytThumb = extractYouTubeThumbnail(a.websiteUrl);
     if (ytThumb) return ytThumb;
@@ -77,11 +74,21 @@ function TypeIcon({ type }: { type: string }) {
 
 function ThumbImage({ artifact }: { artifact: ProjectPreview }) {
   const url = getPreviewUrl(artifact);
-  return url ? (
+  if (!url) return <TypeIcon type={artifact.type} />;
+  if (isVideoUrl(url)) {
+    return (
+      <video
+        src={url}
+        muted
+        playsInline
+        preload="metadata"
+        className="w-full h-full object-cover"
+      />
+    );
+  }
+  return (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={url} alt={artifact.name} className="w-full h-full object-cover" />
-  ) : (
-    <TypeIcon type={artifact.type} />
   );
 }
 
@@ -100,8 +107,12 @@ function ProjectLayout({ artifacts }: { artifacts: ProjectPreview[] }) {
       <div className="rounded-xl overflow-hidden aspect-[4/3] bg-[var(--surface-2)]">
         {main ? (
           mainUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={mainUrl} alt={main.name} className="w-full h-full object-cover" />
+            isVideoUrl(mainUrl) ? (
+              <video src={mainUrl} muted playsInline preload="metadata" className="w-full h-full object-cover" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={mainUrl} alt={main.name} className="w-full h-full object-cover" />
+            )
           ) : (
             <TypeIcon type={main.type} />
           )
