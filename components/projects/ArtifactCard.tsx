@@ -292,18 +292,29 @@ function getCFStreamUID(url: string): string | null {
   return m ? m[1] : null;
 }
 
-function useCFStreamAspectRatio(uid: string | null): string {
+/**
+ * Detect CF Stream thumbnail ratio, then clamp portrait videos to at most 3:4
+ * so they don't dominate the masonry grid. The full ratio is used in the lightbox.
+ */
+function useCFStreamCardRatio(uid: string | null): string {
   const [ratio, setRatio] = useState<string | null>(null);
   useEffect(() => {
     if (!uid) return;
     const img = new Image();
     img.onload = () => {
-      if (img.naturalWidth && img.naturalHeight) {
-        setRatio(`${img.naturalWidth}/${img.naturalHeight}`);
+      if (!img.naturalWidth || !img.naturalHeight) return;
+      const w = img.naturalWidth;
+      const h = img.naturalHeight;
+      // Portrait: cap at 3:4 so the card never exceeds 1.33× its width in height
+      if (h > w) {
+        setRatio("3/4");
+      } else {
+        setRatio(`${w}/${h}`);
       }
     };
     img.src = `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
   }, [uid]);
+  // Default to 16/9 while loading — avoids layout shift for typical landscape videos
   return ratio ?? "16/9";
 }
 
@@ -357,7 +368,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
     (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
   const isCFStreamVideo = isVideo && isCFStream(artifact.mediaUrl ?? "");
   const cfUid = useMemo(() => isCFStreamVideo ? getCFStreamUID(artifact.mediaUrl ?? "") : null, [isCFStreamVideo, artifact.mediaUrl]);
-  const cfAspectRatio = useCFStreamAspectRatio(cfUid);
+  const cfAspectRatio = useCFStreamCardRatio(cfUid);
 
 
 
