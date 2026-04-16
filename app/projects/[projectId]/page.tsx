@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { use } from "react";
-import { Image as PhImage, Link as PhLink, FigmaLogo as PhFigma } from "@phosphor-icons/react";
+import { Image as PhImage, Link as PhLink, FigmaLogo as PhFigma, Code as PhCode } from "@phosphor-icons/react";
 import { DropdownCard, DropdownItem } from "@/components/ui/Dropdown";
 import Link from "next/link";
 import { AnimatePresence, motion, useMotionValue, useTransform, animate } from "framer-motion";
@@ -134,6 +134,7 @@ const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.JSX.Element
   { type: "media", label: "Media",       icon: <PhImage size={16} /> },
   { type: "url",   label: "Website URL", icon: <PhLink size={16} /> },
   { type: "figma", label: "Figma",       icon: <PhFigma size={16} /> },
+  { type: "html",  label: "HTML",        icon: <PhCode size={16} /> },
 ];
 
 function AddButton({ onPick }: { onPick: (type: UploadType) => void }) {
