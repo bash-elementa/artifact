@@ -6,12 +6,14 @@ import { CaretDown } from "@phosphor-icons/react";
 import { MediaUploader } from "./MediaUploader";
 import { UrlUploader } from "./UrlUploader";
 import { FigmaUploader } from "./FigmaUploader";
-export type UploadType = "media" | "url" | "figma";
+import { HtmlUploader } from "./HtmlUploader";
+export type UploadType = "media" | "url" | "figma" | "html";
 
 const TYPE_TITLES: Record<UploadType, string> = {
   media: "Upload media artifact",
   url: "Add website artifact",
   figma: "Add Figma artifact",
+  html: "Add HTML artifact",
 };
 
 interface UploadModalProps {
@@ -161,6 +163,14 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, r
               )}
               {type === "figma" && (
                 <FigmaUploader
+                  defaultProjectId={projectId ?? undefined}
+                  onSuccess={handleSuccess}
+                  submitDisabled={submitDisabled}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
+                />
+              )}
+              {type === "html" && (
+                <HtmlUploader
                   defaultProjectId={projectId ?? undefined}
                   onSuccess={handleSuccess}
                   submitDisabled={submitDisabled}
