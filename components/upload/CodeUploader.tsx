@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { TAG_CONFIG } from "@/lib/tag-config";
 
 interface CodeUploaderProps {
@@ -15,6 +17,8 @@ const REACT_EXTS = [".jsx", ".tsx", ".js", ".ts"];
 
 export function CodeUploader({ defaultProjectId, onSuccess, projectSelector, submitDisabled }: CodeUploaderProps) {
   const [mode, setMode] = useState<"html" | "react">("html");
+  const toggleNavRef = useRef<HTMLDivElement>(null);
+  const [togglePill, setTogglePill] = useState({ left: 0, width: 0, visible: false });
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -25,6 +29,18 @@ export function CodeUploader({ defaultProjectId, onSuccess, projectSelector, sub
   const [dragging, setDragging] = useState(false);
 
   const accepted = mode === "html" ? HTML_EXTS : REACT_EXTS;
+
+  useEffect(() => {
+    const nav = toggleNavRef.current;
+    if (!nav) return;
+    const buttons = nav.querySelectorAll("button");
+    const activeIndex = mode === "html" ? 0 : 1;
+    const activeBtn = buttons[activeIndex] as HTMLElement | undefined;
+    if (!activeBtn) return;
+    const navRect = nav.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    setTogglePill({ left: btnRect.left - navRect.left, width: btnRect.width, visible: true });
+  }, [mode]);
 
   function switchMode(next: "html" | "react") {
     if (next === mode) return;
@@ -131,20 +147,26 @@ export function CodeUploader({ defaultProjectId, onSuccess, projectSelector, sub
     <div className="flex flex-col gap-4">
       {/* Mode toggle */}
       <div
-        className="flex rounded-xl p-1 gap-1"
-        style={{ background: "var(--surface-2)" }}
+        ref={toggleNavRef}
+        className="relative flex items-center rounded-full p-1.5 gap-1 self-center"
+        style={{ background: "var(--nav-pill-bg)", boxShadow: "var(--nav-pill-shadow)" }}
       >
+        <motion.span
+          className="absolute rounded-full shadow-sm pointer-events-none"
+          style={{ background: "var(--foreground)", top: 6, bottom: 6 }}
+          animate={{ left: togglePill.left, width: togglePill.width, opacity: togglePill.visible ? 1 : 0 }}
+          initial={{ left: togglePill.left, width: togglePill.width, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 35 }}
+        />
         {(["html", "react"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => switchMode(m)}
-            className="flex-1 rounded-lg py-1.5 text-sm font-semibold transition-all"
-            style={
-              mode === m
-                ? { background: "var(--surface)", color: "var(--foreground)", boxShadow: "0 1px 3px rgba(0,0,0,0.1)" }
-                : { color: "var(--muted)" }
-            }
+            className={cn(
+              "relative z-10 px-5 py-1.5 text-sm font-semibold rounded-full",
+              mode === m ? "text-[var(--background)]" : "text-[var(--muted)] hover:text-[var(--foreground)]"
+            )}
           >
             {m === "html" ? "HTML" : "React"}
           </button>

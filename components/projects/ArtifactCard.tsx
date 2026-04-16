@@ -361,8 +361,14 @@ function getPreviewUrl(artifact: Artifact): string | null {
     const isVid =
       artifact.mediaMimeType?.startsWith("video/") ||
       (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
-    // Uploaded videos: show static thumbnail; lightbox handles playback
-    if (isVid) return artifact.screenshotUrl ?? null;
+    // Uploaded videos: show static thumbnail; lightbox handles playback.
+    // For CF Stream fall back to their CDN thumbnail when screenshotUrl is absent.
+    if (isVid) {
+      if (artifact.screenshotUrl) return artifact.screenshotUrl;
+      const uid = (artifact.mediaUrl ?? "").match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i)?.[1];
+      if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+      return null;
+    }
     // Images: the mediaUrl is the image itself
     return artifact.mediaUrl ?? null;
   }

@@ -82,7 +82,12 @@ function previewUrl(a: FeedArtifact): string | null {
   if (a.type === "MEDIA") {
     const isVideo =
       a.mediaMimeType?.startsWith("video/") || (!!a.mediaUrl && looksLikeVideo(a.mediaUrl));
-    if (isVideo) return a.screenshotUrl ?? null;
+    if (isVideo) {
+      if (a.screenshotUrl) return a.screenshotUrl;
+      const uid = (a.mediaUrl ?? "").match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i)?.[1];
+      if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+      return null;
+    }
     return a.mediaUrl ?? null;
   }
   if (a.type === "FIGMA") return a.figmaPreviewUrl ?? null;
