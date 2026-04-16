@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { TAG_CONFIG } from "@/lib/tag-config";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn, timeAgo } from "@/lib/utils";
@@ -287,6 +287,26 @@ function MoveModal({
   );
 }
 
+function getCFStreamUID(url: string): string | null {
+  const m = url.match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i);
+  return m ? m[1] : null;
+}
+
+function useCFStreamAspectRatio(uid: string | null): string {
+  const [ratio, setRatio] = useState<string | null>(null);
+  useEffect(() => {
+    if (!uid) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setRatio(`${img.naturalWidth}/${img.naturalHeight}`);
+      }
+    };
+    img.src = `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+  }, [uid]);
+  return ratio ?? "16/9";
+}
+
 function looksLikeVideo(url: string): boolean {
   const lower = url.toLowerCase().split("?")[0];
   return (
@@ -303,11 +323,6 @@ function isCFStream(url: string): boolean {
   return url.includes("videodelivery.net") || url.includes("cloudflarestream.com");
 }
 
-function cfEmbedUrl(url: string): string {
-  const base = url.match(/^(https?:\/\/[^/]+\/[^/]+)/)?.[1] ?? url;
-  const uid = base.split("/").pop()!;
-  return `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=false&preload=auto`;
-}
 
 function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA" && artifact.mediaUrl) {
@@ -340,6 +355,9 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const isVideo =
     artifact.mediaMimeType?.startsWith("video/") ||
     (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
+  const isCFStreamVideo = isVideo && isCFStream(artifact.mediaUrl ?? "");
+  const cfUid = useMemo(() => isCFStreamVideo ? getCFStreamUID(artifact.mediaUrl ?? "") : null, [isCFStreamVideo, artifact.mediaUrl]);
+  const cfAspectRatio = useCFStreamAspectRatio(cfUid);
 
 
 
@@ -391,10 +409,13 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area — cap CF Stream thumbnails so portrait videos don't dominate the grid */}
-      <div className={`relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]${isVideo && isCFStream(artifact.mediaUrl ?? "") ? " max-h-[420px]" : ""}`}>
+      {/* Image area */}
+      <div
+        className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]"
+        style={isCFStreamVideo ? { aspectRatio: cfAspectRatio, maxHeight: "420px" } : undefined}
+      >
         {previewUrl ? (
-          isVideo && !isCFStream(artifact.mediaUrl ?? "") ? (
+          isVideo && !isCFStreamVideo ? (
             // Direct R2 video — play inline at natural aspect ratio
             <video
               src={previewUrl}
@@ -410,7 +431,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
             <img
               src={previewUrl}
               alt={artifact.name}
-              className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90"
+              className={`w-full transition-opacity duration-200 group-hover:opacity-90${isCFStreamVideo ? " h-full object-cover" : ""}`}
             />
           )
         ) : (
