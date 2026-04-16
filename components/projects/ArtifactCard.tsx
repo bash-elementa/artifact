@@ -361,7 +361,8 @@ function getPreviewUrl(artifact: Artifact): string | null {
       if (artifact.screenshotUrl) return artifact.screenshotUrl;
       const uid = (artifact.mediaUrl ?? "").match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i)?.[1];
       if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
-      return null;
+      // Fall back to the video URL — rendered as a static (non-autoplaying) video in the card
+      return artifact.mediaUrl ?? null;
     }
     // Images: the mediaUrl is the image itself
     return artifact.mediaUrl ?? null;
@@ -400,7 +401,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const cfAspectRatio = useCFStreamCardRatio(cfUid);
   // URL-sourced videos (Dribbble, Pinterest, etc.) play inline; uploaded MEDIA plays in lightbox only
   const shouldPlayInline = isVideo && !isCFStreamVideo && artifact.type !== "MEDIA";
-  const directVideoSrc = shouldPlayInline ? previewUrl : null;
+  // Detect dimensions for any non-CF-Stream video (inline or static thumbnail)
+  const directVideoSrc = isVideo && !isCFStreamVideo ? previewUrl : null;
   const directVideoRatio = useDirectVideoCardRatio(directVideoSrc);
 
 
@@ -459,7 +461,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
         style={
           isCFStreamVideo
             ? { aspectRatio: cfAspectRatio }
-            : shouldPlayInline
+            : isVideo && !isCFStreamVideo
             ? { aspectRatio: directVideoRatio }
             : undefined
         }
@@ -475,8 +477,17 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
               playsInline
               className="w-full h-full object-cover block"
             />
+          ) : isVideo && !isCFStreamVideo ? (
+            // Uploaded MEDIA video — show first frame as static thumbnail, no autoplay
+            <video
+              src={previewUrl}
+              muted
+              playsInline
+              preload="metadata"
+              className="w-full object-cover block transition-opacity duration-200 group-hover:opacity-90"
+            />
           ) : (
-            // Image, CF Stream thumbnail, or any static preview
+            // Image or CF Stream thumbnail
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={previewUrl}

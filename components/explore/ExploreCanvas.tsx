@@ -80,7 +80,7 @@ function previewUrl(a: FeedArtifact): string | null {
       if (a.screenshotUrl) return a.screenshotUrl;
       const uid = (a.mediaUrl ?? "").match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i)?.[1];
       if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
-      return null;
+      return a.mediaUrl ?? null;
     }
     return a.mediaUrl ?? null;
   }

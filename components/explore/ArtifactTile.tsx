@@ -43,7 +43,8 @@ function getPreviewUrl(artifact: FeedArtifact): string | null {
       if (artifact.screenshotUrl) return artifact.screenshotUrl;
       const uid = (artifact.mediaUrl ?? "").match(/(?:videodelivery\.net|cloudflarestream\.com)\/([a-f0-9]+)/i)?.[1];
       if (uid) return `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
-      return null;
+      // Fall back to the video URL itself — the tile will autoplay it
+      return artifact.mediaUrl ?? null;
     }
     // Images: the mediaUrl is the image itself
     return artifact.mediaUrl ?? null;
