@@ -336,7 +336,8 @@ export default function HelloPage() {
                       onKeyDown={(e) => e.key === "Enter" && handleContinue()}
                       placeholder={step === 1 ? "Type your name" : "Enter your role at Bash"}
                       maxLength={step === 1 ? 40 : 60}
-                      className="hello-input bg-transparent text-[var(--foreground)] text-sm font-medium text-center outline-none border-none w-56 sm:w-72 md:w-80 px-2"
+                      className="hello-input text-[var(--foreground)] text-sm font-medium text-center outline-none border-none w-56 sm:w-72 md:w-80 px-2"
+                      style={{ background: "transparent" }}
                     />
                   ) : step === 3 ? (
                     <span className="text-sm w-56 sm:w-72 md:w-80 px-2 text-center" style={{ color: selectedTeam ? "var(--foreground)" : "var(--muted)" }}>

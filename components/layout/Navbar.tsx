@@ -154,7 +154,7 @@ export function Navbar() {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user);
       const p = window.location.pathname;
-      if (data.user && !p.startsWith("/onboarding") && !p.startsWith("/auth") && !p.startsWith("/hello")) {
+      if (data.user && !p.startsWith("/onboarding") && !p.startsWith("/auth") && !p.startsWith("/hello") && !p.startsWith("/tour")) {
         fetch("/api/auth/me")
           .then((r) => r.json())
           .then((profile) => {
@@ -252,7 +252,7 @@ export function Navbar() {
   const avatarUrl = dbProfile?.image ?? null;
   const displayName = dbProfile?.name ?? user?.email?.split("@")[0] ?? "You";
 
-  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/hello")) return null;
+  if (pathname.startsWith("/auth") || pathname.startsWith("/onboarding") || pathname.startsWith("/hello") || pathname.startsWith("/tour")) return null;
 
   const Avatar = ({ size = "sm" }: { size?: "sm" | "lg" }) => {
     const cls = size === "lg"

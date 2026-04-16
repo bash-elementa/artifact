@@ -29,9 +29,10 @@ export async function proxy(request: NextRequest) {
   const isAuthPath = request.nextUrl.pathname.startsWith("/auth");
   const isSharePath = request.nextUrl.pathname.startsWith("/share");
   const isHelloPath = request.nextUrl.pathname.startsWith("/hello");
+  const isTourPath = request.nextUrl.pathname.startsWith("/tour");
 
-  // Unauthenticated: redirect to sign-in (except auth/share/hello routes)
-  if (!user && !isAuthPath && !isSharePath && !isHelloPath) {
+  // Unauthenticated: redirect to sign-in (except auth/share/hello/tour routes)
+  if (!user && !isAuthPath && !isSharePath && !isHelloPath && !isTourPath) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/sign-in";
     return NextResponse.redirect(url);

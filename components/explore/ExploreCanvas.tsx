@@ -15,6 +15,7 @@ import { ArtifactLightbox } from "./ArtifactLightbox";
 import { ReactionBar } from "@/components/reactions/ReactionBar";
 import { LoadingDots } from "@/components/ui/LoadingDots";
 import { TAG_CONFIG } from "@/lib/tag-config";
+import { TourModal } from "@/components/tour/TourModal";
 
 interface FeedArtifact {
   id: string;
@@ -265,6 +266,7 @@ export function ExploreCanvas() {
     }
     return 4;
   });
+  const [showTour, setShowTour] = useState(false);
   // Always derive lightbox artifact from live artifacts array so reactions stay in sync
   const lightboxArtifact = lightboxOpen ? (artifacts[lightboxIndex] ?? null) : null;
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
@@ -290,6 +292,20 @@ export function ExploreCanvas() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+  }, []);
+
+  // Show tour for users who haven't completed onboarding
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("tour-seen")) return;
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((user) => {
+        if (user && (!user.role || !user.team)) {
+          setShowTour(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // Auto-open lightbox from deep-link ?artifact=ID
@@ -631,6 +647,15 @@ export function ExploreCanvas() {
         />
 
         {FloatingControls}
+
+        <AnimatePresence>
+          {showTour && (
+            <TourModal
+              onDone={() => { localStorage.setItem("tour-seen", "1"); setShowTour(false); }}
+              onSkip={() => { localStorage.setItem("tour-seen", "1"); setShowTour(false); }}
+            />
+          )}
+        </AnimatePresence>
       </>
     );
   }
@@ -682,6 +707,21 @@ export function ExploreCanvas() {
       />
 
       {FloatingControls}
+
+      <AnimatePresence>
+        {showTour && (
+          <TourModal
+            onDone={() => {
+              localStorage.setItem("tour-seen", "1");
+              setShowTour(false);
+            }}
+            onSkip={() => {
+              localStorage.setItem("tour-seen", "1");
+              setShowTour(false);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
