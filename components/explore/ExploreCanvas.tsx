@@ -67,15 +67,9 @@ function makeRng(seed: number) {
 }
 
 function looksLikeVideo(url: string): boolean {
-  const lower = url.toLowerCase().split("?")[0];
-  return (
-    lower.includes("videodelivery.net") ||
-    lower.includes("cloudflarestream.com") ||
-    lower.endsWith(".mp4") ||
-    lower.endsWith(".webm") ||
-    lower.endsWith(".mov") ||
-    lower.endsWith(".m3u8")
-  );
+  const lower = url.toLowerCase();
+  if (lower.includes("videodelivery.net") || lower.includes("cloudflarestream.com")) return true;
+  return /\.(mp4|webm|mov|m3u8)([?#/]|$)/.test(lower);
 }
 
 function previewUrl(a: FeedArtifact): string | null {
@@ -606,7 +600,7 @@ export function ExploreCanvas() {
                       <video src={purl} autoPlay muted loop playsInline className="w-full object-cover" />
                     ) : (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={purl} alt={artifact.name} className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90" />
+                      <img src={purl} alt={artifact.name} className="w-full object-cover transition-opacity duration-200 group-hover:opacity-90" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
                     )
                   ) : (
                     <div className="w-full aspect-[4/3] flex items-center justify-center">

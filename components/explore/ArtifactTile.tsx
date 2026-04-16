@@ -64,15 +64,10 @@ function getPreviewUrl(artifact: FeedArtifact): string | null {
 }
 
 function looksLikeVideo(url: string): boolean {
-  const lower = url.toLowerCase().split("?")[0];
-  return (
-    lower.includes("videodelivery.net") ||
-    lower.includes("cloudflarestream.com") ||
-    lower.endsWith(".m3u8") ||
-    lower.endsWith(".mp4") ||
-    lower.endsWith(".webm") ||
-    lower.endsWith(".mov")
-  );
+  const lower = url.toLowerCase();
+  if (lower.includes("videodelivery.net") || lower.includes("cloudflarestream.com")) return true;
+  // Match extension before any query/hash/trailing slash
+  return /\.(mp4|webm|mov|m3u8)([?#/]|$)/.test(lower);
 }
 
 function isCFStream(url: string): boolean {
@@ -99,6 +94,7 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
   const previewUrl = getPreviewUrl(artifact);
   // Derive isVideo from previewUrl so the render path always matches the src
   const isVideo = !!previewUrl && looksLikeVideo(previewUrl);
+  const [imgFailed, setImgFailed] = useState(false);
   const pointerDown = useRef<{ x: number; y: number } | null>(null);
 
   const [counts, setCounts] = useState<Record<string, number>>(artifact.reactionCounts);
@@ -173,7 +169,7 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
     >
       {/* Preview */}
       <div className="relative w-full h-full">
-        {previewUrl ? (
+        {previewUrl && !imgFailed ? (
           isVideo ? (
             isCFStream(previewUrl) ? (
               <iframe
@@ -199,6 +195,7 @@ export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTile
               alt={artifact.name}
               className="w-full h-full object-cover"
               loading="lazy"
+              onError={() => setImgFailed(true)}
             />
           )
         ) : (

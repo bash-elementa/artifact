@@ -340,15 +340,9 @@ function useCFStreamCardRatio(uid: string | null): string {
 }
 
 function looksLikeVideo(url: string): boolean {
-  const lower = url.toLowerCase().split("?")[0];
-  return (
-    lower.includes("videodelivery.net") ||
-    lower.includes("cloudflarestream.com") ||
-    lower.endsWith(".m3u8") ||
-    lower.endsWith(".mp4") ||
-    lower.endsWith(".webm") ||
-    lower.endsWith(".mov")
-  );
+  const lower = url.toLowerCase();
+  if (lower.includes("videodelivery.net") || lower.includes("cloudflarestream.com")) return true;
+  return /\.(mp4|webm|mov|m3u8)([?#/]|$)/.test(lower);
 }
 
 function isCFStream(url: string): boolean {
