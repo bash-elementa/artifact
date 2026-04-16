@@ -357,14 +357,14 @@ function isCFStream(url: string): boolean {
 
 
 function getPreviewUrl(artifact: Artifact): string | null {
-  if (artifact.type === "MEDIA" && artifact.mediaUrl) {
-    // For CF Stream videos, show the thumbnail image rather than the live embed —
-    // the embed forces 16:9, can show "Video not found" while still processing,
-    // and is unnecessary since the lightbox handles playback.
-    if (isCFStream(artifact.mediaUrl) && artifact.screenshotUrl) return artifact.screenshotUrl;
-    return artifact.mediaUrl;
+  if (artifact.type === "MEDIA") {
+    // Uploaded videos play in the lightbox only — always show a static thumbnail in the card.
+    // If no screenshot is available (still processing etc.) show nothing rather than
+    // an inline video player.
+    return artifact.screenshotUrl ?? null;
   }
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
+  if (artifact.type === "URL" && artifact.mediaUrl) return artifact.mediaUrl;
   if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.type === "HTML"  && artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.type === "REACT" && artifact.screenshotUrl) return artifact.screenshotUrl;
@@ -390,7 +390,9 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
   const isCFStreamVideo = isVideo && isCFStream(artifact.mediaUrl ?? "");
   const cfUid = useMemo(() => isCFStreamVideo ? getCFStreamUID(artifact.mediaUrl ?? "") : null, [isCFStreamVideo, artifact.mediaUrl]);
   const cfAspectRatio = useCFStreamCardRatio(cfUid);
-  const directVideoSrc = isVideo && !isCFStreamVideo ? previewUrl : null;
+  // URL-sourced videos (Dribbble, Pinterest, etc.) play inline; uploaded MEDIA plays in lightbox only
+  const shouldPlayInline = isVideo && !isCFStreamVideo && artifact.type !== "MEDIA";
+  const directVideoSrc = shouldPlayInline ? previewUrl : null;
   const directVideoRatio = useDirectVideoCardRatio(directVideoSrc);
 
 
@@ -449,14 +451,14 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
         style={
           isCFStreamVideo
             ? { aspectRatio: cfAspectRatio }
-            : isVideo
+            : shouldPlayInline
             ? { aspectRatio: directVideoRatio }
             : undefined
         }
       >
         {previewUrl ? (
-          isVideo && !isCFStreamVideo ? (
-            // Direct R2 video — capped to detected ratio via container
+          shouldPlayInline ? (
+            // URL-sourced video (Dribbble, Pinterest, etc.) — plays inline
             <video
               src={previewUrl}
               autoPlay
