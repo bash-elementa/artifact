@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, PutBucketCorsCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 const r2Client = new S3Client({
@@ -73,4 +73,54 @@ export async function uploadVideoToStream(formData: FormData): Promise<{ uid: st
 
   const data = await response.json();
   return data.result;
+}
+
+let r2CorsConfigured = false;
+
+/** Configure R2 CORS to allow direct browser uploads via presigned PUT URLs. Idempotent. */
+export async function ensureR2Cors(): Promise<void> {
+  if (r2CorsConfigured) return;
+  await r2Client.send(
+    new PutBucketCorsCommand({
+      Bucket: BUCKET,
+      CORSConfiguration: {
+        CORSRules: [
+          {
+            AllowedHeaders: ["Content-Type", "Content-Length"],
+            AllowedMethods: ["PUT"],
+            AllowedOrigins: ["*"],
+            ExposeHeaders: [],
+            MaxAgeSeconds: 86400,
+          },
+        ],
+      },
+    })
+  );
+  r2CorsConfigured = true;
+}
+
+/** Get a Cloudflare Stream one-time direct upload URL so the browser can upload large videos without proxying through Next.js. */
+export async function getCFStreamDirectUploadUrl(): Promise<{ uploadUrl: string; uid: string }> {
+  const accountId = process.env.CLOUDFLARE_STREAM_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_STREAM_TOKEN;
+
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/direct_upload`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ maxDurationSeconds: 3600 }),
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => response.statusText);
+    throw new Error(`CF Stream direct upload failed: ${text}`);
+  }
+
+  const data = await response.json();
+  return { uploadUrl: data.result.uploadURL, uid: data.result.uid };
 }

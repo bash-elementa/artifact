@@ -122,17 +122,48 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
     try {
       for (const item of valid) {
         const isVideo = item.file.type.startsWith("video/");
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", item.file);
+        let mediaUrl: string;
+        let screenshotUrl: string | null = null;
 
-        const uploadRes = await fetch(isVideo ? "/api/upload/video" : "/api/upload/media", {
-          method: "POST", body: uploadFormData,
-        });
-        if (!uploadRes.ok) {
-          const body = await uploadRes.json().catch(() => ({}));
-          throw new Error(body.error ?? `Upload failed (${uploadRes.status})`);
+        if (isVideo) {
+          // Get a one-time CF Stream upload URL — client uploads directly, bypassing Next.js body limit
+          const tokenRes = await fetch("/api/upload/video-token", { method: "POST" });
+          if (!tokenRes.ok) {
+            const body = await tokenRes.json().catch(() => ({}));
+            throw new Error(body.error ?? `Failed to get upload token (${tokenRes.status})`);
+          }
+          const { uploadUrl, uid } = await tokenRes.json();
+
+          const cfFormData = new FormData();
+          cfFormData.append("file", item.file);
+          const uploadRes = await fetch(uploadUrl, { method: "POST", body: cfFormData });
+          if (!uploadRes.ok) throw new Error(`Video upload failed (${uploadRes.status})`);
+
+          mediaUrl = `https://videodelivery.net/${uid}/manifest/video.m3u8`;
+          screenshotUrl = `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+        } else {
+          // Get a presigned R2 PUT URL — client uploads directly, bypassing Next.js body limit
+          const ext = item.file.name.split(".").pop() ?? "bin";
+          const presignRes = await fetch("/api/upload/presign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ext, contentType: item.file.type }),
+          });
+          if (!presignRes.ok) {
+            const body = await presignRes.json().catch(() => ({}));
+            throw new Error(body.error ?? `Failed to get upload URL (${presignRes.status})`);
+          }
+          const { presignedUrl, publicUrl } = await presignRes.json();
+
+          const putRes = await fetch(presignedUrl, {
+            method: "PUT",
+            body: item.file,
+            headers: { "Content-Type": item.file.type },
+          });
+          if (!putRes.ok) throw new Error(`Upload failed (${putRes.status})`);
+
+          mediaUrl = publicUrl;
         }
-        const uploadData = await uploadRes.json();
 
         await fetch("/api/artifacts", {
           method: "POST",
@@ -141,9 +172,9 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
             name: item.name,
             description: item.description || undefined,
             type: "MEDIA",
-            mediaUrl: isVideo ? uploadData.playbackUrl : uploadData.url,
+            mediaUrl,
             mediaMimeType: item.file.type,
-            screenshotUrl: isVideo ? (uploadData.thumbnailUrl ?? null) : null,
+            screenshotUrl,
             storageBytes: item.file.size,
             projectId: defaultProjectId ?? null,
             tags: tag ? [tag] : [],
