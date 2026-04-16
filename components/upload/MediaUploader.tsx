@@ -92,7 +92,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
     onDrop,
     accept: {
       "image/png": [], "image/jpeg": [], "image/gif": [], "image/webp": [],
-      "video/mp4": [], "video/webm": [],
+      "video/mp4": [], "video/webm": [], "video/quicktime": [".mov"],
     },
     maxFiles: 4,
     disabled: files.length >= 4,
@@ -128,7 +128,10 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
         const uploadRes = await fetch(isVideo ? "/api/upload/video" : "/api/upload/media", {
           method: "POST", body: uploadFormData,
         });
-        if (!uploadRes.ok) throw new Error("Upload failed");
+        if (!uploadRes.ok) {
+          const body = await uploadRes.json().catch(() => ({}));
+          throw new Error(body.error ?? `Upload failed (${uploadRes.status})`);
+        }
         const uploadData = await uploadRes.json();
 
         await fetch("/api/artifacts", {
@@ -236,7 +239,7 @@ export function MediaUploader({ defaultProjectId, onSuccess, projectSelector, su
                 {isDragActive ? "Drop files here" : "Drag & drop or click to upload"}
               </p>
               <p className="text-xs text-[var(--muted)]">
-                PNG, JPEG, GIF, WebP, MP4, WebM · up to 4 files · 50MB images / 500MB video
+                PNG, JPEG, GIF, WebP, MP4, WebM, MOV · up to 4 files · 50MB images / 500MB video
               </p>
             </div>
           )}
