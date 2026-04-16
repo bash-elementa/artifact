@@ -30,6 +30,7 @@ interface Artifact {
   figmaUrl?: string | null;
   sourceUrl?: string | null;
   sourceCredit?: string | null;
+  tags?: string[];
   createdAt: string;
   reactions?: { emoji: string }[];
 }
@@ -50,10 +51,13 @@ function RenameModal({
 }: {
   artifact: Artifact;
   onClose: () => void;
-  onSave: (name: string, description: string | null) => Promise<void>;
+  onSave: (name: string, description: string | null, tags: string[]) => Promise<void>;
 }) {
   const [name, setName] = useState(artifact.name);
   const [description, setDescription] = useState(artifact.description ?? "");
+  const [tag, setTag] = useState<"work" | "inspo" | null>(
+    (artifact.tags?.[0] as "work" | "inspo" | undefined) ?? null
+  );
   const [saving, setSaving] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
 
@@ -66,7 +70,7 @@ function RenameModal({
     e.preventDefault();
     if (!name.trim()) return;
     setSaving(true);
-    await onSave(name.trim(), description.trim() || null);
+    await onSave(name.trim(), description.trim() || null, tag ? [tag] : []);
     setSaving(false);
   }
 
@@ -108,6 +112,22 @@ function RenameModal({
               placeholder="Add a description…"
               className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)] resize-none"
             />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-[var(--muted)]">Category</label>
+            <div className="flex gap-2">
+              {(["work", "inspo"] as const).map((t) => (
+                <button key={t} type="button" onClick={() => setTag(tag === t ? null : t)}
+                  className="flex-1 py-2 rounded-xl text-sm font-medium capitalize transition-colors"
+                  style={tag === t
+                    ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
+                    : { background: "transparent", color: "var(--muted)", border: "1px solid var(--border)" }}
+                >
+                  {t === "work" ? "Work" : "Inspo"}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex gap-2 pt-1">
@@ -338,11 +358,11 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
     onDelete?.(artifact.id);
   }
 
-  async function handleSaveRename(name: string, description: string | null) {
+  async function handleSaveRename(name: string, description: string | null, tags: string[]) {
     const res = await fetch(`/api/artifacts/${artifact.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify({ name, description, tags }),
     });
     if (res.ok) {
       setDisplayName(name);
