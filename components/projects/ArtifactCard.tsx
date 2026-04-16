@@ -313,7 +313,8 @@ function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA" && artifact.mediaUrl) return artifact.mediaUrl;
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
   if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
-  if (artifact.type === "HTML" && artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.type === "HTML"  && artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.type === "REACT" && artifact.screenshotUrl) return artifact.screenshotUrl;
   return null;
 }
 
@@ -416,7 +417,7 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
         ) : (
           <div className="w-full aspect-[4/3] flex items-center justify-center">
             <span className="text-4xl opacity-20">
-              {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : artifact.type === "HTML" ? "</>" : "🖼️"}
+              {artifact.type === "URL" ? "🌐" : artifact.type === "FIGMA" ? "✦" : artifact.type === "HTML" ? "</>" : artifact.type === "REACT" ? "⚛️" : "🖼️"}
             </span>
           </div>
         )}

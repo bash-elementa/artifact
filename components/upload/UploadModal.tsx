@@ -7,13 +7,15 @@ import { MediaUploader } from "./MediaUploader";
 import { UrlUploader } from "./UrlUploader";
 import { FigmaUploader } from "./FigmaUploader";
 import { HtmlUploader } from "./HtmlUploader";
-export type UploadType = "media" | "url" | "figma" | "html";
+import { ReactUploader } from "./ReactUploader";
+export type UploadType = "media" | "url" | "figma" | "html" | "react";
 
 const TYPE_TITLES: Record<UploadType, string> = {
   media: "Upload media artifact",
   url: "Add website artifact",
   figma: "Add Figma artifact",
   html: "Add HTML artifact",
+  react: "Add React artifact",
 };
 
 interface UploadModalProps {
@@ -171,6 +173,14 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, r
               )}
               {type === "html" && (
                 <HtmlUploader
+                  defaultProjectId={projectId ?? undefined}
+                  onSuccess={handleSuccess}
+                  submitDisabled={submitDisabled}
+                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
+                />
+              )}
+              {type === "react" && (
+                <ReactUploader
                   defaultProjectId={projectId ?? undefined}
                   onSuccess={handleSuccess}
                   submitDisabled={submitDisabled}
