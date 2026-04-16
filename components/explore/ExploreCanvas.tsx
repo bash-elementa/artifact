@@ -226,6 +226,20 @@ function GridColumnSlider({ value, onChange }: { value: number; onChange: (v: nu
   );
 }
 
+function FloatingTooltip({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="relative group/tip">
+      {children}
+      <div
+        className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 rounded-lg text-xs font-medium whitespace-nowrap pointer-events-none opacity-0 group-hover/tip:opacity-100 transition-opacity duration-150 z-50"
+        style={{ background: "var(--foreground)", color: "var(--background)" }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
 export function ExploreCanvas() {
   const searchParams = useSearchParams();
   const deepLinkId = searchParams.get("artifact");
@@ -394,7 +408,7 @@ export function ExploreCanvas() {
   // ── Shared floating controls — hidden when lightbox is open ─────────────────
   const FloatingControls = lightboxOpen ? null : (
     <div
-      className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-2xl px-2 py-1.5 shadow-lg"
+      className="fixed bottom-6 right-6 z-20 flex items-center gap-2 rounded-2xl px-2 py-1.5 shadow-lg"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
       {/* Column slider — only in grid mode, slides out to the left */}
@@ -417,42 +431,43 @@ export function ExploreCanvas() {
       {/* View toggles — sliding active pill */}
       <div className="flex items-center gap-0.5 relative">
         {(["canvas", "grid"] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setViewMode(mode)}
-            title={mode === "canvas" ? "Infinite canvas" : "Grid"}
-            className="w-8 h-8 rounded-xl flex items-center justify-center relative z-10"
-            style={{ color: viewMode === mode ? "var(--background)" : "var(--muted)" }}
-          >
-            {viewMode === mode && (
-              <motion.span
-                layoutId="tab-pill"
-                className="absolute inset-0 rounded-xl"
-                style={{ background: "var(--foreground)" }}
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
-              />
-            )}
-            <span className="relative z-10">
-              {mode === "canvas"
-                ? <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
-                : <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
-              }
-            </span>
-          </button>
+          <FloatingTooltip key={mode} label={mode === "canvas" ? "Canvas" : "Grid"}>
+            <button
+              onClick={() => setViewMode(mode)}
+              className="w-8 h-8 rounded-xl flex items-center justify-center relative z-10"
+              style={{ color: viewMode === mode ? "var(--background)" : "var(--muted)" }}
+            >
+              {viewMode === mode && (
+                <motion.span
+                  layoutId="tab-pill"
+                  className="absolute inset-0 rounded-xl"
+                  style={{ background: "var(--foreground)" }}
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+              <span className="relative z-10">
+                {mode === "canvas"
+                  ? <Compass size={15} weight={viewMode === "canvas" ? "fill" : "regular"} />
+                  : <SquaresFour size={15} weight={viewMode === "grid" ? "fill" : "regular"} />
+                }
+              </span>
+            </button>
+          </FloatingTooltip>
         ))}
       </div>
 
       {/* Filter button */}
       <div className="w-px h-4 bg-[var(--border)] shrink-0" />
       <div className="relative" ref={filterRef}>
-        <button
-          onClick={() => setFilterOpen((v) => !v)}
-          title="Filter"
-          className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-          style={{ color: isFiltered ? "var(--foreground)" : "var(--muted)" }}
-        >
-          <Funnel size={15} weight={isFiltered ? "fill" : "regular"} />
-        </button>
+        <FloatingTooltip label="Filter">
+          <button
+            onClick={() => setFilterOpen((v) => !v)}
+            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+            style={{ color: isFiltered ? "var(--foreground)" : "var(--muted)" }}
+          >
+            <Funnel size={15} weight={isFiltered ? "fill" : "regular"} />
+          </button>
+        </FloatingTooltip>
 
         <AnimatePresence>
           {filterOpen && (
@@ -461,7 +476,7 @@ export function ExploreCanvas() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.96 }}
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute bottom-full right-0 mb-2 rounded-2xl p-3 flex flex-col gap-3"
+              className="absolute bottom-full -right-2 mb-3 rounded-2xl p-3 flex flex-col gap-3"
               style={{ background: "var(--surface-2)", border: "1px solid var(--border)", minWidth: 220, boxShadow: "0 8px 32px rgba(0,0,0,0.12)" }}
             >
               <div className="flex flex-col gap-2">
