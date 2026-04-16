@@ -358,10 +358,13 @@ function isCFStream(url: string): boolean {
 
 function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA") {
-    // Uploaded videos play in the lightbox only — always show a static thumbnail in the card.
-    // If no screenshot is available (still processing etc.) show nothing rather than
-    // an inline video player.
-    return artifact.screenshotUrl ?? null;
+    const isVid =
+      artifact.mediaMimeType?.startsWith("video/") ||
+      (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
+    // Uploaded videos: show static thumbnail; lightbox handles playback
+    if (isVid) return artifact.screenshotUrl ?? null;
+    // Images: the mediaUrl is the image itself
+    return artifact.mediaUrl ?? null;
   }
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
   if (artifact.type === "URL" && artifact.mediaUrl) return artifact.mediaUrl;

@@ -33,7 +33,15 @@ interface ArtifactTileProps {
 }
 
 function getPreviewUrl(artifact: FeedArtifact): string | null {
-  if (artifact.type === "MEDIA") return artifact.screenshotUrl ?? null;
+  if (artifact.type === "MEDIA") {
+    const isVideo =
+      artifact.mediaMimeType?.startsWith("video/") ||
+      (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
+    // Uploaded videos: show static thumbnail (playback is in the lightbox)
+    if (isVideo) return artifact.screenshotUrl ?? null;
+    // Images: the mediaUrl is the image itself
+    return artifact.mediaUrl ?? null;
+  }
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
   if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.type === "HTML" && artifact.screenshotUrl) return artifact.screenshotUrl;

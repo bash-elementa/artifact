@@ -24,7 +24,6 @@ import {
   FolderSimple as PhFolderSimple,
   Plus as PhPlus,
   Code as PhCode,
-  Atom as PhAtom,
 } from "@phosphor-icons/react";
 
 // ── Logo ────────────────────────────────────────────────────────────────────────
@@ -108,16 +107,14 @@ const UPLOAD_OPTIONS: { type: UploadType; label: string; icon: React.ReactNode }
   { type: "media", label: "Media",       icon: <PhImage size={16} /> },
   { type: "url",   label: "Website URL", icon: <PhLink size={16} /> },
   { type: "figma", label: "Figma",       icon: <PhFigma size={16} /> },
-  { type: "html",  label: "HTML",        icon: <PhCode size={16} /> },
-  { type: "react", label: "React",       icon: <PhAtom size={16} /> },
+  { type: "code",  label: "Code",        icon: <PhCode size={16} /> },
 ];
 
 const MOBILE_UPLOAD_OPTIONS: { type: UploadType; label: string; description: string; icon: React.ReactNode }[] = [
   { type: "media", label: "Media",       description: "Photos and videos",   icon: <PhImage size={24} /> },
   { type: "url",   label: "Website URL", description: "Website or link",     icon: <PhLink size={24} /> },
   { type: "figma", label: "Figma",       description: "Design file",         icon: <PhFigma size={24} /> },
-  { type: "html",  label: "HTML",        description: "Static HTML file",    icon: <PhCode size={24} /> },
-  { type: "react", label: "React",       description: "React component/app", icon: <PhAtom size={24} /> },
+  { type: "code",  label: "Code",        description: "HTML or React component", icon: <PhCode size={24} /> },
 ];
 
 const NAV_TABS = [

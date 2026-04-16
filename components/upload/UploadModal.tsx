@@ -6,16 +6,14 @@ import { CaretDown } from "@phosphor-icons/react";
 import { MediaUploader } from "./MediaUploader";
 import { UrlUploader } from "./UrlUploader";
 import { FigmaUploader } from "./FigmaUploader";
-import { HtmlUploader } from "./HtmlUploader";
-import { ReactUploader } from "./ReactUploader";
-export type UploadType = "media" | "url" | "figma" | "html" | "react";
+import { CodeUploader } from "./CodeUploader";
+export type UploadType = "media" | "url" | "figma" | "code";
 
 const TYPE_TITLES: Record<UploadType, string> = {
   media: "Upload media artifact",
   url: "Add website artifact",
   figma: "Add Figma artifact",
-  html: "Add HTML artifact",
-  react: "Add React artifact",
+  code: "Add code artifact",
 };
 
 interface UploadModalProps {
@@ -171,16 +169,8 @@ export function UploadModal({ open, onClose, type = "media", defaultProjectId, r
                   projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
                 />
               )}
-              {type === "html" && (
-                <HtmlUploader
-                  defaultProjectId={projectId ?? undefined}
-                  onSuccess={handleSuccess}
-                  submitDisabled={submitDisabled}
-                  projectSelector={showProjectSelector ? <ProjectSelector value={projectId} onChange={setProjectId} required={requireProject} /> : undefined}
-                />
-              )}
-              {type === "react" && (
-                <ReactUploader
+              {type === "code" && (
+                <CodeUploader
                   defaultProjectId={projectId ?? undefined}
                   onSuccess={handleSuccess}
                   submitDisabled={submitDisabled}
