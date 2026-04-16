@@ -159,7 +159,7 @@ export function Navbar() {
           .then((r) => r.json())
           .then((profile) => {
             if (profile && !profile.team) {
-              window.location.href = "/hello";
+              window.location.replace("/hello");
             } else if (profile) {
               setDbProfile({ role: profile.role ?? null, team: profile.team ?? null, name: profile.name ?? null, image: profile.image ?? null });
             }
