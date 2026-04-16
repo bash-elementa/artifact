@@ -38,8 +38,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user on sign-in page: send to explore
-  if (user && request.nextUrl.pathname === "/auth/sign-in") {
+  // Authenticated user on sign-in or hello page: send to explore
+  if (user && (request.nextUrl.pathname === "/auth/sign-in" || request.nextUrl.pathname === "/hello")) {
     const url = request.nextUrl.clone();
     url.pathname = "/explore";
     return NextResponse.redirect(url);
