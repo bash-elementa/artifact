@@ -373,8 +373,13 @@ function getPreviewUrl(artifact: Artifact): string | null {
     return artifact.mediaUrl ?? null;
   }
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
-  if (artifact.type === "URL" && artifact.mediaUrl) return artifact.mediaUrl;
-  if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.type === "URL") {
+    const videoSrc = artifact.mediaUrl ?? artifact.websiteUrl ?? null;
+    const hasVideo =
+      artifact.mediaMimeType?.startsWith("video/") || (!!videoSrc && looksLikeVideo(videoSrc));
+    if (hasVideo && videoSrc) return videoSrc;
+    return artifact.screenshotUrl ?? null;
+  }
   if (artifact.type === "HTML"  && artifact.screenshotUrl) return artifact.screenshotUrl;
   if (artifact.type === "REACT" && artifact.screenshotUrl) return artifact.screenshotUrl;
   return null;

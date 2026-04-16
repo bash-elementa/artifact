@@ -50,11 +50,13 @@ function getPreviewUrl(artifact: FeedArtifact): string | null {
   }
   if (artifact.type === "FIGMA") return artifact.figmaPreviewUrl ?? null;
   if (artifact.type === "URL") {
-    // If the URL artifact contains a video, return the video URL for inline playback
+    // The URL uploader stores the pasted URL in websiteUrl (not mediaUrl).
+    // If it looks like a video (direct .mp4 link etc.), use it as the video src.
+    const videoSrc = artifact.mediaUrl ?? artifact.websiteUrl ?? null;
     const hasVideo =
       artifact.mediaMimeType?.startsWith("video/") ||
-      (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
-    if (hasVideo && artifact.mediaUrl) return artifact.mediaUrl;
+      (!!videoSrc && looksLikeVideo(videoSrc));
+    if (hasVideo && videoSrc) return videoSrc;
     return artifact.screenshotUrl ?? null;
   }
   if (artifact.type === "HTML" || artifact.type === "REACT") return artifact.screenshotUrl ?? null;

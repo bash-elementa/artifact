@@ -92,9 +92,10 @@ function previewUrl(a: FeedArtifact): string | null {
   }
   if (a.type === "FIGMA") return a.figmaPreviewUrl ?? null;
   if (a.type === "URL") {
+    const videoSrc = a.mediaUrl ?? a.websiteUrl ?? null;
     const hasVideo =
-      a.mediaMimeType?.startsWith("video/") || (!!a.mediaUrl && looksLikeVideo(a.mediaUrl));
-    if (hasVideo && a.mediaUrl) return a.mediaUrl;
+      a.mediaMimeType?.startsWith("video/") || (!!videoSrc && looksLikeVideo(videoSrc));
+    if (hasVideo && videoSrc) return videoSrc;
     return a.screenshotUrl ?? null;
   }
   // HTML, REACT — use the screenshot
