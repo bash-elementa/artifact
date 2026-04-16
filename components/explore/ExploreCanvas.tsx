@@ -66,8 +66,28 @@ function makeRng(seed: number) {
   };
 }
 
+function looksLikeVideo(url: string): boolean {
+  const lower = url.toLowerCase().split("?")[0];
+  return (
+    lower.includes("videodelivery.net") ||
+    lower.includes("cloudflarestream.com") ||
+    lower.endsWith(".mp4") ||
+    lower.endsWith(".webm") ||
+    lower.endsWith(".mov") ||
+    lower.endsWith(".m3u8")
+  );
+}
+
 function previewUrl(a: FeedArtifact): string | null {
-  return a.mediaUrl ?? a.figmaPreviewUrl ?? a.screenshotUrl ?? null;
+  if (a.type === "MEDIA") {
+    const isVideo =
+      a.mediaMimeType?.startsWith("video/") || (!!a.mediaUrl && looksLikeVideo(a.mediaUrl));
+    if (isVideo) return a.screenshotUrl ?? null;
+    return a.mediaUrl ?? null;
+  }
+  if (a.type === "FIGMA") return a.figmaPreviewUrl ?? null;
+  // URL, HTML, REACT — all use the screenshot
+  return a.screenshotUrl ?? null;
 }
 
 function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims, seed: number): Layout {
