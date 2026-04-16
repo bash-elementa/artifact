@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface MediaRendererProps {
   url: string;
@@ -19,21 +19,41 @@ function isHLS(url: string): boolean {
   return url.includes(".m3u8") || !!getCFStreamUID(url);
 }
 
+/**
+ * Detect the true aspect ratio of a CF Stream video by loading its thumbnail.
+ * Defaults to "16/9" until the image resolves.
+ */
+function useCFStreamAspectRatio(uid: string | null): string {
+  const [ratio, setRatio] = useState("16/9");
+  useEffect(() => {
+    if (!uid) return;
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setRatio(`${img.naturalWidth}/${img.naturalHeight}`);
+      }
+    };
+    img.src = `https://videodelivery.net/${uid}/thumbnails/thumbnail.jpg`;
+  }, [uid]);
+  return ratio;
+}
+
 export function MediaRenderer({ url, mimeType, alt = "", maxHeight = "80vh" }: MediaRendererProps) {
   const isVideo = mimeType?.startsWith("video/");
   const isGif = mimeType === "image/gif";
   const [muted, setMuted] = useState(true);
 
-  if (isVideo) {
-    const uid = getCFStreamUID(url);
+  const cfUid = isVideo ? getCFStreamUID(url) : null;
+  const cfAspectRatio = useCFStreamAspectRatio(cfUid);
 
+  if (isVideo) {
     // HLS / Cloudflare Stream → use the official iframe embed (works in all browsers)
-    if (uid || isHLS(url)) {
-      const embedUrl = uid
-        ? `https://iframe.videodelivery.net/${uid}?autoplay=true&muted=true&loop=true&controls=true`
+    if (cfUid || isHLS(url)) {
+      const embedUrl = cfUid
+        ? `https://iframe.videodelivery.net/${cfUid}?autoplay=true&muted=true&loop=true&controls=true`
         : url;
       return (
-        <div style={{ width: "min(90vw, 960px)", aspectRatio: "16/9", position: "relative" }}>
+        <div style={{ width: "min(90vw, 960px)", aspectRatio: cfAspectRatio, maxHeight, position: "relative" }}>
           <iframe
             src={embedUrl}
             allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
