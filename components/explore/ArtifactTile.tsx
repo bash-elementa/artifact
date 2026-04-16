@@ -48,10 +48,16 @@ function getPreviewUrl(artifact: FeedArtifact): string | null {
     // Images: the mediaUrl is the image itself
     return artifact.mediaUrl ?? null;
   }
-  if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
-  if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
-  if (artifact.type === "HTML" && artifact.screenshotUrl) return artifact.screenshotUrl;
-  if (artifact.type === "REACT" && artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.type === "FIGMA") return artifact.figmaPreviewUrl ?? null;
+  if (artifact.type === "URL") {
+    // If the URL artifact contains a video, return the video URL for inline playback
+    const hasVideo =
+      artifact.mediaMimeType?.startsWith("video/") ||
+      (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
+    if (hasVideo && artifact.mediaUrl) return artifact.mediaUrl;
+    return artifact.screenshotUrl ?? null;
+  }
+  if (artifact.type === "HTML" || artifact.type === "REACT") return artifact.screenshotUrl ?? null;
   return null;
 }
 
@@ -89,9 +95,8 @@ const TILE_SIZES = [
 
 export function ArtifactTile({ artifact, style, onClick, onReact }: ArtifactTileProps) {
   const previewUrl = getPreviewUrl(artifact);
-  const isVideo =
-    artifact.mediaMimeType?.startsWith("video/") ||
-    (!!artifact.mediaUrl && looksLikeVideo(artifact.mediaUrl));
+  // Derive isVideo from previewUrl so the render path always matches the src
+  const isVideo = !!previewUrl && looksLikeVideo(previewUrl);
   const pointerDown = useRef<{ x: number; y: number } | null>(null);
 
   const [counts, setCounts] = useState<Record<string, number>>(artifact.reactionCounts);

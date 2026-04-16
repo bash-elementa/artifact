@@ -91,7 +91,13 @@ function previewUrl(a: FeedArtifact): string | null {
     return a.mediaUrl ?? null;
   }
   if (a.type === "FIGMA") return a.figmaPreviewUrl ?? null;
-  // URL, HTML, REACT — all use the screenshot
+  if (a.type === "URL") {
+    const hasVideo =
+      a.mediaMimeType?.startsWith("video/") || (!!a.mediaUrl && looksLikeVideo(a.mediaUrl));
+    if (hasVideo && a.mediaUrl) return a.mediaUrl;
+    return a.screenshotUrl ?? null;
+  }
+  // HTML, REACT — use the screenshot
   return a.screenshotUrl ?? null;
 }
 
@@ -581,9 +587,8 @@ export function ExploreCanvas() {
           <div style={{ columnCount: gridColumns, columnGap: 12 }}>
             {filteredArtifacts.map((artifact, i) => {
               const purl = previewUrl(artifact);
-              const isVideo =
-                artifact.mediaMimeType?.startsWith("video/") ||
-                (!!artifact.mediaUrl && artifact.mediaUrl.toLowerCase().includes("videodelivery.net"));
+              // Derive from purl so the render path always matches the src
+              const isVideo = !!purl && looksLikeVideo(purl);
 
               return (
                 <motion.div
