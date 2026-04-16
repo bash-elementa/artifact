@@ -660,6 +660,7 @@ function HtmlLightbox({
             url={artifact.mediaUrl!}
             fileName={fileName}
             screenSize={artifact.screenSize}
+            screenshotUrl={artifact.screenshotUrl}
             maxWidth={maxWidth}
             maxHeight={maxHeight}
           />

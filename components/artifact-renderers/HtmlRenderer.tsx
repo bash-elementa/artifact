@@ -20,6 +20,7 @@ interface HtmlRendererProps {
   url: string;
   fileName?: string;
   screenSize?: string | null;
+  screenshotUrl?: string | null;
   maxWidth?: number;
   maxHeight?: number;
 }
@@ -28,6 +29,7 @@ export function HtmlRenderer({
   url,
   fileName,
   screenSize = "DESKTOP",
+  screenshotUrl,
   maxWidth = 880,
   maxHeight,
 }: HtmlRendererProps) {
@@ -134,6 +136,16 @@ export function HtmlRenderer({
           boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
         }}
       >
+        {/* Screenshot shown as background while iframe loads */}
+        {screenshotUrl && !loaded && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={screenshotUrl}
+            alt="Loading preview…"
+            className="absolute inset-0 w-full h-full object-cover object-top"
+          />
+        )}
+
         {!loaded && (
           <div className="absolute inset-0 flex flex-col items-center justify-end pb-8 pointer-events-none">
             <div

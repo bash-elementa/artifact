@@ -313,6 +313,7 @@ function getPreviewUrl(artifact: Artifact): string | null {
   if (artifact.type === "MEDIA" && artifact.mediaUrl) return artifact.mediaUrl;
   if (artifact.type === "FIGMA" && artifact.figmaPreviewUrl) return artifact.figmaPreviewUrl;
   if (artifact.type === "URL" && artifact.screenshotUrl) return artifact.screenshotUrl;
+  if (artifact.type === "HTML" && artifact.screenshotUrl) return artifact.screenshotUrl;
   return null;
 }
 

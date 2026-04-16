@@ -63,6 +63,18 @@ export function HtmlUploader({ defaultProjectId, onSuccess, projectSelector, sub
       if (!uploadRes.ok) throw new Error("Upload failed");
       const { url, size } = await uploadRes.json();
 
+      setStatus("Capturing preview…");
+      let screenshotUrl: string | undefined;
+      try {
+        const ssRes = await fetch(`/api/screenshot?url=${encodeURIComponent(url)}`);
+        if (ssRes.ok) {
+          const ssData = await ssRes.json();
+          screenshotUrl = ssData.url;
+        }
+      } catch {
+        // screenshot is optional — continue without it
+      }
+
       setStatus("Saving…");
       await fetch("/api/artifacts", {
         method: "POST",
@@ -75,6 +87,7 @@ export function HtmlUploader({ defaultProjectId, onSuccess, projectSelector, sub
           mediaMimeType: "text/html",
           storageBytes: size,
           screenSize: "DESKTOP",
+          screenshotUrl: screenshotUrl ?? null,
           projectId: defaultProjectId ?? null,
           tags: tag ? [tag] : [],
         }),
