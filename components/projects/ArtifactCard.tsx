@@ -391,8 +391,8 @@ export function ArtifactCard({ artifact, onClick, onShareToggle, onDelete, onRen
       className="group relative cursor-pointer"
       onClick={onClick}
     >
-      {/* Image area — no fixed aspect, let content breathe */}
-      <div className="relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]">
+      {/* Image area — cap CF Stream thumbnails so portrait videos don't dominate the grid */}
+      <div className={`relative rounded-2xl overflow-hidden bg-[var(--surface-2)] min-h-[120px]${isVideo && isCFStream(artifact.mediaUrl ?? "") ? " max-h-[420px]" : ""}`}>
         {previewUrl ? (
           isVideo && !isCFStream(artifact.mediaUrl ?? "") ? (
             // Direct R2 video — play inline at natural aspect ratio
