@@ -187,7 +187,7 @@ function MediaLightbox({
             </div>
             {artifact.tags?.[0] && TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG] && (
               <span
-                className="px-2.5 py-1 rounded-full text-xs font-semibold leading-none"
+                className="px-2.5 py-2 rounded-full text-xs font-semibold leading-none"
                 style={{
                   background: TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].bg,
                   color: "#fff",
