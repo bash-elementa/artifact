@@ -14,6 +14,7 @@ import { ArtifactTile } from "./ArtifactTile";
 import { ArtifactLightbox } from "./ArtifactLightbox";
 import { ReactionBar } from "@/components/reactions/ReactionBar";
 import { LoadingDots } from "@/components/ui/LoadingDots";
+import { TAG_CONFIG } from "@/lib/tag-config";
 
 interface FeedArtifact {
   id: string;
@@ -558,6 +559,19 @@ export function ExploreCanvas() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                  {artifact.tags?.[0] && TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG] && (
+                    <div className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                      <span
+                        className="px-2.5 py-1 rounded-full text-xs font-semibold leading-none"
+                        style={{
+                          background: TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].bg,
+                          color: "#fff",
+                        }}
+                      >
+                        {TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].label}
+                      </span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-y-1 group-hover:translate-y-0">
                     <div className="flex items-center gap-1.5 min-w-0">
                       {/* User pill */}

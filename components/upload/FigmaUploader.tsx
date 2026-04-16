@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { TAG_CONFIG } from "@/lib/tag-config";
 
 interface FigmaUploaderProps {
   defaultProjectId?: string;
@@ -122,12 +123,12 @@ export function FigmaUploader({ defaultProjectId, onSuccess, projectSelector, su
         <div className="flex gap-2">
           {(["work", "inspo"] as const).map((t) => (
             <button key={t} type="button" onClick={() => setTag(t)}
-              className="flex-1 py-2 rounded-xl text-sm font-medium capitalize transition-colors"
+              className="px-5 py-1.5 rounded-full text-sm font-semibold transition-all"
               style={tag === t
-                ? { background: "var(--accent)", color: "var(--accent-fg)", border: "1px solid transparent" }
-                : { background: "transparent", color: "var(--muted)", border: "1px solid var(--border)" }}
+                ? { background: TAG_CONFIG[t].bg, color: TAG_CONFIG[t].text }
+                : { background: `${TAG_CONFIG[t].bg}18`, color: TAG_CONFIG[t].bg, border: `1.5px solid ${TAG_CONFIG[t].bg}50` }}
             >
-              {t === "work" ? "Work" : "Inspo"}
+              {TAG_CONFIG[t].label}
             </button>
           ))}
         </div>

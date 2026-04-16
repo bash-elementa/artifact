@@ -8,6 +8,7 @@ import { FigmaRenderer } from "@/components/artifact-renderers/FigmaRenderer";
 import { MediaRenderer } from "@/components/artifact-renderers/MediaRenderer";
 import { ReactionBar } from "@/components/reactions/ReactionBar";
 import { timeAgo } from "@/lib/utils";
+import { TAG_CONFIG } from "@/lib/tag-config";
 
 interface ArtifactUser {
   id: string;
@@ -34,6 +35,7 @@ interface LightboxArtifact {
   isSharedToFeed?: boolean;
   createdAt: string;
   user?: ArtifactUser;
+  tags?: string[];
   myReactions?: string[];
   reactionCounts?: Record<string, number>;
 }
@@ -177,10 +179,21 @@ function MediaLightbox({
         >
           {/* Title pill — overlaid on the asset, top-left corner */}
           <div
-            className="absolute top-3 left-3 z-10 rounded-xl px-3 py-2"
+            className="absolute top-3 left-3 z-10 rounded-xl px-3 py-2 flex items-center gap-2"
             style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.10)" }}
           >
             <p className="text-xs font-semibold text-white leading-none">{artifact.name}</p>
+            {artifact.tags?.[0] && TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG] && (
+              <span
+                className="px-2 py-0.5 rounded-full text-[10px] font-semibold leading-none shrink-0"
+                style={{
+                  background: TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].bg,
+                  color: "#fff",
+                }}
+              >
+                {TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].label}
+              </span>
+            )}
           </div>
 
           {isVideo ? (
@@ -377,6 +390,20 @@ function UrlLightbox({
         onClick={(e) => e.stopPropagation()}
       >
         <UserAvatar user={artifact.user} />
+        {artifact.tags?.[0] && TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG] && (
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <span
+              className="px-2.5 py-1 rounded-full text-xs font-semibold leading-none shrink-0"
+              style={{
+                background: TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].bg,
+                color: "#fff",
+              }}
+            >
+              {TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].label}
+            </span>
+          </>
+        )}
         {artifact.isSharedToFeed && (
           <>
             <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
@@ -522,6 +549,20 @@ function FigmaLightbox({
         onClick={(e) => e.stopPropagation()}
       >
         <UserAvatar user={artifact.user} />
+        {artifact.tags?.[0] && TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG] && (
+          <>
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
+            <span
+              className="px-2.5 py-1 rounded-full text-xs font-semibold leading-none shrink-0"
+              style={{
+                background: TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].bg,
+                color: "#fff",
+              }}
+            >
+              {TAG_CONFIG[artifact.tags[0] as keyof typeof TAG_CONFIG].label}
+            </span>
+          </>
+        )}
         {artifact.figmaUrl && (
           <>
             <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.12)" }} />
