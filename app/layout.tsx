@@ -14,19 +14,19 @@ const bannerUrl = `${appUrl}/artifact-banner.png`;
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Artifact — Bash",
+    default: "/artifact",
     template: "%s",
   },
   description: "An internal creative sharing platform for Bash.",
   openGraph: {
-    title: "Artifact — Bash",
+    title: "/artifact",
     description: "An internal creative sharing platform for Bash.",
     siteName: "/artifact",
     images: [{ url: bannerUrl, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Artifact — Bash",
+    title: "/artifact",
     description: "An internal creative sharing platform for Bash.",
     images: [bannerUrl],
   },
