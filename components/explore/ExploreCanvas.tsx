@@ -294,18 +294,13 @@ export function ExploreCanvas() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Show tour for users who haven't completed onboarding
+  // Show tour for users who just completed onboarding
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (localStorage.getItem("tour-seen")) return;
-    fetch("/api/auth/me")
-      .then((r) => r.json())
-      .then((user) => {
-        if (user && (!user.role || !user.team)) {
-          setShowTour(true);
-        }
-      })
-      .catch(() => {});
+    if (localStorage.getItem("show-tour") === "1") {
+      localStorage.removeItem("show-tour");
+      setShowTour(true);
+    }
   }, []);
 
   // Auto-open lightbox from deep-link ?artifact=ID

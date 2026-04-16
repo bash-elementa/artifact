@@ -121,7 +121,10 @@ export default function HelloPage() {
     setPhase("welcome");
     setTimeout(() => {
       setExiting(true);
-      setTimeout(() => { window.location.href = "/explore"; }, 700);
+      setTimeout(() => {
+        localStorage.setItem("show-tour", "1");
+        window.location.href = "/explore";
+      }, 700);
     }, 2000);
   }
 
