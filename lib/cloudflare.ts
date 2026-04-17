@@ -38,6 +38,26 @@ export async function deleteFromR2(key: string): Promise<void> {
   );
 }
 
+/** Extract the R2 object key from a public R2 URL, or null if it's not an R2 URL. */
+export function r2KeyFromUrl(url: string): string | null {
+  if (!PUBLIC_URL || !url.startsWith(PUBLIC_URL + "/")) return null;
+  return url.slice(PUBLIC_URL.length + 1);
+}
+
+/** Delete a video from Cloudflare Stream by its UID. */
+export async function deleteFromStream(uid: string): Promise<void> {
+  const accountId = process.env.CLOUDFLARE_STREAM_ACCOUNT_ID;
+  const token = process.env.CLOUDFLARE_STREAM_TOKEN;
+  const res = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/stream/${uid}`,
+    { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`CF Stream delete failed: ${text}`);
+  }
+}
+
 export async function getPresignedUploadUrl(
   key: string,
   contentType: string,
