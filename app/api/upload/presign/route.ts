@@ -10,8 +10,12 @@ export async function POST(req: NextRequest) {
   const key = `media/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const publicUrl = `${process.env.CLOUDFLARE_R2_PUBLIC_URL ?? ""}/${key}`;
 
+  // Best-effort CORS setup — failures here are non-fatal since CORS can be
+  // configured directly in the Cloudflare R2 dashboard and the token may lack
+  // bucket-level permissions.
+  ensureR2Cors().catch((e) => console.warn("[presign] ensureR2Cors failed:", e?.message));
+
   try {
-    await ensureR2Cors();
     const presignedUrl = await getPresignedUploadUrl(key, contentType);
     return NextResponse.json({ presignedUrl, publicUrl, key });
   } catch (e) {
