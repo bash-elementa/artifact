@@ -114,7 +114,7 @@ function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims, seed: number): L
     const rawH = d ? Math.round(ITEM_WIDTH * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
     const height = Math.max(160, Math.min(480, rawH));
     const angle = i * GOLDEN_ANGLE;
-    const radius = i === 0 ? 0 : SPIRAL_SCALE * Math.sqrt(i);
+    const radius = SPIRAL_SCALE * Math.sqrt(i + 1);
     raw.push({ artifact: a, cx: radius * Math.cos(angle), cy: radius * Math.sin(angle), width: ITEM_WIDTH, height });
   }
 
@@ -141,9 +141,9 @@ function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims, seed: number): L
   const canvasWidth = maxX - minX + PADDING * 2;
   const canvasHeight = maxY - minY + PADDING * 2;
 
-  // Origin is where the first (central) item's center lands in canvas coords
-  const originX = offsetX;
-  const originY = offsetY;
+  // Origin is where the first item's center lands in canvas coords
+  const originX = raw[0].cx + offsetX;
+  const originY = raw[0].cy + offsetY;
 
   return { items, canvasWidth, canvasHeight, originX, originY };
 }
