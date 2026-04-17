@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import {
   TransformWrapper,
@@ -286,8 +287,10 @@ function FloatingTooltip({ label, children }: { label: string; children: React.R
 
 export function ExploreCanvas() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const deepLinkId = searchParams.get("artifact");
   const [artifacts, setArtifacts] = useState<FeedArtifact[]>([]);
+  const [deepLinkedArtifact, setDeepLinkedArtifact] = useState<FeedArtifact | null>(null);
   const [dims, setDims] = useState<Dims>({});
   const [loading, setLoading] = useState(true);
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -311,7 +314,10 @@ export function ExploreCanvas() {
   });
   const [showTour, setShowTour] = useState(false);
   // Always derive lightbox artifact from live artifacts array so reactions stay in sync
-  const lightboxArtifact = lightboxOpen ? (artifacts[lightboxIndex] ?? null) : null;
+  // deepLinkedArtifact takes priority when it's a private/non-feed artifact
+  const lightboxArtifact = lightboxOpen
+    ? (deepLinkedArtifact ?? artifacts[lightboxIndex] ?? null)
+    : null;
   const sessionSeed = useRef(Math.floor(Math.random() * 1000000));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const transformRef = useRef<any>(null);
@@ -323,6 +329,18 @@ export function ExploreCanvas() {
   useEffect(() => {
     localStorage.setItem("explore-grid-columns", String(gridColumns));
   }, [gridColumns]);
+
+  // Redirect unauthenticated users to sign-in, preserving the current URL
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        const next = encodeURIComponent(window.location.pathname + window.location.search);
+        router.replace(`/auth/sign-in?next=${next}`);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     fetch(`/api/feed?seed=${sessionSeed.current}`)
@@ -347,16 +365,30 @@ export function ExploreCanvas() {
   }, []);
 
   // Auto-open lightbox from deep-link ?artifact=ID
+  // If the artifact isn't in the feed, fetch it directly (private/project artifact)
   const deepLinkHandled = useRef(false);
   useEffect(() => {
-    if (!deepLinkId || deepLinkHandled.current || artifacts.length === 0) return;
+    if (!deepLinkId || deepLinkHandled.current) return;
+    // Wait for feed to finish loading before deciding to fetch separately
+    if (loading) return;
+    deepLinkHandled.current = true;
     const idx = artifacts.findIndex((a) => a.id === deepLinkId);
     if (idx >= 0) {
-      deepLinkHandled.current = true;
       setLightboxIndex(idx);
       setLightboxOpen(true);
+    } else {
+      // Not in feed — fetch directly
+      fetch(`/api/artifacts/${deepLinkId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((artifact) => {
+          if (artifact) {
+            setDeepLinkedArtifact(artifact);
+            setLightboxOpen(true);
+          }
+        })
+        .catch(console.error);
     }
-  }, [deepLinkId, artifacts]);
+  }, [deepLinkId, artifacts, loading]);
 
   const uniqueTeams = useMemo(
     () => [...new Set(artifacts.map((a) => a.user?.team).filter(Boolean) as string[])].sort(),
@@ -676,10 +708,10 @@ export function ExploreCanvas() {
 
         <ArtifactLightbox
           artifact={lightboxArtifact}
-          onClose={() => setLightboxOpen(false)}
+          onClose={() => { setLightboxOpen(false); setDeepLinkedArtifact(null); }}
           onReact={handleReact}
-          onPrev={lightboxIndex > 0 ? () => navigateLightbox(-1) : undefined}
-          onNext={lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined}
+          onPrev={!deepLinkedArtifact && lightboxIndex > 0 ? () => navigateLightbox(-1) : undefined}
+          onNext={!deepLinkedArtifact && lightboxIndex < artifacts.length - 1 ? () => navigateLightbox(1) : undefined}
         />
 
         {FloatingControls}

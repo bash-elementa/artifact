@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { TegakiRenderer } from "tegaki/react";
 import type { TegakiRendererHandle, TegakiBundle } from "tegaki/react";
@@ -24,7 +25,9 @@ type Phase = "onboarding" | "loading" | "welcome";
 type Step = 1 | 2 | 3 | 4;
 
 
-export default function HelloPage() {
+function HelloPageInner() {
+  const searchParams = useSearchParams();
+  const postAuthRedirect = searchParams.get("redirect") ?? "/explore";
   const [font, setFont] = useState<TegakiBundle | null>(null);
   const [phase, setPhase] = useState<Phase>("onboarding");
   const [step, setStep] = useState<Step>(1);
@@ -129,7 +132,7 @@ export default function HelloPage() {
       setExiting(true);
       setTimeout(() => {
         localStorage.setItem("show-tour", "1");
-        window.location.replace("/explore");
+        window.location.replace(postAuthRedirect);
       }, 700);
     }, 2000);
   }
@@ -421,6 +424,14 @@ export default function HelloPage() {
         </AnimatePresence>
       </div>
     </>
+  );
+}
+
+export default function HelloPage() {
+  return (
+    <Suspense>
+      <HelloPageInner />
+    </Suspense>
   );
 }
 

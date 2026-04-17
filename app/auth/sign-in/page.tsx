@@ -15,6 +15,7 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
 
+  const next = searchParams.get("next") ?? "/explore";
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam ? (ERROR_MESSAGES[errorParam] ?? "Something went wrong.") : null
@@ -58,7 +59,14 @@ function SignInForm() {
           popup?.close();
           await fetch("/api/auth/ensure-user", { method: "POST" });
           const profile = await fetch("/api/auth/me").then((r) => r.json());
-          window.location.replace(profile?.team ? "/explore" : "/hello");
+          if (profile?.team) {
+            window.location.replace(next);
+          } else {
+            const helloUrl = next !== "/explore"
+              ? `/hello?redirect=${encodeURIComponent(next)}`
+              : "/hello";
+            window.location.replace(helloUrl);
+          }
         }
       }
     );

@@ -59,9 +59,11 @@ export async function GET(request: NextRequest) {
     select: { team: true },
   });
 
-  // New users (no team set) go through onboarding first
+  // New users (no team set) go through onboarding first, preserving the post-auth destination
   if (!dbUser.team) {
-    return NextResponse.redirect(new URL("/hello", origin));
+    const helloUrl = new URL("/hello", origin);
+    if (next !== "/explore") helloUrl.searchParams.set("redirect", next);
+    return NextResponse.redirect(helloUrl);
   }
 
   return NextResponse.redirect(new URL(next, origin));
