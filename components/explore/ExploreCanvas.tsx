@@ -44,16 +44,15 @@ interface FeedArtifact {
 }
 
 const VIEWPORT_BUFFER = 400;
-const COLUMN_COUNT = 5;
-const COLUMN_WIDTH = 280;
-const COLUMN_GAP = 16;
-const ITEM_GAP = 16;
-const PADDING = 24;
+const ITEM_WIDTH = 280;
+const SPIRAL_SCALE = 380; // radial expansion per sqrt(i) step
+const GOLDEN_ANGLE = 2.399963229728653; // ≈ 137.508° in radians
+const PADDING = 80;
 const FALLBACK_HEIGHTS = [220, 300, 240, 280, 200, 260, 320, 180, 250, 210];
 
 type Dims = Record<string, { w: number; h: number }>;
 type LayoutItem = { artifact: FeedArtifact; x: number; y: number; width: number; height: number };
-type Layout = { items: LayoutItem[]; canvasWidth: number; canvasHeight: number };
+type Layout = { items: LayoutItem[]; canvasWidth: number; canvasHeight: number; originX: number; originY: number };
 
 // Fast seeded RNG (mulberry32)
 function makeRng(seed: number) {
@@ -97,38 +96,56 @@ function previewUrl(a: FeedArtifact): string | null {
 }
 
 function layoutArtifacts(artifacts: FeedArtifact[], dims: Dims, seed: number): Layout {
-  if (artifacts.length === 0) return { items: [], canvasWidth: 1200, canvasHeight: 600 };
+  if (artifacts.length === 0) return { items: [], canvasWidth: 1200, canvasHeight: 600, originX: 600, originY: 300 };
 
   const rng = makeRng(seed);
 
-  // Shuffle so new artifacts don't always append to the same column
   const shuffled = [...artifacts];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 
-  const columnHeights = Array(COLUMN_COUNT).fill(PADDING);
-  const items: LayoutItem[] = [];
-
+  // Place items on a golden-angle (Fermat) spiral, relative to origin (0,0)
+  const raw: { artifact: FeedArtifact; cx: number; cy: number; width: number; height: number }[] = [];
   for (let i = 0; i < shuffled.length; i++) {
     const a = shuffled[i];
-    const col = columnHeights.indexOf(Math.min(...columnHeights));
-    const x = PADDING + col * (COLUMN_WIDTH + COLUMN_GAP);
-    const y = columnHeights[col];
-
     const d = dims[a.id];
-    const raw = d ? Math.round(COLUMN_WIDTH * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
-    const height = Math.max(160, Math.min(480, raw));
-
-    items.push({ artifact: a, x, y, width: COLUMN_WIDTH, height });
-    columnHeights[col] += height + ITEM_GAP;
+    const rawH = d ? Math.round(ITEM_WIDTH * d.h / d.w) : FALLBACK_HEIGHTS[i % FALLBACK_HEIGHTS.length];
+    const height = Math.max(160, Math.min(480, rawH));
+    const angle = i * GOLDEN_ANGLE;
+    const radius = i === 0 ? 0 : SPIRAL_SCALE * Math.sqrt(i);
+    raw.push({ artifact: a, cx: radius * Math.cos(angle), cy: radius * Math.sin(angle), width: ITEM_WIDTH, height });
   }
 
-  const canvasWidth = PADDING * 2 + COLUMN_COUNT * COLUMN_WIDTH + (COLUMN_COUNT - 1) * COLUMN_GAP;
-  const canvasHeight = Math.max(...columnHeights) + PADDING;
+  // Compute bounding box and shift to canvas coordinates
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const { cx, cy, width, height } of raw) {
+    minX = Math.min(minX, cx - width / 2);
+    minY = Math.min(minY, cy - height / 2);
+    maxX = Math.max(maxX, cx + width / 2);
+    maxY = Math.max(maxY, cy + height / 2);
+  }
 
-  return { items, canvasWidth, canvasHeight };
+  const offsetX = -minX + PADDING;
+  const offsetY = -minY + PADDING;
+
+  const items: LayoutItem[] = raw.map(({ artifact, cx, cy, width, height }) => ({
+    artifact,
+    x: cx + offsetX - width / 2,
+    y: cy + offsetY - height / 2,
+    width,
+    height,
+  }));
+
+  const canvasWidth = maxX - minX + PADDING * 2;
+  const canvasHeight = maxY - minY + PADDING * 2;
+
+  // Origin is where the first (central) item's center lands in canvas coords
+  const originX = offsetX;
+  const originY = offsetY;
+
+  return { items, canvasWidth, canvasHeight, originX, originY };
 }
 
 async function loadDimensions(artifacts: FeedArtifact[]): Promise<Dims> {
@@ -360,14 +377,13 @@ export function ExploreCanvas() {
     [filteredArtifacts, dims]
   );
 
-  // Centre viewport on the artifact cluster — on initial load and whenever switching back to canvas
+  // Centre viewport on the spiral origin (first/central item) on load and canvas switch
   useEffect(() => {
     if (viewMode !== "canvas") return;
     if (!transformRef.current || layout.items.length === 0) return;
 
-    const vmin = Math.min(window.innerWidth, window.innerHeight) * 0.1;
-    const posX = window.innerWidth / 2 + vmin - layout.canvasWidth / 2;
-    const posY = window.innerHeight / 2 + vmin - layout.canvasHeight / 2;
+    const posX = window.innerWidth / 2 - layout.originX;
+    const posY = window.innerHeight / 2 - layout.originY;
     transformRef.current.setTransform(posX, posY, 1, 0);
   }, [layout, viewMode]);
 
