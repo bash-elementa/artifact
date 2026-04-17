@@ -69,7 +69,9 @@ export function ReactUploader({ defaultProjectId, onSuccess, projectSelector, su
       setStatus("Capturing preview…");
       let screenshotUrl: string | undefined;
       try {
-        const ssRes = await fetch(`/api/screenshot?url=${encodeURIComponent(url)}`);
+        // Screenshot the rendered HTML page, not the raw JSX file
+        const renderUrl = `${location.origin}/api/render/react?url=${encodeURIComponent(url)}`;
+        const ssRes = await fetch(`/api/screenshot?url=${encodeURIComponent(renderUrl)}&wait=3000`);
         if (ssRes.ok) {
           const ssData = await ssRes.json();
           screenshotUrl = ssData.url;
