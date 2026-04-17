@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const ALLOWED_DOMAIN = "tfg.co.za";
 
 const ERROR_MESSAGES: Record<string, string> = {
-  unauthorized_domain: `Only @${ALLOWED_DOMAIN} email addresses are allowed.`,
+  unauthorized_domain: `Only @${ALLOWED_DOMAIN} accounts are allowed.`,
   auth_failed: "Authentication failed. Please try again.",
 };
 
@@ -15,51 +15,16 @@ function SignInForm() {
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     errorParam ? (ERROR_MESSAGES[errorParam] ?? "Something went wrong.") : null
   );
-  const [lastMethod, setLastMethod] = useState<"google" | "email" | null>(null);
-
-  useEffect(() => {
-    const m = localStorage.getItem("last-auth-method");
-    if (m === "google" || m === "email") setLastMethod(m);
-
-    // Prevent back navigation into the sign-in page
-    history.pushState(null, "", window.location.href);
-    const onPop = () => history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
 
   const supabase = createClient();
-
-  async function handleEmailSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-      setError(`Only @${ALLOWED_DOMAIN} email addresses are allowed.`);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError(error.message);
-    } else {
-      localStorage.setItem("last-auth-method", "email");
-      await fetch("/api/auth/ensure-user", { method: "POST" });
-      const profile = await fetch("/api/auth/me").then((r) => r.json());
-      window.location.replace(profile?.team ? "/explore" : "/hello");
-    }
-    setLoading(false);
-  }
 
   async function handleGoogle() {
     setLoading(true);
     setError(null);
-    localStorage.setItem("last-auth-method", "google");
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -128,57 +93,16 @@ function SignInForm() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-transparent px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors disabled:opacity-50"
-        >
-          <GoogleIcon />
-          Continue with Google
-        </button>
-        {lastMethod === "google" && (
-          <p className="text-center text-xs font-semibold mt-2" style={{ color: "#7474ee" }}>Last used</p>
-        )}
-      </div>
+      <button
+        onClick={handleGoogle}
+        disabled={loading}
+        className="flex items-center justify-center gap-2 w-full rounded-xl border border-[var(--border)] bg-transparent px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--surface)] transition-colors disabled:opacity-50"
+      >
+        <GoogleIcon />
+        {loading ? "…" : "Continue with Google"}
+      </button>
 
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-[var(--border)]" />
-        <span className="text-xs text-[var(--muted)]">or</span>
-        <div className="flex-1 h-px bg-[var(--border)]" />
-      </div>
-
-      <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
-        {lastMethod === "email" && (
-          <p className="text-center text-xs font-semibold mb-2" style={{ color: "#7474ee" }}>Last used</p>
-        )}
-        <input
-          type="email"
-          placeholder={`you@${ALLOWED_DOMAIN}`}
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full rounded-xl bg-[var(--surface-2)] border border-[var(--border)] px-4 py-2.5 text-sm text-[var(--foreground)] placeholder-[var(--muted)] focus:outline-none focus:border-[var(--muted)]"
-        />
-
-        {error && <p className="text-xs text-red-400">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-xl bg-[var(--accent)] py-2.5 text-sm font-semibold text-[var(--accent-fg)] hover:opacity-90 transition-opacity disabled:opacity-50"
-        >
-          {loading ? "…" : "Sign in"}
-        </button>
-      </form>
+      {error && <p className="text-xs text-red-400 text-center">{error}</p>}
     </div>
   );
 }
