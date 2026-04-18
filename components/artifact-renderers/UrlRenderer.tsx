@@ -48,9 +48,22 @@ function isFigmaSite(url: string) {
   }
 }
 
+// Sites where proxy rewriting breaks rendering (Cloudflare bot protection,
+// heavy WebGL, SPA routers that parse window.location, etc.)
+const DIRECT_LOAD_HOSTS = new Set(["oryzo.ai"]);
+
+function isDirectLoadUrl(url: string) {
+  try {
+    const host = new URL(url).hostname;
+    return DIRECT_LOAD_HOSTS.has(host) || DIRECT_LOAD_HOSTS.has(host.replace(/^www\./, ""));
+  } catch {
+    return false;
+  }
+}
+
 function iframeUrl(url: string) {
-  // Figma Make sites are SPAs — proxy rewriting breaks them; load directly
-  return isFigmaSite(url) ? url : proxyUrl(url);
+  // Load directly (no proxy) for Figma Make sites and other known-problematic hosts
+  return isFigmaSite(url) || isDirectLoadUrl(url) ? url : proxyUrl(url);
 }
 
 function truncateUrl(url: string, max = 42) {
